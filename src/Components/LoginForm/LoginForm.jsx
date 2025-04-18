@@ -2,10 +2,27 @@ import React, { useState } from "react";
 import './LoginForm.css';
 import { FaUser, FaLock } from "react-icons/fa";
 import logo from '../Assets/logo2.png';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const LoginForm = () => {
+
+
+    useEffect(() => {
+        // Ajouter une classe spécifique au body
+        document.body.classList.add('login-body');
+
+        // Nettoyage : retirer la classe quand on quitte LoginForm
+        return () => {
+            document.body.classList.remove('login-body');
+        };
+    }, []);
+
+
+    const navigate = useNavigate();
+
     const [credentials, setCredentials] = useState({
-        username: '',
+        email: '',
         password: ''
     });
 
@@ -16,25 +33,24 @@ const LoginForm = () => {
         });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // bloque l'envoi classique
+    const handleSubmit = (e) => {
+        e.preventDefault();
 
-        try {
-            const response = await fetch("https://localhost:3000/api/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(credentials)
-            });
+        // 🔒 Vérification locale (sans API)
+        const userTest = {
+            email: "admin@gmail.com",
+            password: "admin123"
+        };
 
-            const data = await response.json();
-            console.log("Réponse login :", data);
-
-            // tu peux ensuite stocker le token, rediriger, etc.
-
-        } catch (error) {
-            console.error("Erreur de login :", error);
+        if (
+            credentials.username === userTest.username &&
+            credentials.password === userTest.password
+        ) {
+            // Simulation de token
+            localStorage.setItem("token", "fake-jwt-token");
+            navigate("/dashboard");
+        } else {
+            alert("Identifiants incorrects !");
         }
     };
 
@@ -47,23 +63,34 @@ const LoginForm = () => {
                 <h1>Login</h1>
 
                 <div className="input-box">
-                    <input type="text" name="username" placeholder="Username" required onChange={handleChange} />
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        required
+                        onChange={handleChange}
+                    />
                     <FaUser className="icon" />
                 </div>
 
                 <div className="input-box">
-                    <input type="password" name="password" placeholder="Password" required onChange={handleChange} />
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                        onChange={handleChange}/>
                     <FaLock className="icon" />
                 </div>
 
                 <div className="remember-forgot">
-                    <label> <input type="checkbox" />Remember me</label>
+                    <label>
+                        <input type="checkbox" /> Remember me
+                    </label>
                     <a href="#">Forgot password?</a>
                 </div>
 
                 <button type="submit">Login</button>
-
-
             </form>
         </div>
     );

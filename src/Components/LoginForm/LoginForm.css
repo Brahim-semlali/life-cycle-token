@@ -1,3 +1,16 @@
+.login-body {
+    background: url("../Assets/back.jpg") no-repeat;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center ;
+}
+
 .wrapper {
     width: 420px;
     color: white;
@@ -6,6 +19,10 @@
     box-shadow: 0  0  10px rgb(0, 0, 0, .2);
     border-radius: 10px ;
     padding: 30px 40px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .company-logo {
@@ -47,7 +64,6 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-
 .wrapper .input-box{
     position: relative;
     width: 100%;
@@ -80,7 +96,6 @@
 .input-box input::placeholder {
     color: white;
 }
-
 
 .input-box .icon {
     position: absolute;

@@ -1,0 +1,112 @@
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #4a7ab0;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.sidebar.minimized {
+    width: 80px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar h2 {
+    margin: 0;
+    font-size: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.toggle-menu {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.toggle-menu:hover {
+    transform: scale(1.1);
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    margin: 5px 0;
+}
+
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.material-icons {
+    margin-right: 15px;
+    font-size: 20px;
+}
+
+.minimized .menu-text {
+    display: none;
+}
+
+.admin-toggle {
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.admin-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.admin-submenu.open {
+    max-height: 500px;
+}
+
+.admin-submenu a {
+    padding-left: 40px;
+}
+
+.minimized .admin-submenu a {
+    padding-left: 20px;
+}
