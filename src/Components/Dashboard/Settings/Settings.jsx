@@ -19,8 +19,8 @@ const Settings = () => {
 
   // Language options
   const languages = [
-    { code: 'en', name: 'English' },
     { code: 'fr', name: 'Français' },
+    { code: 'en', name: 'English' },
     { code: 'ar', name: 'العربية' },
     { code: 'es', name: 'Español' }
   ];
