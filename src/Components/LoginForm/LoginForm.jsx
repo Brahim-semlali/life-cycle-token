@@ -1,30 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './LoginForm.css';
 import { FaUser, FaLock } from "react-icons/fa";
 import logo from '../Assets/logo2.png';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginForm = () => {
-
-
-    useEffect(() => {
-        // Ajouter une classe spécifique au body
-        document.body.classList.add('login-body');
-
-        // Nettoyage : retirer la classe quand on quitte LoginForm
-        return () => {
-            document.body.classList.remove('login-body');
-        };
-    }, []);
-
-
     const navigate = useNavigate();
-
+    const { login } = useAuth();
     const [credentials, setCredentials] = useState({
         email: '',
         password: ''
     });
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        document.body.classList.add('login-body');
+        return () => {
+            document.body.classList.remove('login-body');
+        };
+    }, []);
 
     const handleChange = (e) => {
         setCredentials({
@@ -33,24 +28,20 @@ const LoginForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
 
-        // 🔒 Vérification locale (sans API)
-        const userTest = {
-            email: "admin@gmail.com",
-            password: "admin123"
-        };
-
-        if (
-            credentials.username === userTest.username &&
-            credentials.password === userTest.password
-        ) {
-            // Simulation de token
-            localStorage.setItem("token", "fake-jwt-token");
-            navigate("/dashboard");
-        } else {
-            alert("Identifiants incorrects !");
+        try {
+            const success = await login(credentials.email, credentials.password);
+            if (success) {
+                navigate('/dashboard');
+            } else {
+                setError('Invalid email or password');
+            }
+        } catch (err) {
+            setError('An error occurred during login');
+            console.error('Login error:', err);
         }
     };
 
@@ -62,12 +53,26 @@ const LoginForm = () => {
                 </div>
                 <h1>Login</h1>
 
+                {error && (
+                    <div className="error-message" style={{
+                        color: 'red',
+                        marginBottom: '10px',
+                        padding: '10px',
+                        backgroundColor: '#ffebee',
+                        borderRadius: '4px',
+                        border: '1px solid #ffcdd2'
+                    }}>
+                        {error}
+                    </div>
+                )}
+
                 <div className="input-box">
                     <input
                         type="email"
                         name="email"
                         placeholder="Email"
                         required
+                        value={credentials.email}
                         onChange={handleChange}
                     />
                     <FaUser className="icon" />
@@ -79,7 +84,9 @@ const LoginForm = () => {
                         name="password"
                         placeholder="Password"
                         required
-                        onChange={handleChange}/>
+                        value={credentials.password}
+                        onChange={handleChange}
+                    />
                     <FaLock className="icon" />
                 </div>
 

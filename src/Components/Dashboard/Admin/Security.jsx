@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { useMenu } from "../../../context/MenuContext";
+import { useTheme } from "../../../context/ThemeContext";
+import { useTranslation } from 'react-i18next';
 import "./Security.css";
 
 const Security = () => {
     const { isMinimized } = useMenu();
+    const { isDarkMode } = useTheme();
+    const { t } = useTranslation();
+    
     const [passwordRules, setPasswordRules] = useState({
         minLength: 8,
         requireUppercase: true,
         requireLowercase: true,
         requireNumbers: true,
         requireSpecialChars: true,
-        passwordExpiration: 90, // jours
-        preventPasswordReuse: 5, // nombre de mots de passe précédents
+        passwordExpiration: 90, // days
+        preventPasswordReuse: 5, // number of previous passwords
         maxLoginAttempts: 3,
         lockoutDuration: 30, // minutes
-        minPasswordAge: 1, // jours
+        minPasswordAge: 1, // days
         sessionTimeout: 30 // minutes
     });
 
@@ -35,39 +40,39 @@ const Security = () => {
         const feedback = [];
         let score = 0;
 
-        // Longueur minimale
+        // Minimum length
         if (password.length >= passwordRules.minLength) {
             score += 20;
         } else {
-            feedback.push(`Le mot de passe doit contenir au moins ${passwordRules.minLength} caractères`);
+            feedback.push(t('security.passwordRules.minLengthError', { length: passwordRules.minLength }));
         }
 
-        // Majuscules
+        // Uppercase
         if (passwordRules.requireUppercase && /[A-Z]/.test(password)) {
             score += 20;
         } else if (passwordRules.requireUppercase) {
-            feedback.push('Le mot de passe doit contenir au moins une majuscule');
+            feedback.push(t('security.passwordRules.uppercaseError'));
         }
 
-        // Minuscules
+        // Lowercase
         if (passwordRules.requireLowercase && /[a-z]/.test(password)) {
             score += 20;
         } else if (passwordRules.requireLowercase) {
-            feedback.push('Le mot de passe doit contenir au moins une minuscule');
+            feedback.push(t('security.passwordRules.lowercaseError'));
         }
 
-        // Chiffres
+        // Numbers
         if (passwordRules.requireNumbers && /\d/.test(password)) {
             score += 20;
         } else if (passwordRules.requireNumbers) {
-            feedback.push('Le mot de passe doit contenir au moins un chiffre');
+            feedback.push(t('security.passwordRules.numberError'));
         }
 
-        // Caractères spéciaux
+        // Special characters
         if (passwordRules.requireSpecialChars && /[!@#$%^&*(),.?":{}|<>]/.test(password)) {
             score += 20;
         } else if (passwordRules.requireSpecialChars) {
-            feedback.push('Le mot de passe doit contenir au moins un caractère spécial');
+            feedback.push(t('security.passwordRules.specialError'));
         }
 
         setPasswordStrength({ score, feedback });
@@ -80,14 +85,14 @@ const Security = () => {
     };
 
     return (
-        <div className={`security-container ${isMinimized ? 'minimized' : ''}`}>
-            <h2>Paramètres de Sécurité</h2>
+        <div className={`security-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
+            <h2>{t('security.settings')}</h2>
 
             <div className="security-section">
-                <h3>Règles de Mot de Passe</h3>
+                <h3>{t('security.passwordRules')}</h3>
                 <div className="rules-grid">
                     <div className="form-group">
-                        <label>Longueur minimale</label>
+                        <label>{t('security.minimumLength')}</label>
                         <input
                             type="number"
                             min="6"
@@ -98,7 +103,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Expiration du mot de passe (jours)</label>
+                        <label>{t('security.passwordExpiration')}</label>
                         <input
                             type="number"
                             min="0"
@@ -108,7 +113,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Historique des mots de passe</label>
+                        <label>{t('security.passwordHistory')}</label>
                         <input
                             type="number"
                             min="0"
@@ -118,7 +123,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Tentatives de connexion max</label>
+                        <label>{t('security.maxLoginAttempts')}</label>
                         <input
                             type="number"
                             min="1"
@@ -128,7 +133,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Durée de verrouillage (minutes)</label>
+                        <label>{t('security.lockoutDuration')}</label>
                         <input
                             type="number"
                             min="1"
@@ -138,7 +143,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Âge minimum du mot de passe (jours)</label>
+                        <label>{t('security.minPasswordAge')}</label>
                         <input
                             type="number"
                             min="0"
@@ -148,7 +153,7 @@ const Security = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Expiration de session (minutes)</label>
+                        <label>{t('security.sessionTimeout')}</label>
                         <input
                             type="number"
                             min="1"
@@ -165,7 +170,7 @@ const Security = () => {
                             checked={passwordRules.requireUppercase}
                             onChange={(e) => handleRuleChange('requireUppercase', e.target.checked)}
                         />
-                        Exiger des majuscules
+                        {t('security.requireUppercase')}
                     </label>
 
                     <label>
@@ -174,7 +179,7 @@ const Security = () => {
                             checked={passwordRules.requireLowercase}
                             onChange={(e) => handleRuleChange('requireLowercase', e.target.checked)}
                         />
-                        Exiger des minuscules
+                        {t('security.requireLowercase')}
                     </label>
 
                     <label>
@@ -183,7 +188,7 @@ const Security = () => {
                             checked={passwordRules.requireNumbers}
                             onChange={(e) => handleRuleChange('requireNumbers', e.target.checked)}
                         />
-                        Exiger des chiffres
+                        {t('security.requireNumbers')}
                     </label>
 
                     <label>
@@ -192,17 +197,17 @@ const Security = () => {
                             checked={passwordRules.requireSpecialChars}
                             onChange={(e) => handleRuleChange('requireSpecialChars', e.target.checked)}
                         />
-                        Exiger des caractères spéciaux
+                        {t('security.requireSpecial')}
                     </label>
                 </div>
             </div>
 
             <div className="security-section">
-                <h3>Testeur de Mot de Passe</h3>
+                <h3>{t('security.passwordTester')}</h3>
                 <div className="password-tester">
                     <input
                         type="text"
-                        placeholder="Testez un mot de passe"
+                        placeholder={t('security.testPassword')}
                         value={testPassword}
                         onChange={handleTestPasswordChange}
                         className="test-password-input"
@@ -215,7 +220,7 @@ const Security = () => {
                             ></div>
                         </div>
                         <div className="strength-label">
-                            Force: {passwordStrength.score}%
+                            {t('security.passwordStrength')}: {passwordStrength.score}%
                         </div>
                     </div>
                     {passwordStrength.feedback.length > 0 && (

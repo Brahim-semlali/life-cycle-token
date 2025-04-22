@@ -1,8 +1,8 @@
 .sidebar {
     width: 250px;
     height: 100vh;
-    background: #4a7ab0;
-    color: white;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
     position: fixed;
     left: 0;
     top: 0;
@@ -34,7 +34,7 @@
 .toggle-menu {
     background: none;
     border: none;
-    color: white;
+    color: var(--sidebar-text);
     cursor: pointer;
     font-size: 20px;
     padding: 5px;
@@ -59,7 +59,7 @@
 }
 
 .sidebar a {
-    color: white;
+    color: var(--sidebar-text);
     text-decoration: none;
     padding: 12px 20px;
     display: flex;
@@ -109,4 +109,25 @@
 
 .minimized .admin-submenu a {
     padding-left: 20px;
+}
+
+/* RTL Support */
+[dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+}
+
+[dir="rtl"] .material-icons {
+    margin-right: 0;
+    margin-left: 15px;
+}
+
+[dir="rtl"] .admin-submenu a {
+    padding-left: 20px;
+    padding-right: 40px;
+}
+
+[dir="rtl"] .minimized .admin-submenu a {
+    padding-left: 20px;
+    padding-right: 20px;
 }

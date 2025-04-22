@@ -1,0 +1,173 @@
+// English translations
+export const en = {
+  // Common
+  'app.title': 'Titrit Technologies',
+  'app.language': 'Language',
+  'app.loading': 'Loading...',
+  'app.error': 'An error occurred',
+  'app.success': 'Operation successful',
+  
+  // Admin
+  'admin.title': 'Administration',
+  
+  // Login
+  'login.title': 'Login',
+  'login.username': 'Username',
+  'login.password': 'Password',
+  'login.submit': 'Sign In',
+  'login.error': 'Invalid credentials',
+  'login.forgot': 'Forgot Password?',
+  
+  // Dashboard
+  'dashboard.title': 'Dashboard',
+  'dashboard.overview': 'Overview',
+  'dashboard.analytics': 'Analytics',
+  'dashboard.reports': 'Reports',
+  'dashboard.welcome': 'Welcome',
+  'dashboard.statistics': 'Statistics',
+  'dashboard.recentActivity': 'Recent Activity',
+  
+  // Profiles
+  'profiles.title': 'Profiles',
+  'profiles.create': 'Create Profile',
+  'profiles.edit': 'Edit Profile',
+  'profiles.delete': 'Delete Profile',
+  'profiles.view': 'View Profile',
+  'profiles.name': 'Profile Name',
+  'profiles.save': 'Save Changes',
+  'profiles.cancel': 'Cancel',
+  'profiles.list': 'List of Profiles',
+  'profiles.nameRequired': 'Please enter a profile name',
+  'profiles.confirmDelete': 'Are you sure you want to delete this profile?',
+  
+  // Modules
+  'modules.administration.title': 'Administration',
+  'modules.administration.profiles': 'Profiles',
+  'modules.administration.users': 'Users',
+  'modules.administration.security': 'Security',
+
+  'modules.issuerTSP.title': 'Issuer TSP',
+  'modules.issuerTSP.certificates': 'Certificates',
+  'modules.issuerTSP.validation': 'Validation',
+  'modules.issuerTSP.settings': 'Settings',
+
+  'modules.tokenManager.title': 'Token Manager',
+  'modules.tokenManager.tokens': 'Tokens',
+  'modules.tokenManager.distribution': 'Distribution',
+  'modules.tokenManager.monitoring': 'Monitoring',
+
+  'modules.clients.title': 'Clients',
+  'modules.clients.management': 'Management',
+  'modules.clients.contracts': 'Contracts',
+  'modules.clients.billing': 'Billing',
+
+  // Users
+  'users.title': 'Users',
+  'users.create': 'Create User',
+  'users.edit': 'Edit User',
+  'users.delete': 'Delete User',
+  'users.firstName': 'First Name',
+  'users.lastName': 'Last Name',
+  'users.email': 'Email',
+  'users.username': 'Username',
+  'users.password': 'Password',
+  'users.profile': 'Profile',
+  'users.selectProfile': 'Select a profile',
+  'users.status': 'Status',
+  'users.statusActive': 'Active',
+  'users.statusInactive': 'Inactive',
+  'users.save': 'Save',
+  'users.cancel': 'Cancel',
+  'users.list': 'Users List',
+  'users.fillAllFields': 'Please fill in all required fields',
+  'users.confirmDelete': 'Are you sure you want to delete this user?',
+  'users.successCreate': 'User created successfully',
+  'users.successUpdate': 'User updated successfully',
+  'users.successDelete': 'User deleted successfully',
+  'users.errorCreate': 'Error creating user',
+  'users.errorUpdate': 'Error updating user',
+  'users.errorDelete': 'Error deleting user',
+  
+  // Security
+  'security.title': 'Security',
+  'security.settings': 'Security Settings',
+  'security.password': 'Password',
+  'security.oldPassword': 'Old Password',
+  'security.newPassword': 'New Password',
+  'security.confirmPassword': 'Confirm Password',
+  'security.changePassword': 'Change Password',
+  'security.twoFactor': 'Two-Factor Authentication',
+  'security.twoFactorEnabled': 'Enable Two-Factor Authentication',
+  'security.twoFactorDisabled': 'Disable Two-Factor Authentication',
+  'security.twoFactorStatus': 'Two-Factor Authentication Status',
+  'security.passwordRules': 'Password Rules',
+  'security.minLength': 'Minimum Length',
+  'security.requireUppercase': 'Uppercase Required',
+  'security.requireLowercase': 'Lowercase Required',
+  'security.requireNumbers': 'Number Required',
+  'security.requireSpecial': 'Special Character Required',
+  'security.save': 'Save Changes',
+  'security.cancel': 'Cancel',
+  'security.successUpdate': 'Security settings updated successfully',
+  'security.errorUpdate': 'Error updating security settings',
+  'security.passwordMismatch': 'Passwords do not match',
+  'security.passwordWeak': 'Password is too weak',
+  'security.passwordStrong': 'Password is strong',
+  'security.currentPassword': 'Current password is incorrect',
+  'security.minimumLength': 'Minimum Password Length',
+  'security.passwordExpiration': 'Password Expiration (days)',
+  'security.passwordHistory': 'Password History',
+  'security.maxLoginAttempts': 'Maximum Login Attempts',
+  'security.lockoutDuration': 'Lockout Duration (minutes)',
+  'security.minPasswordAge': 'Minimum Password Age (days)',
+  'security.sessionTimeout': 'Session Timeout (minutes)',
+  'security.passwordTester': 'Password Tester',
+  'security.testPassword': 'Test Password',
+  'security.passwordStrength': 'Password Strength',
+  'security.passwordRules.minLengthError': 'Password must contain at least {{length}} characters',
+  'security.passwordRules.uppercaseError': 'Password must contain at least one uppercase letter',
+  'security.passwordRules.lowercaseError': 'Password must contain at least one lowercase letter',
+  'security.passwordRules.numberError': 'Password must contain at least one number',
+  'security.passwordRules.specialError': 'Password must contain at least one special character',
+  
+  // Settings
+  'settings.title': 'Settings',
+  'settings.theme': 'Theme',
+  'settings.theme.light': 'Light Mode',
+  'settings.theme.dark': 'Dark Mode',
+  'settings.selectTheme': 'Select Theme',
+  'settings.language': 'Language',
+  'settings.selectLanguage': 'Select Language',
+  'settings.about': 'About',
+  'settings.version': 'Version',
+  'settings.language.title': 'Language',
+  'settings.language.select': 'Select Language',
+  'settings.language.downloadTemplate': 'Download Template',
+  'settings.language.importTranslations': 'Import Translations',
+
+  // IssuerTsp
+  'issuerTsp.title': 'Issuer TSP',
+
+  // TokenManager
+  'tokenManager.title': 'Token Manager',
+
+  // Clients
+  'clients.title': 'Clients',
+
+  translations: {
+    importTitle: 'Import Translations',
+    downloadTemplate: 'Download Template',
+    templateInfo: 'Use this template to format your translations correctly',
+    dropzoneText: 'Drag and drop your file here or click to browse',
+    browse: 'Browse',
+    processing: 'Processing...',
+    importSuccess: 'Translations imported successfully',
+    importError: 'Error importing translations',
+    invalidFileType: 'Unsupported file type. Use .xlsx, .xls or .cab',
+    supportedFormats: 'Supported Formats',
+    xlsFormat: 'Excel file with columns: key, fr, en, es, ar',
+    cabFormat: 'Text file with comma-separated values: key,fr,en,es,ar',
+  },
+};
+
+export default en; 

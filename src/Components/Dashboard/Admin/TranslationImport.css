@@ -1,0 +1,205 @@
+.translation-import-container {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.translation-import-container h2 {
+    color: #2d3748;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.dark-mode .translation-import-container h2 {
+    color: #e2e8f0;
+}
+
+.template-section {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.template-button {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-button:hover {
+    background-color: #3182ce;
+}
+
+.template-info {
+    margin-top: 1rem;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.dark-mode .template-info {
+    color: #a0aec0;
+}
+
+.drop-zone {
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+    background-color: #f8fafc;
+    margin-bottom: 2rem;
+}
+
+.dark-mode .drop-zone {
+    border-color: #4a5568;
+    background-color: #2d3748;
+}
+
+.drop-zone.active {
+    border-color: #4299e1;
+    background-color: rgba(66, 153, 225, 0.1);
+}
+
+.file-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.drop-zone-content {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.drop-zone p {
+    color: #4a5568;
+    margin-bottom: 1rem;
+}
+
+.dark-mode .drop-zone p {
+    color: #e2e8f0;
+}
+
+.browse-button {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.processing-indicator {
+    color: #4299e1;
+    font-weight: 500;
+}
+
+.dark-mode .processing-indicator {
+    color: #63b3ed;
+}
+
+.error-message {
+    background-color: #fed7d7;
+    color: #c53030;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.dark-mode .error-message {
+    background-color: rgba(245, 101, 101, 0.2);
+    color: #fc8181;
+}
+
+.success-message {
+    background-color: #c6f6d5;
+    color: #2f855a;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.dark-mode .success-message {
+    background-color: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+}
+
+.format-info {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .format-info {
+    background-color: #2d3748;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.format-info h3 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.dark-mode .format-info h3 {
+    color: #e2e8f0;
+}
+
+.format-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.format-info li {
+    margin-bottom: 0.75rem;
+    color: #4a5568;
+}
+
+.dark-mode .format-info li {
+    color: #a0aec0;
+}
+
+.format-info li:last-child {
+    margin-bottom: 0;
+}
+
+.format-info strong {
+    color: #2d3748;
+    margin-right: 0.5rem;
+}
+
+.dark-mode .format-info strong {
+    color: #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .translation-import-container {
+        padding: 1rem;
+    }
+
+    .drop-zone {
+        padding: 1.5rem;
+    }
+
+    .template-button,
+    .browse-button {
+        width: 100%;
+    }
+} 

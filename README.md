@@ -1,104 +1,172 @@
-# Documentation du Projet Titrit Technologies
+# Titrit Technologies Project Documentation
 
-## Table des matières
-1. [Vue d'ensemble](#vue-densemble)
-2. [Technologies utilisées](#technologies-utilisées)
-3. [Structure du projet](#structure-du-projet)
-4. [Composants](#composants)
-5. [Configuration](#configuration)
-6. [Démarrage du projet](#démarrage-du-projet)
+## Table of Contents
+1. [Overview](#overview)
+2. [Technologies Used](#technologies-used)
+3. [Project Structure](#project-structure)
+4. [User Management](#user-management)
+5. [Getting Started](#getting-started)
 
-## Vue d'ensemble
-Ce projet est une application web développée avec React.js, mettant en œuvre une interface utilisateur moderne avec authentification et tableau de bord.
+## Overview
+This project is a web application developed with React.js, implementing a modern user interface with authentication, user management, and dashboard features.
 
-## Technologies utilisées
+## Technologies Used
 
 ### Frontend
-- **React.js** (v19.1.0) - Framework JavaScript pour la construction d'interfaces utilisateur
-- **React Router DOM** (v7.5.0) - Gestion du routage dans l'application
-- **Axios** (v1.8.4) - Client HTTP pour les requêtes API
-- **React Icons** (v5.5.0) - Bibliothèque d'icônes
-- **CSS Modules** - Pour le style des composants
+- **React.js** (v19.1.0) - JavaScript framework for building user interfaces
+- **React Router DOM** (v7.5.0) - Routing management in the application
+- **Axios** (v1.8.4) - HTTP client for API requests
+- **React Icons** (v5.5.0) - Icon library
+- **CSS Modules** - For component styling
 
-### Outils de développement
-- **Create React App** - Configuration initiale du projet
-- **ESLint** - Linting du code
-- **Jest** - Tests unitaires
-- **Web Vitals** - Mesure des performances
+### Development Tools
+- **Create React App** - Initial project setup
+- **ESLint** - Code linting
+- **Jest** - Unit testing
+- **Web Vitals** - Performance measurement
 
-## Structure du projet
+## Project Structure
 
 ```
 src/
-├── Components/           # Composants React
-│   ├── LoginForm/       # Formulaire de connexion
-│   ├── Sidebar/         # Barre latérale de navigation
-│   ├── Dashboard/       # Tableau de bord
-│   └── Assets/          # Ressources statiques
-├── context/             # Contextes React
-│   └── MenuContext.jsx  # Gestion du menu
-├── App.js              # Composant principal
-├── index.js            # Point d'entrée
-└── App.css             # Styles globaux
+├── Components/           # React Components
+│   ├── LoginForm/       # Login form
+│   ├── Sidebar/         # Navigation sidebar
+│   ├── Dashboard/       # Dashboard components
+│   │   ├── Admin/       # Admin components (Users, Profiles)
+│   │   └── ...         # Other dashboard sections
+│   └── Assets/          # Static resources
+├── context/             # React Context providers
+│   ├── MenuContext.jsx  # Menu management
+│   ├── AuthContext.jsx  # Authentication management
+│   └── ...             # Other contexts
+├── config/              # Configuration files
+│   ├── predefinedUsers.js    # User management
+│   └── predefinedProfiles.js # Profile management
+├── index.js            # Entry point
+└── App.css             # Global styles
 ```
 
-## Composants
+## User Management
+
+### Predefined Users
+The system includes several predefined user accounts with different access levels:
+
+1. **Admin Account**
+   - Email: admin@titrit.com
+   - Password: Admin@123
+   - Access: Full administrative access
+
+2. **Security Team**
+   - Email: security@titrit.com
+   - Password: Security@123
+   - Access: Security management features
+
+3. **Bank Team**
+   - Email: bank@titrit.com
+   - Password: Bank@123
+   - Access: Banking operations
+
+4. **Call Center Team**
+   - Email: callcenter@titrit.com
+   - Password: CallCenter@123
+   - Access: Customer service features
+
+### Creating New Users
+Administrators can create new users through the admin interface:
+
+1. Log in as admin
+2. Navigate to Dashboard > Admin > Users
+3. Click "Create User" and fill in the details:
+   - First Name
+   - Last Name
+   - Email
+   - Username
+   - Password
+   - Profile Selection
+   - Status (Active/Inactive)
+
+### User Persistence
+- New users created by administrators are automatically added to the system's predefined users
+- User data persists between sessions using localStorage
+- User profiles and access rights are managed through the profile system
+
+### Profile Management
+Users can be assigned different profiles with specific access rights:
+- Admin Profile: Full system access
+- Security Team: Security management
+- Bank Team: Banking operations
+- Call Center: Customer service
+- Custom profiles can be created and managed
+
+## Components
 
 ### LoginForm
-- Gestion de l'authentification des utilisateurs
-- Validation des formulaires
-- Intégration avec l'API d'authentification
+- User authentication management
+- Validation of forms
+- Integration with the authentication API
+- Support for predefined and custom users
 
 ### Sidebar
-- Navigation principale de l'application
-- Gestion de l'état du menu via MenuContext
-- Interface responsive
+- Dynamic navigation based on user profile
+- Menu state management via MenuContext
+- Responsive interface
+- Access control based on user permissions
 
-### Dashboard
-- Affichage des données principales
-- Widgets et graphiques
-- Interface utilisateur interactive
+### Dashboard/Admin
+- User Management Interface
+- Profile Management
+- Security Settings
+- Access Control Management
 
 ## Configuration
 
-### Variables d'environnement
-Le projet utilise HTTPS en développement avec des certificats SSL locaux :
+### Environment Variables
+The project uses HTTPS in development with local SSL certificates:
 - SSL_CRT_FILE=cert/localhost.pem
 - SSL_KEY_FILE=cert/localhost-key.pem
 
-### Scripts disponibles
-- `npm start` - Lance le serveur de développement en HTTPS
-- `npm build` - Crée une version de production
-- `npm test` - Lance les tests
-- `npm eject` - Éjecte la configuration CRA
+### Scripts Available
+- `npm start` - Launches the HTTPS development server
+- `npm build` - Creates a production version
+- `npm test` - Launches tests
+- `npm eject` - Ejects CRA configuration
 
-## Démarrage du projet
+## Getting Started
 
-1. Installation des dépendances :
+1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Démarrage du serveur de développement :
+2. Launch the development server:
 ```bash
 npm start
 ```
 
-3. Accès à l'application :
-- URL : https://localhost:3000
+3. Access the application:
+- URL: https://localhost:3000
+- Use predefined admin credentials to start:
+  - Email: admin@titrit.com
+  - Password: Admin@123
 
-## Sécurité
-- Utilisation de HTTPS en développement
-- Gestion sécurisée des tokens d'authentification
-- Protection des routes sensibles
+## Security
+- Use of HTTPS in development
+- Secure token management
+- Protection of sensitive routes
+- Role-based access control
+- Password encryption
+- Session management
 
 ## Performance
-- Optimisation des images et assets
-- Lazy loading des composants
+- Image and asset optimization
+- Lazy loading of components
 - Monitoring via Web Vitals
+- Efficient state management
 
 ## Maintenance
-- Code modulaire et réutilisable
-- Documentation des composants
-- Tests unitaires pour les fonctionnalités critiques
+- Modular and reusable code
+- Component documentation
+- Unit tests for critical features
+- User management documentation
 

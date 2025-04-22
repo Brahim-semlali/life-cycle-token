@@ -1,0 +1,24 @@
+.issuer-tsp-container {
+  padding: 20px;
+  transition: all 0.3s ease;
+  margin-left: 250px;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  width: calc(100% - 250px);
+  position: absolute;
+  top: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.issuer-tsp-container.minimized {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+
+.issuer-tsp-container h2 {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+} 

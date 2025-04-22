@@ -1,0 +1,242 @@
+.settings-container {
+  padding: 2rem;
+  transition: all 0.3s ease;
+  margin-left: 250px;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  width: calc(100% - 250px);
+  position: absolute;
+  top: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.settings-container.minimized {
+  margin-left: 5rem;
+  width: calc(100% - 5rem);
+}
+
+.settings-container h2 {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.settings-container.dark-mode {
+  background-color: #1a1a1a;
+  color: #e2e8f0;
+}
+
+.settings-container.light-mode {
+  background-color: #f8fafc;
+  color: #2d3748;
+}
+
+.settings-section {
+  background-color: #2d3748;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.dark-mode .settings-section {
+  background-color: #2d3748;
+}
+
+.light-mode .settings-section {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 30px;
+  border: 2px solid transparent;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(30px);
+}
+
+.toggle-switch:hover .toggle-slider {
+  border-color: var(--accent-color);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 1px var(--accent-color);
+}
+
+/* Select Styles */
+.theme-select,
+.language-select {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.75rem;
+  border: 2px solid #4a5568;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.light-mode .theme-select,
+.light-mode .language-select {
+  background-color: white;
+  color: #2d3748;
+  border-color: #e2e8f0;
+}
+
+.translation-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.settings-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #4a5568;
+  border-radius: 8px;
+  background-color: #2d3748;
+  color: #e2e8f0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.settings-button:hover {
+  background-color: #4a5568;
+}
+
+.settings-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-icon {
+  font-size: 1.25rem;
+}
+
+.light-mode .settings-button {
+  background-color: white;
+  color: #2d3748;
+  border-color: #e2e8f0;
+}
+
+.light-mode .settings-button:hover {
+  background-color: #f8fafc;
+  border-color: #4a5568;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    margin-left: 0;
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .settings-section {
+    padding: 1.5rem;
+  }
+
+  .translation-buttons {
+    flex-direction: column;
+  }
+
+  .settings-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .settings-container {
+  margin-left: 0;
+  margin-right: 250px;
+}
+
+[dir="rtl"] .settings-container.minimized {
+  margin-left: 0;
+  margin-right: 80px;
+}
+
+[dir="rtl"] .toggle-slider:before {
+  left: auto;
+  right: 4px;
+}
+
+[dir="rtl"] .toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(-30px);
+}
+
+[dir="rtl"] .theme-select,
+[dir="rtl"] .language-select {
+  background-position: left 10px center;
+  padding-right: 15px;
+  padding-left: 35px;
+} 

@@ -1,0 +1,173 @@
+// French translations
+export const fr = {
+  // Common
+  'app.title': 'Titrit Technologies',
+  'app.language': 'Langue',
+  'app.loading': 'Chargement...',
+  'app.error': 'Une erreur est survenue',
+  'app.success': 'Opération réussie',
+  
+  // Admin
+  'admin.title': 'Administration',
+  
+  // Login
+  'login.title': 'Connexion',
+  'login.username': 'Nom d\'utilisateur',
+  'login.password': 'Mot de passe',
+  'login.submit': 'Se connecter',
+  'login.error': 'Identifiants invalides',
+  'login.forgot': 'Mot de passe oublié ?',
+  
+  // Dashboard
+  'dashboard.title': 'Tableau de bord',
+  'dashboard.overview': 'Aperçu',
+  'dashboard.welcome': 'Bienvenue',
+  'dashboard.analytics': 'Analytiques',
+  'dashboard.statistics': 'Statistiques',
+  'dashboard.recentActivity': 'Activité récente',
+  'dashboard.reports': 'Rapports',
+  
+  // Profiles
+  'profiles.title': 'Profils',
+  'profiles.create': 'Créer un profil',
+  'profiles.edit': 'Modifier le profil',
+  'profiles.delete': 'Supprimer le profil',
+  'profiles.view': 'Voir le profil',
+  'profiles.name': 'Nom du profil',
+  'profiles.save': 'Enregistrer',
+  'profiles.cancel': 'Annuler',
+  'profiles.list': 'Liste des profils',
+  'profiles.nameRequired': 'Veuillez saisir un nom de profil',
+  'profiles.confirmDelete': 'Êtes-vous sûr de vouloir supprimer ce profil ?',
+  
+  // Users
+  'users.title': 'Utilisateurs',
+  'users.create': 'Créer un utilisateur',
+  'users.edit': 'Modifier l\'utilisateur',
+  'users.delete': 'Supprimer l\'utilisateur',
+  'users.firstName': 'Prénom',
+  'users.lastName': 'Nom',
+  'users.email': 'E-mail',
+  'users.username': 'Nom d\'utilisateur',
+  'users.password': 'Mot de passe',
+  'users.profile': 'Profil',
+  'users.selectProfile': 'Sélectionner un profil',
+  'users.status': 'Statut',
+  'users.statusActive': 'Actif',
+  'users.statusInactive': 'Inactif',
+  'users.save': 'Enregistrer',
+  'users.cancel': 'Annuler',
+  'users.list': 'Liste des utilisateurs',
+  'users.fillAllFields': 'Veuillez remplir tous les champs obligatoires',
+  'users.confirmDelete': 'Êtes-vous sûr de vouloir supprimer cet utilisateur ?',
+  'users.successCreate': 'Utilisateur créé avec succès',
+  'users.successUpdate': 'Utilisateur mis à jour avec succès',
+  'users.successDelete': 'Utilisateur supprimé avec succès',
+  'users.errorCreate': 'Erreur lors de la création de l\'utilisateur',
+  'users.errorUpdate': 'Erreur lors de la mise à jour de l\'utilisateur',
+  'users.errorDelete': 'Erreur lors de la suppression de l\'utilisateur',
+  
+  // Security
+  'security.title': 'Sécurité',
+  'security.settings': 'Paramètres de sécurité',
+  'security.password': 'Mot de passe',
+  'security.oldPassword': 'Ancien mot de passe',
+  'security.newPassword': 'Nouveau mot de passe',
+  'security.confirmPassword': 'Confirmer le mot de passe',
+  'security.changePassword': 'Changer le mot de passe',
+  'security.twoFactor': 'Authentification à deux facteurs',
+  'security.twoFactorEnabled': 'Activer l\'authentification à deux facteurs',
+  'security.twoFactorDisabled': 'Désactiver l\'authentification à deux facteurs',
+  'security.twoFactorStatus': 'État de l\'authentification à deux facteurs',
+  'security.passwordRules': 'Règles du mot de passe',
+  'security.minLength': 'Longueur minimale',
+  'security.requireUppercase': 'Majuscule requise',
+  'security.requireLowercase': 'Minuscule requise',
+  'security.requireNumbers': 'Chiffre requis',
+  'security.requireSpecial': 'Caractère spécial requis',
+  'security.save': 'Enregistrer les modifications',
+  'security.cancel': 'Annuler',
+  'security.successUpdate': 'Paramètres de sécurité mis à jour avec succès',
+  'security.errorUpdate': 'Erreur lors de la mise à jour des paramètres de sécurité',
+  'security.passwordMismatch': 'Les mots de passe ne correspondent pas',
+  'security.passwordWeak': 'Le mot de passe est trop faible',
+  'security.passwordStrong': 'Le mot de passe est fort',
+  'security.currentPassword': 'Le mot de passe actuel est incorrect',
+  'security.minimumLength': 'Longueur minimale du mot de passe',
+  'security.passwordExpiration': 'Expiration du mot de passe (jours)',
+  'security.passwordHistory': 'Historique des mots de passe',
+  'security.maxLoginAttempts': 'Nombre maximum de tentatives de connexion',
+  'security.lockoutDuration': 'Durée de verrouillage (minutes)',
+  'security.minPasswordAge': 'Âge minimum du mot de passe (jours)',
+  'security.sessionTimeout': 'Délai d\'expiration de session (minutes)',
+  'security.passwordTester': 'Testeur de mot de passe',
+  'security.testPassword': 'Tester un mot de passe',
+  'security.passwordStrength': 'Force du mot de passe',
+  'security.passwordRules.minLengthError': 'Le mot de passe doit contenir au moins {{length}} caractères',
+  'security.passwordRules.uppercaseError': 'Le mot de passe doit contenir au moins une majuscule',
+  'security.passwordRules.lowercaseError': 'Le mot de passe doit contenir au moins une minuscule',
+  'security.passwordRules.numberError': 'Le mot de passe doit contenir au moins un chiffre',
+  'security.passwordRules.specialError': 'Le mot de passe doit contenir au moins un caractère spécial',
+  
+  // Settings
+  'settings.title': 'Paramètres',
+  'settings.theme': 'Thème',
+  'settings.theme.light': 'Mode clair',
+  'settings.theme.dark': 'Mode sombre',
+  'settings.selectTheme': 'Sélectionner le thème',
+  'settings.language': 'Langue',
+  'settings.selectLanguage': 'Sélectionner la langue',
+  'settings.about': 'À propos',
+  'settings.version': 'Version',
+  'settings.language.title': 'Langue',
+  'settings.language.select': 'Sélectionner la langue',
+  'settings.language.downloadTemplate': 'Télécharger le modèle',
+  'settings.language.importTranslations': 'Importer les traductions',
+
+  // IssuerTsp
+  'issuerTsp.title': 'Émetteur TSP',
+
+  // TokenManager
+  'tokenManager.title': 'Gestionnaire de jetons',
+
+  // Clients
+  'clients.title': 'Clients',
+
+  // Modules
+  'modules.administration.title': 'Administration',
+  'modules.administration.profiles': 'Profils',
+  'modules.administration.users': 'Utilisateurs',
+  'modules.administration.security': 'Sécurité',
+
+  'modules.issuerTSP.title': 'Émetteur TSP',
+  'modules.issuerTSP.certificates': 'Certificats',
+  'modules.issuerTSP.validation': 'Validation',
+  'modules.issuerTSP.settings': 'Paramètres',
+
+  'modules.tokenManager.title': 'Gestionnaire de jetons',
+  'modules.tokenManager.tokens': 'Jetons',
+  'modules.tokenManager.distribution': 'Distribution',
+  'modules.tokenManager.monitoring': 'Surveillance',
+
+  'modules.clients.title': 'Clients',
+  'modules.clients.management': 'Gestion',
+  'modules.clients.contracts': 'Contrats',
+  'modules.clients.billing': 'Facturation',
+
+  translations: {
+    importTitle: 'Importer des traductions',
+    downloadTemplate: 'Télécharger le modèle',
+    templateInfo: 'Utilisez ce modèle pour formater vos traductions correctement',
+    dropzoneText: 'Glissez-déposez votre fichier ici ou cliquez pour parcourir',
+    browse: 'Parcourir',
+    processing: 'Traitement en cours...',
+    importSuccess: 'Traductions importées avec succès',
+    importError: 'Erreur lors de l\'importation des traductions',
+    invalidFileType: 'Type de fichier non supporté. Utilisez .xlsx, .xls ou .cab',
+    supportedFormats: 'Formats supportés',
+    xlsFormat: 'Fichier Excel avec colonnes : key, fr, en, es, ar',
+    cabFormat: 'Fichier texte avec valeurs séparées par des virgules : key,fr,en,es,ar',
+  },
+};
+
+export default fr; 
