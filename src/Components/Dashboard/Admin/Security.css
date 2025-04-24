@@ -1,3 +1,4 @@
+/* Container principal avec animation d'entrée */
 .security-container {
     padding: 2rem;
     transition: all 0.3s ease;
@@ -10,10 +11,22 @@
     overflow-y: auto;
     background-color: #f8fafc;
     color: #2d3748;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .security-container.dark-mode {
-    background-color: #1a1a1a;
+    background-color: #1a202c;
     color: #e2e8f0;
 }
 
@@ -22,37 +35,10 @@
     width: calc(100% - 5rem);
 }
 
+/* En-tête avec style moderne */
 .security-container h2 {
-    margin-bottom: 30px;
-    font-size: 24px;
-    font-weight: 600;
-    text-align: center;
-}
-
-.security-container.dark-mode h2 {
-    color: #e2e8f0;
-}
-
-.security-form {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: 2rem auto;
-    border: 1px solid rgba(226, 232, 240, 0.3);
-    backdrop-filter: blur(8px);
-}
-
-.security-container.dark-mode .security-form {
-    background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(74, 85, 104, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.section-title {
-    font-size: 1.8rem;
-    font-weight: 600;
+    font-size: 2rem;
+    font-weight: 700;
     color: #2d3748;
     margin-bottom: 2rem;
     text-align: center;
@@ -60,11 +46,11 @@
     padding-bottom: 1rem;
 }
 
-.security-container.dark-mode .section-title {
+.security-container.dark-mode h2 {
     color: #e2e8f0;
 }
 
-.section-title::after {
+.security-container h2::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -72,27 +58,68 @@
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #4a7ab0 0%, #63b3ed 100%);
+    background: linear-gradient(90deg, #4299e1 0%, #63b3ed 100%);
     border-radius: 2px;
 }
 
-/* Styles communs pour les sections */
-.form-section {
-    background: #ffffff;
-    border-radius: 12px;
+/* Sections avec effet de carte */
+.security-section {
+    background: white;
+    border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUp 0.5s ease-out;
 }
 
-.security-container.dark-mode .form-section {
+.security-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.security-container.dark-mode .security-section {
     background: #2d3748;
-    border-color: #4a5568;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    border-color: rgba(74, 85, 104, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Styles communs pour les inputs */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Titre des sections */
+.security-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.security-container.dark-mode .security-section h3 {
+    color: #e2e8f0;
+}
+
+/* Grille pour les règles */
+.rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Style des champs de formulaire */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -103,247 +130,193 @@
     font-size: 0.95rem;
     font-weight: 500;
     color: #4a5568;
+    transition: color 0.3s ease;
 }
 
 .security-container.dark-mode .form-group label {
-    color: #e2e8f0;
+    color: #a0aec0;
 }
 
-.form-group input[type="number"],
-.form-group input[type="text"],
-.form-group input[type="password"],
-.form-group select {
+.form-group input {
     width: 100%;
-    height: 45px;
     padding: 0.75rem 1rem;
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
-    background-color: #ffffff;
+    background: white;
     color: #2d3748;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.security-container.dark-mode .form-group input[type="number"],
-.security-container.dark-mode .form-group input[type="text"],
-.security-container.dark-mode .form-group input[type="password"],
-.security-container.dark-mode .form-group select {
-    background-color: #1a1a1a;
+.security-container.dark-mode .form-group input {
+    background: #1a202c;
     border-color: #4a5568;
     color: #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus {
     outline: none;
     border-color: #4299e1;
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
 }
 
-.security-container.dark-mode .form-group input:focus,
-.security-container.dark-mode .form-group select:focus {
-    border-color: #63b3ed;
-    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15);
-}
-
-/* Groupe de cases à cocher */
-.checkbox-container {
+/* Style des cases à cocher */
+.checkbox-rules {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin-top: 2rem;
 }
 
-.checkbox-group {
+.checkbox-rules label {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-    background-color: #ffffff;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 10px;
     border: 1px solid #e2e8f0;
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.security-container.dark-mode .checkbox-group {
-    background-color: #2d3748;
+.security-container.dark-mode .checkbox-rules label {
+    background: #2d3748;
     border-color: #4a5568;
 }
 
-.checkbox-group:hover {
-    background-color: #f7fafc;
+.checkbox-rules label:hover {
+    background: #edf2f7;
+    transform: translateY(-1px);
 }
 
-.security-container.dark-mode .checkbox-group:hover {
-    background-color: #2d3748;
+.security-container.dark-mode .checkbox-rules label:hover {
+    background: #374151;
 }
 
-.checkbox-group input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
+.checkbox-rules input[type="checkbox"] {
     width: 20px;
     height: 20px;
     border: 2px solid #4299e1;
     border-radius: 6px;
-    margin: 0;
+    appearance: none;
     cursor: pointer;
     position: relative;
-    background-color: #ffffff;
+    transition: all 0.2s ease;
 }
 
-.security-container.dark-mode .checkbox-group input[type="checkbox"] {
-    border-color: #63b3ed;
-    background-color: #1a1a1a;
-}
-
-.checkbox-group input[type="checkbox"]:checked {
+.checkbox-rules input[type="checkbox"]:checked {
     background-color: #4299e1;
     border-color: #4299e1;
 }
 
-.security-container.dark-mode .checkbox-group input[type="checkbox"]:checked {
-    background-color: #63b3ed;
-    border-color: #63b3ed;
-}
-
-.checkbox-group input[type="checkbox"]:checked::after {
+.checkbox-rules input[type="checkbox"]:checked::after {
     content: "✓";
     position: absolute;
-    color: #ffffff;
+    color: white;
     font-size: 14px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
-.checkbox-group label {
-    font-size: 0.95rem;
-    color: #4a5568;
-}
-
-.security-container.dark-mode .checkbox-group label {
-    color: #e2e8f0;
-}
-
-/* Password Tester */
+/* Testeur de mot de passe */
 .password-tester {
-    background-color: #ffffff;
+    background: white;
     border-radius: 12px;
     padding: 2rem;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .security-container.dark-mode .password-tester {
-    background-color: #2d3748;
+    background: #2d3748;
     border-color: #4a5568;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.password-test-input {
+.test-password-input {
     width: 100%;
-    height: 45px;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
-    background-color: #ffffff;
-    color: #2d3748;
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
 }
 
-.security-container.dark-mode .password-test-input {
-    background-color: #1a1a1a;
+.security-container.dark-mode .test-password-input {
+    background: #1a202c;
     border-color: #4a5568;
     color: #e2e8f0;
 }
 
-.password-test-input:focus {
-    outline: none;
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-}
-
-.security-container.dark-mode .password-test-input:focus {
-    border-color: #63b3ed;
-    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15);
-}
-
 /* Barre de force du mot de passe */
-.strength-meter {
+.password-strength {
     margin-top: 1.5rem;
 }
 
-.strength-text {
-    font-size: 0.95rem;
-    color: #4a5568;
-    margin-bottom: 0.5rem;
-}
-
-.security-container.dark-mode .strength-text {
-    color: #e2e8f0;
-}
-
 .strength-bar {
-    width: 100%;
     height: 8px;
-    background-color: #e2e8f0;
+    background: #e2e8f0;
     border-radius: 4px;
     overflow: hidden;
-}
-
-.security-container.dark-mode .strength-bar {
-    background-color: #4a5568;
+    margin-bottom: 0.5rem;
 }
 
 .strength-fill {
     height: 100%;
-    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 4px;
     background: linear-gradient(90deg, #4299e1 0%, #48bb78 100%);
-    transition: width 0.3s ease;
 }
 
-.security-container.dark-mode .strength-fill {
-    background: linear-gradient(90deg, #63b3ed 0%, #68d391 100%);
+.strength-label {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-top: 0.5rem;
 }
 
-/* Messages d'état */
-.status-message {
+.security-container.dark-mode .strength-label {
+    color: #a0aec0;
+}
+
+/* Feedback sur le mot de passe */
+.password-feedback {
+    margin-top: 1rem;
     padding: 1rem;
     border-radius: 8px;
-    margin-top: 1rem;
-    font-size: 0.95rem;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+}
+
+.security-container.dark-mode .password-feedback {
+    background: rgba(254, 215, 215, 0.1);
+    border-color: rgba(254, 215, 215, 0.2);
+}
+
+.password-feedback ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.password-feedback li {
+    color: #c53030;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.status-success {
-    background-color: #c6f6d5;
-    color: #2f855a;
-    border: 1px solid #9ae6b4;
-}
-
-.security-container.dark-mode .status-success {
-    background-color: rgba(72, 187, 120, 0.2);
-    color: #68d391;
-    border-color: rgba(104, 211, 145, 0.3);
-}
-
-.status-error {
-    background-color: #fed7d7;
-    color: #c53030;
-    border: 1px solid #feb2b2;
-}
-
-.security-container.dark-mode .status-error {
-    background-color: rgba(245, 101, 101, 0.2);
+.security-container.dark-mode .password-feedback li {
     color: #fc8181;
-    border-color: rgba(252, 129, 129, 0.3);
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .security-container {
         margin-left: 0;
@@ -351,15 +324,223 @@
         padding: 1rem;
     }
 
-    .form-section {
-        padding: 1.5rem;
-    }
-
-    .checkbox-container {
+    .rules-grid {
         grid-template-columns: 1fr;
     }
 
-    .checkbox-group {
+    .checkbox-rules {
+        grid-template-columns: 1fr;
+    }
+
+    .security-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Animations supplémentaires */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.security-section:hover h3 {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Scrollbar personnalisée */
+.security-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.security-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.security-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.security-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+.security-container.dark-mode::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+.security-container.dark-mode::-webkit-scrollbar-thumb {
+    background: #4a5568;
+}
+
+.security-container.dark-mode::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
+
+/* Styles pour le header et le bouton de sauvegarde */
+.security-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark-mode .security-header {
+    background: rgba(45, 55, 72, 0.95);
+    border: 1px solid rgba(74, 85, 104, 0.3);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.save-button {
+    position: relative;
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 15px rgba(66, 153, 225, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow: hidden;
+}
+
+.save-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(255, 255, 255, 0.1),
+        transparent,
+        rgba(255, 255, 255, 0.1)
+    );
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.save-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(66, 153, 225, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.save-button:hover::before {
+    transform: translateY(100%);
+}
+
+.save-button:active {
+    transform: translateY(1px);
+    box-shadow: 
+        0 2px 10px rgba(66, 153, 225, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.save-button .MuiSvgIcon-root {
+    font-size: 1.25rem;
+    transition: transform 0.3s ease;
+}
+
+.save-button:hover .MuiSvgIcon-root {
+    transform: translateX(2px) scale(1.1);
+}
+
+/* Mode sombre */
+.dark-mode .save-button {
+    background: linear-gradient(135deg, #4299e1, #2b6cb0);
+    box-shadow: 
+        0 4px 15px rgba(66, 153, 225, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.dark-mode .save-button:hover {
+    background: linear-gradient(135deg, #63b3ed, #3182ce);
+    box-shadow: 
+        0 6px 20px rgba(66, 153, 225, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.dark-mode .save-button:active {
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    box-shadow: 
+        0 2px 10px rgba(66, 153, 225, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Animation de succès */
+@keyframes saveSuccess {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.save-button.success {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    animation: saveSuccess 0.5s ease-out;
+}
+
+.dark-mode .save-button.success {
+    background: linear-gradient(135deg, #48bb78, #2f855a);
+}
+
+/* Animation de chargement */
+@keyframes saveLoading {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.save-button.loading .MuiSvgIcon-root {
+    animation: saveLoading 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .security-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .save-button {
         width: 100%;
+        justify-content: center;
     }
 } 

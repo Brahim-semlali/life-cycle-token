@@ -6,6 +6,8 @@
 3. [Project Structure](#project-structure)
 4. [User Management](#user-management)
 5. [Getting Started](#getting-started)
+6. [API Configuration](#api-configuration)
+7. [Environment Variables](#environment-variables)
 
 ## Overview
 This project is a web application developed with React.js, implementing a modern user interface with authentication, user management, and dashboard features.
@@ -131,6 +133,61 @@ The project uses HTTPS in development with local SSL certificates:
 - `npm build` - Creates a production version
 - `npm test` - Launches tests
 - `npm eject` - Ejects CRA configuration
+
+## API Configuration
+
+### API Service Setup
+The application uses Axios for API requests with the following features:
+- Centralized API configuration in `src/services/api.js`
+- Automatic token management for authenticated requests
+- Error handling and authentication failure management
+- Default headers configuration
+
+### API Usage Example
+```javascript
+import api from '../services/api';
+
+// GET request
+api.get('/endpoint')
+  .then(response => {
+    // Handle response
+  })
+  .catch(error => {
+    // Handle error
+  });
+
+// POST request
+api.post('/endpoint', data)
+  .then(response => {
+    // Handle response
+  })
+  .catch(error => {
+    // Handle error
+  });
+```
+
+## Environment Variables
+
+### Required Variables
+- `REACT_APP_API_URL`: Base URL for API requests (default: http://localhost:3000)
+
+### Development Environment
+Create a `.env` file in the project root with the following content:
+```
+REACT_APP_API_URL=http://localhost:3000
+```
+
+### Production Environment
+For production, set the environment variables in your hosting platform:
+- Heroku: Use the dashboard or CLI
+- Netlify: Use the site settings
+- Vercel: Use the project settings
+
+### Security Notes
+- Never commit `.env` files to version control
+- Use `.env.example` as a template for required variables
+- Keep sensitive information in environment variables
+- Use HTTPS in production environments
 
 ## Getting Started
 

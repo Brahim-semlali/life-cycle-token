@@ -1,0 +1,14 @@
+{
+  "security": {
+    "settings": "Security Settings",
+    "save": "Save Changes",
+    "passwordRules": {
+      "help": "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character",
+      "minLengthError": "Password must contain at least {length} characters",
+      "uppercaseError": "Password must contain at least one uppercase letter",
+      "lowercaseError": "Password must contain at least one lowercase letter",
+      "numberError": "Password must contain at least one number",
+      "specialError": "Password must contain at least one special character"
+    }
+  }
+} 

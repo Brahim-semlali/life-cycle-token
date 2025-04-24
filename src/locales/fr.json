@@ -1,0 +1,14 @@
+{
+  "security": {
+    "settings": "Paramètres de sécurité",
+    "save": "Enregistrer les modifications",
+    "passwordRules": {
+      "help": "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial",
+      "minLengthError": "Le mot de passe doit contenir au moins {length} caractères",
+      "uppercaseError": "Le mot de passe doit contenir au moins une majuscule",
+      "lowercaseError": "Le mot de passe doit contenir au moins une minuscule",
+      "numberError": "Le mot de passe doit contenir au moins un chiffre",
+      "specialError": "Le mot de passe doit contenir au moins un caractère spécial"
+    }
+  }
+} 

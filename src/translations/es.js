@@ -17,6 +17,17 @@ export const es = {
   'login.submit': 'Iniciar sesión',
   'login.error': 'Credenciales inválidas',
   'login.forgot': '¿Olvidó su contraseña?',
+  'login.usernamePlaceholder': 'Ingrese su nombre de usuario',
+  'login.passwordPlaceholder': 'Ingrese su contraseña',
+  'login.selectProfilePlaceholder': 'Seleccione su perfil',
+  'login.login': 'Iniciar sesión',
+  'login.helpText': 'Ayuda de inicio de sesión',
+  'login.securityTeam': 'Equipo de Seguridad',
+  'login.securityTeamDesc': 'Gestión de certificados y políticas de seguridad',
+  'login.bankTeam': 'Equipo Bancario',
+  'login.bankTeamDesc': 'Gestión de operaciones bancarias y transacciones',
+  'login.callCenterTeam': 'Equipo del Centro de Llamadas',
+  'login.callCenterTeamDesc': 'Soporte al cliente y gestión de solicitudes',
   
   // Dashboard
   'dashboard.title': 'Panel de Control',
@@ -39,6 +50,11 @@ export const es = {
   'profiles.list': 'Lista de perfiles',
   'profiles.nameRequired': 'Por favor, ingrese un nombre de perfil',
   'profiles.confirmDelete': '¿Está seguro de que desea eliminar este perfil?',
+  'profiles.description': 'Descripción',
+  'profiles.status': 'Estado',
+  'profiles.actions': 'Acciones',
+  'profiles.status.active': 'Activo',
+  'profiles.status.inactive': 'Inactivo',
   
   // Users
   'users.title': 'Usuarios',

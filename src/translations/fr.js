@@ -17,6 +17,17 @@ export const fr = {
   'login.submit': 'Se connecter',
   'login.error': 'Identifiants invalides',
   'login.forgot': 'Mot de passe oublié ?',
+  'login.usernamePlaceholder': 'Entrez votre nom d\'utilisateur',
+  'login.passwordPlaceholder': 'Entrez votre mot de passe',
+  'login.selectProfilePlaceholder': 'Sélectionnez votre profil',
+  'login.login': 'Connexion',
+  'login.helpText': 'Aide à la connexion',
+  'login.securityTeam': 'Équipe de Sécurité',
+  'login.securityTeamDesc': 'Gestion des certificats et des politiques de sécurité',
+  'login.bankTeam': 'Équipe Bancaire',
+  'login.bankTeamDesc': 'Gestion des opérations bancaires et des transactions',
+  'login.callCenterTeam': 'Équipe du Centre d\'Appels',
+  'login.callCenterTeamDesc': 'Support client et gestion des demandes',
   
   // Dashboard
   'dashboard.title': 'Tableau de bord',
@@ -39,7 +50,18 @@ export const fr = {
   'profiles.list': 'Liste des profils',
   'profiles.nameRequired': 'Veuillez saisir un nom de profil',
   'profiles.confirmDelete': 'Êtes-vous sûr de vouloir supprimer ce profil ?',
-  
+  'profiles.description': 'Description',
+  'profiles.status': 'Statut',
+  'profiles.actions': 'Actions',
+  'profiles.status.active': 'Actif',
+  'profiles.status.inactive': 'Inactif',
+  'profiles.cancelSelection': 'Annuler la selection',
+  'profiles.deleteSelected' : 'Supprimer la selection',
+  'common.logout': 'Deconnexion',
+  'users.fullName': 'Nom complet',
+  'users.actionss': 'Actions',
+
+
   // Users
   'users.title': 'Utilisateurs',
   'users.create': 'Créer un utilisateur',

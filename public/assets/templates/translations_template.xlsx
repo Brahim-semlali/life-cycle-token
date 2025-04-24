@@ -3,4 +3,9 @@ app.title,Titrit Technologies,Titrit Technologies,Titrit Technologies,تيتري
 app.language,Langue,Language,Idioma,اللغة
 app.loading,Chargement...,Loading...,Cargando...,جاري التحميل...
 app.error,Une erreur est survenue,An error occurred,Se produjo un error,حدث خطأ
-app.success,Opération réussie,Operation successful,Operación exitosa,تمت العملية بنجاح 
+app.success,Opération réussie,Operation successful,Operación exitosa,تمت العملية بنجاح
+profiles.description,Description,Description,Descripción,الوصف
+profiles.status,Statut,Status,Estado,الحالة
+profiles.actions,Actions,Actions,Acciones,الإجراءات
+profiles.status.active,Actif,Active,Activo,نشط
+profiles.status.inactive,Inactif,Inactive,Inactivo,غير نشط 

@@ -153,4 +153,33 @@ export const checkUserCredentials = (email, password) => {
         console.error('Erreur lors de la vérification des identifiants:', error);
         return null;
     }
+};
+
+// Fonction pour supprimer un utilisateur
+export const deleteUser = (userId) => {
+    try {
+        console.log('Suppression de l\'utilisateur:', userId);
+        
+        // Créer un nouvel objet sans l'utilisateur à supprimer
+        const updatedUsers = Object.fromEntries(
+            Object.entries(PREDEFINED_USERS).filter(([_, user]) => user.id !== userId)
+        );
+        
+        // Mettre à jour PREDEFINED_USERS
+        PREDEFINED_USERS = updatedUsers;
+        
+        // Sauvegarder dans localStorage
+        const predefinedUsersToSave = Object.fromEntries(
+            Object.entries(updatedUsers).filter(([email]) => 
+                !['admin@titrit.com', 'security@titrit.com', 'bank@titrit.com', 'callcenter@titrit.com'].includes(email)
+            )
+        );
+        localStorage.setItem('predefinedUsers', JSON.stringify(predefinedUsersToSave));
+        
+        console.log('Utilisateur supprimé avec succès');
+        return true;
+    } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        return false;
+    }
 }; 

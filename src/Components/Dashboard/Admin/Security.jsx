@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMenu } from "../../../context/MenuContext";
 import { useTheme } from "../../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
 import "./Security.css";
+import { Save as SaveIcon } from '@mui/icons-material';
+import { Button } from '@mui/material';
 
 const Security = () => {
     const { isMinimized } = useMenu();
@@ -29,11 +31,26 @@ const Security = () => {
         feedback: []
     });
 
+    // Charger les règles depuis le localStorage au démarrage
+    useEffect(() => {
+        const savedRules = localStorage.getItem('passwordRules');
+        if (savedRules) {
+            setPasswordRules(JSON.parse(savedRules));
+        }
+    }, []);
+
     const handleRuleChange = (name, value) => {
         setPasswordRules(prev => ({
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleSave = () => {
+        // Sauvegarder les règles dans le localStorage
+        localStorage.setItem('passwordRules', JSON.stringify(passwordRules));
+        // Émettre un événement personnalisé pour notifier les autres composants
+        window.dispatchEvent(new CustomEvent('passwordRulesUpdated', { detail: passwordRules }));
     };
 
     const validatePassword = (password) => {
@@ -86,7 +103,17 @@ const Security = () => {
 
     return (
         <div className={`security-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
-            <h2>{t('security.settings')}</h2>
+            <div className="security-header">
+                <h2>{t('security.settings')}</h2>
+                <Button
+                    variant="contained"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSave}
+                    className="save-button"
+                >
+                    {t('security.save')}
+                </Button>
+            </div>
 
             <div className="security-section">
                 <h3>{t('security.passwordRules')}</h3>

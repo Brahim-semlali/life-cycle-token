@@ -39,6 +39,11 @@ export const ar = {
   'profiles.list': 'قائمة الملفات الشخصية',
   'profiles.nameRequired': 'يرجى إدخال اسم الملف الشخصي',
   'profiles.confirmDelete': 'هل أنت متأكد من حذف هذا الملف الشخصي؟',
+  'profiles.description': 'الوصف',
+  'profiles.status': 'الحالة',
+  'profiles.actions': 'الإجراءات',
+  'profiles.status.active': 'نشط',
+  'profiles.status.inactive': 'غير نشط',
   
   // Users
   'users.title': 'المستخدمون',
