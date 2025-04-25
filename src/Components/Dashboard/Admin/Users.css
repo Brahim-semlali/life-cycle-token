@@ -449,65 +449,114 @@
 
 /* Status badges with improved animations */
 .status-badge {
-    border-radius: 30px;
-    font-size: 20px;
-    font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    justify-content: center;
+    margin-top: -20px;
+    border-radius: 0px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    min-width: 120px;
     position: relative;
-    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .status-badge::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        rgba(255, 255, 255, 0.2),
-        transparent,
-        rgba(255, 255, 255, 0.2)
-    );
-    transform: translateX(-100%);
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.status-badge:hover::before {
-    transform: translateX(100%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .status-badge.active {
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    color: white;
+    background: rgba(72, 187, 120, 0.1);
+    color: #2f855a;
+    border: 1px solid rgba(72, 187, 120, 0.2);
+    padding-left: 24px;
+}
 
-    box-shadow:
-        0 2px 10px rgba(56, 161, 105, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-    animation: pulseBadge 2s infinite;
+.status-badge.active::before {
+    background: #48bb78;
+    box-shadow: 0 0 8px #48bb78;
 }
 
 .status-badge.inactive {
-    background: linear-gradient(135deg, #f56565, #c53030);
-    color: white;
-    box-shadow: 
-        0 2px 10px rgba(197, 48, 48, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    background: rgba(245, 101, 101, 0.1);
+    color: #c53030;
+    border: 1px solid rgba(245, 101, 101, 0.2);
+    padding-left: 24px;
 }
 
-@keyframes pulseBadge {
+.status-badge.inactive::before {
+    background: #f56565;
+    box-shadow: 0 0 8px #f56565;
+}
+
+/* Animation au survol */
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.status-badge.active:hover {
+    background: rgba(72, 187, 120, 0.15);
+}
+
+.status-badge.inactive:hover {
+    background: rgba(245, 101, 101, 0.15);
+}
+
+/* Animation du point */
+@keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.4);
+        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
     }
     70% {
-        box-shadow: 0 0 0 10px rgba(56, 161, 105, 0);
+        box-shadow: 0 0 0 6px rgba(72, 187, 120, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(56, 161, 105, 0);
+        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
     }
+}
+
+.status-badge.active::before {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(245, 101, 101, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0);
+    }
+}
+
+.status-badge.inactive::before {
+    animation: pulseRed 2s infinite;
+}
+
+/* Dark mode styles */
+.dark-mode .status-badge.active {
+    background: rgba(72, 187, 120, 0.15);
+    color: #9ae6b4;
+    border-color: rgba(72, 187, 120, 0.3);
+}
+
+.dark-mode .status-badge.inactive {
+    background: rgba(245, 101, 101, 0.15);
+    color: #feb2b2;
+    border-color: rgba(245, 101, 101, 0.3);
 }
 
 /* DataGrid custom styles with enhanced animations */
@@ -1223,8 +1272,8 @@
 }
 
 .dark-mode .MuiTablePagination-selectIcon,
-.dark-mode .MuiTablePagination-actions .MuiIconButton-root {
-    color: #90cdf4 !important;
+.dark-mode .MuiTablePagination-actions {
+    color: #e2e8f0 !important;
 }
 
 /* Mode sombre - Barre d'outils */
@@ -1234,16 +1283,16 @@
 }
 
 .dark-mode .MuiDataGrid-toolbarContainer .MuiButton-text {
-    color: #90cdf4 !important;
+    color: #e2e8f0 !important;
 }
 
 .dark-mode .MuiDataGrid-toolbarContainer .MuiButton-text:hover {
-    background: rgba(66, 153, 225, 0.1) !important;
+    background-color: rgba(74, 85, 104, 0.08) !important;
 }
 
 /* Mode sombre - Pas de données */
 .dark-mode .MuiDataGrid-overlay {
-    background-color: rgba(26, 32, 44, 0.95) !important;
+    background-color: rgba(45, 55, 72, 0.8) !important;
     color: #e2e8f0 !important;
 }
 
@@ -1256,20 +1305,20 @@
 
 /* Mode sombre - Sélection */
 .dark-mode .MuiDataGrid-row.Mui-selected {
-    background-color: rgba(66, 153, 225, 0.15) !important;
+    background-color: rgba(66, 153, 225, 0.16) !important;
 }
 
 .dark-mode .MuiDataGrid-row.Mui-selected:hover {
-    background-color: rgba(66, 153, 225, 0.25) !important;
+    background-color: rgba(66, 153, 225, 0.24) !important;
 }
 
 /* Mode sombre - Tri des colonnes */
 .dark-mode .MuiDataGrid-sortIcon {
-    color: #90cdf4 !important;
+    color: #e2e8f0 !important;
 }
 
 .dark-mode .MuiDataGrid-columnHeader--sorted {
-    color: #63b3ed !important;
+    color: #4299e1 !important;
 }
 
 /* Mode sombre - Menu des colonnes */
@@ -1285,5 +1334,5 @@
 }
 
 .dark-mode .MuiMenuItem-root:hover {
-    background-color: rgba(66, 153, 225, 0.1) !important;
+    background-color: rgba(74, 85, 104, 0.08) !important;
 } 
