@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import './LoginForm.css';
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from '../Assets/logo2.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,7 @@ const LoginForm = () => {
         password: ''
     });
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         document.body.classList.add('login-body');
@@ -80,7 +81,7 @@ const LoginForm = () => {
 
                 <div className="input-box">
                     <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="Password"
                         required
@@ -88,6 +89,12 @@ const LoginForm = () => {
                         onChange={handleChange}
                     />
                     <FaLock className="icon" />
+                    <div 
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </div>
                 </div>
 
                 <div className="remember-forgot">

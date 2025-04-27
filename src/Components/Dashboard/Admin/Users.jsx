@@ -25,7 +25,11 @@ import {
   InputLabel,
   IconButton,
   Tooltip,
-  Checkbox
+  Checkbox,
+  ToggleButton,
+  ToggleButtonGroup,
+  InputAdornment,
+  Collapse
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -34,7 +38,12 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon,
+  Search as SearchIcon,
+  FilterList as FilterListIcon,
+  GridView as GridViewIcon,
+  ViewList as ViewListIcon,
+  FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { ensureProfileExists } from '../../../services/ProfileService';
@@ -58,6 +67,11 @@ const Users = () => {
         requireNumbers: true,
         requireSpecialChars: true
     });
+    const [viewMode, setViewMode] = useState('grid');
+    const [showFilters, setShowFilters] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterProfile, setFilterProfile] = useState('all');
 
     const emptyUser = {
         firstName: '',
@@ -463,6 +477,46 @@ const Users = () => {
         }
     ], [selectedUsers, users.length, handleHeaderCheckboxClick]);
 
+    // Fonction de filtrage
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => {
+            const matchesSearch = 
+                user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+            const matchesProfile = filterProfile === 'all' || user.profileId === filterProfile;
+
+            return matchesSearch && matchesStatus && matchesProfile;
+        });
+    }, [users, searchQuery, filterStatus, filterProfile]);
+
+    // Fonction d'export
+    const handleExport = (format) => {
+        const data = filteredUsers.map(user => ({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            profile: user.profileName,
+            status: user.status
+        }));
+
+        if (format === 'csv') {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "First Name,Last Name,Email,Profile,Status\n"
+                + data.map(row => Object.values(row).join(",")).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "users.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
     return (
         <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
             <Box sx={{ 
@@ -481,6 +535,30 @@ const Users = () => {
                     {t('users.title')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                        size="small"
+                        placeholder={t('users.search')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{ width: 200 }}
+                    />
+                    <IconButton onClick={() => setShowFilters(!showFilters)}>
+                        <FilterListIcon />
+                    </IconButton>
+                    <Button
+                        variant="outlined"
+                        startIcon={<FileDownloadIcon />}
+                        onClick={() => handleExport('csv')}
+                    >
+                        {t('users.export')}
+                    </Button>
                     {selectedUsers.length > 0 && (
                         <>
                             <Button
@@ -544,6 +622,40 @@ const Users = () => {
                 </Box>
             </Box>
 
+            <Collapse in={showFilters}>
+                <Paper sx={{ p: 2, mb: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                            <InputLabel>{t('users.filterByStatus')}</InputLabel>
+                            <Select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                label={t('users.filterByStatus')}
+                            >
+                                <MenuItem value="all">{t('users.allStatuses')}</MenuItem>
+                                <MenuItem value="active">{t('users.statusActive')}</MenuItem>
+                                <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                            <InputLabel>{t('users.filterByProfile')}</InputLabel>
+                            <Select
+                                value={filterProfile}
+                                onChange={(e) => setFilterProfile(e.target.value)}
+                                label={t('users.filterByProfile')}
+                            >
+                                <MenuItem value="all">{t('users.allProfiles')}</MenuItem>
+                                {profiles.map((profile) => (
+                                    <MenuItem key={profile.id} value={profile.id}>
+                                        {profile.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </Paper>
+            </Collapse>
+
             <Paper sx={{ 
                 height: 600, 
                 width: '100%',
@@ -592,7 +704,7 @@ const Users = () => {
                 }
             }}>
                 <DataGrid
-                    rows={users}
+                    rows={filteredUsers}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[10, 25, 50]}

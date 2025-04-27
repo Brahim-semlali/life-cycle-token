@@ -1335,4 +1335,183 @@
 
 .dark-mode .MuiMenuItem-root:hover {
     background-color: rgba(74, 85, 104, 0.08) !important;
+}
+
+/* Styles pour le champ de recherche */
+.MuiTextField-root {
+    transition: all 0.3s ease;
+}
+
+.MuiTextField-root:hover {
+    transform: translateY(-1px);
+}
+
+.MuiTextField-root .MuiOutlinedInput-root {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+}
+
+.dark-mode .MuiTextField-root .MuiOutlinedInput-root {
+    background: rgba(45, 55, 72, 0.5);
+}
+
+/* Styles pour les filtres */
+.filter-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .filter-section {
+    background: rgba(45, 55, 72, 0.95);
+    border: 1px solid rgba(74, 85, 104, 0.3);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Styles pour les boutons de vue */
+.MuiToggleButtonGroup-root {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.dark-mode .MuiToggleButtonGroup-root {
+    background: rgba(45, 55, 72, 0.5);
+}
+
+.MuiToggleButton-root {
+    color: #4a5568;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .MuiToggleButton-root {
+    color: #e2e8f0;
+}
+
+.MuiToggleButton-root.Mui-selected {
+    background: rgba(66, 153, 225, 0.1);
+    color: #4299e1;
+}
+
+.dark-mode .MuiToggleButton-root.Mui-selected {
+    background: rgba(66, 153, 225, 0.2);
+    color: #63b3ed;
+}
+
+/* Styles pour le bouton d'export */
+.export-button {
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 2px 4px rgba(66, 153, 225, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.export-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 6px rgba(66, 153, 225, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.dark-mode .export-button {
+    background: linear-gradient(135deg, #63b3ed, #4299e1);
+    box-shadow: 
+        0 2px 4px rgba(66, 153, 225, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Animation pour le panneau de filtres */
+.filter-panel-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.filter-panel-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
+}
+
+.filter-panel-exit {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.filter-panel-exit-active {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 300ms, transform 300ms;
+}
+
+/* Styles pour les sélecteurs de filtre */
+.filter-select {
+    min-width: 200px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .filter-select {
+    background: rgba(45, 55, 72, 0.5);
+}
+
+.filter-select:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour le mode liste */
+.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.list-item {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.dark-mode .list-item {
+    background: rgba(45, 55, 72, 0.95);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 } 

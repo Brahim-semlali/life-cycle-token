@@ -5,7 +5,7 @@
 
 .profiles-container {
     padding: 2rem;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-left: 250px;
     min-height: 100vh;
     width: calc(100% - 250px);
@@ -419,10 +419,10 @@ input[type="checkbox"]:checked::after {
 }
 
 .profiles-header {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     padding: 1.5rem 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
@@ -430,23 +430,12 @@ input[type="checkbox"]:checked::after {
     animation: slideDown 0.5s ease-out;
     border: 1px solid rgba(226, 232, 240, 0.8);
     backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 
-.dark-mode .profiles-header {
-    background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(74, 85, 104, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+.profiles-header:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 .profiles-actions {
@@ -473,18 +462,17 @@ input[type="checkbox"]:checked::after {
 
 .profiles-table-container {
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     height: calc(100vh - 240px);
     animation: fadeIn 0.5s ease-in-out;
     border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
 }
 
-.dark-mode .profiles-table-container {
-    background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(74, 85, 104, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+.profiles-table-container:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
 }
 
 .profiles-grid {
@@ -493,10 +481,15 @@ input[type="checkbox"]:checked::after {
 
 /* Grid Cells Styling */
 .name-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 0 !important;
+    transition: all 0.2s ease;
+}
+
+.name-cell:hover {
+    transform: translateX(5px);
 }
 
 .name-cell .MuiTypography-root {
@@ -531,13 +524,13 @@ input[type="checkbox"]:checked::after {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 12px;
+    padding: 8px 16px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     letter-spacing: 0.3px;
     text-transform: capitalize;
-    min-width: 90px;
+    min-width: 100px;
     position: relative;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -555,10 +548,9 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.active {
-    background: rgba(72, 187, 120, 0.1);
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(72, 187, 120, 0.2));
     color: #2f855a;
-    border: 1px solid rgba(72, 187, 120, 0.2);
-    padding-left: 24px;
+    border: 1px solid rgba(72, 187, 120, 0.3);
 }
 
 .status-badge.active::before {
@@ -567,10 +559,9 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.inactive {
-    background: rgba(245, 101, 101, 0.1);
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(245, 101, 101, 0.2));
     color: #c53030;
-    border: 1px solid rgba(245, 101, 101, 0.2);
-    padding-left: 24px;
+    border: 1px solid rgba(245, 101, 101, 0.3);
 }
 
 .status-badge.inactive::before {
@@ -642,8 +633,8 @@ input[type="checkbox"]:checked::after {
 .grid-action-item {
     padding: 8px !important;
     margin: 0 4px !important;
-    border-radius: 8px !important;
-    transition: all 0.2s ease !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
     background-color: transparent !important;
 }
 
@@ -710,7 +701,7 @@ input[type="checkbox"]:checked::after {
 
 /* Dialog Styling */
 .profile-dialog .MuiDialog-paper {
-    border-radius: 20px;
+    border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: dialogSlideIn 0.3s ease-out;
@@ -728,14 +719,9 @@ input[type="checkbox"]:checked::after {
 }
 
 .dialog-title {
-    background: #f7fafc;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
     border-bottom: 1px solid #e2e8f0;
     padding: 1.5rem 2rem !important;
-}
-
-.dark-mode .dialog-title {
-    background: #2d3748;
-    border-bottom: 1px solid #4a5568;
 }
 
 .dialog-content {
@@ -754,11 +740,12 @@ input[type="checkbox"]:checked::after {
 
 .form-field .MuiOutlinedInput-root {
     border-radius: 12px;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .form-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
     border-color: #4299e1;
+    box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
 }
 
 .description-field textarea {
@@ -780,15 +767,15 @@ input[type="checkbox"]:checked::after {
 }
 
 .modules-group {
-    background: #f7fafc;
-    border-radius: 8px;
-    padding: 1rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
     border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
 }
 
-.dark-mode .modules-group {
-    background: #2d3748;
-    border-color: #4a5568;
+.modules-group:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .module-section {
@@ -892,11 +879,36 @@ input[type="checkbox"]:checked::after {
     transition: all 0.3s ease !important;
     text-transform: none !important;
     box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3) !important;
+    position: relative;
+    overflow: hidden;
 }
 
 .create-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4) !important;
+}
+
+.create-button:active {
+    transform: translateY(0);
+}
+
+/* Create Button Ripple Effect */
+.create-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.create-button:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
 }
 
 /* DataGrid Customization */
@@ -1300,4 +1312,316 @@ input[type="checkbox"]:checked::after {
 .dark-mode .MuiDataGrid-footerContainer {
     border-top: 2px solid #4a5568 !important;
     background-color: #2d3748 !important;
+}
+
+/* Améliorations générales */
+.profiles-container {
+    padding: 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 250px;
+    min-height: 100vh;
+    width: calc(100% - 250px);
+    position: absolute;
+    top: 0;
+    right: 0;
+    overflow-y: auto;
+    background-color: #f8fafc;
+    color: #2d3748;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Amélioration du header */
+.profiles-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideDown 0.5s ease-out;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.profiles-header:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Amélioration des boutons */
+.create-button {
+    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
+    color: white !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.create-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4) !important;
+}
+
+.create-button:active {
+    transform: translateY(0);
+}
+
+/* Effet de ripple pour les boutons */
+.create-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.create-button:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+/* Amélioration du tableau */
+.profiles-table-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    height: calc(100vh - 240px);
+    animation: fadeIn 0.5s ease-in-out;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
+}
+
+.profiles-table-container:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Amélioration des cellules */
+.name-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 0 !important;
+    transition: all 0.2s ease;
+}
+
+.name-cell:hover {
+    transform: translateX(5px);
+}
+
+/* Amélioration des badges de statut */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    min-width: 100px;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(72, 187, 120, 0.2));
+    color: #2f855a;
+    border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(245, 101, 101, 0.2));
+    color: #c53030;
+    border: 1px solid rgba(245, 101, 101, 0.3);
+}
+
+/* Amélioration des boutons d'action */
+.grid-action-item {
+    padding: 8px !important;
+    margin: 0 4px !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    background-color: transparent !important;
+}
+
+.grid-action-item:hover {
+    transform: translateY(-2px);
+    background-color: rgba(66, 153, 225, 0.08) !important;
+}
+
+/* Amélioration du dialogue */
+.profile-dialog .MuiDialog-paper {
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+.dialog-title {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.5rem 2rem !important;
+}
+
+.dialog-content {
+    padding: 2rem !important;
+}
+
+/* Amélioration des champs de formulaire */
+.form-field .MuiOutlinedInput-root {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.form-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
+}
+
+/* Amélioration des modules */
+.modules-group {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.modules-group:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Amélioration des checkboxes */
+.MuiCheckbox-root {
+    transition: all 0.3s ease !important;
+}
+
+.MuiCheckbox-root:hover {
+    transform: scale(1.1);
+}
+
+/* Dark mode improvements */
+.dark-mode .profiles-header {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border-color: rgba(74, 85, 104, 0.3);
+}
+
+.dark-mode .profiles-table-container {
+    background: rgba(45, 55, 72, 0.95);
+    border-color: rgba(74, 85, 104, 0.3);
+}
+
+.dark-mode .modules-group {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border-color: rgba(74, 85, 104, 0.3);
+}
+
+/* Animations améliorées */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes dialogSlideIn {
+    from {
+        transform: translateY(-20px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    20% {
+        transform: scale(25, 25);
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(40, 40);
+    }
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .profiles-container {
+        margin-left: 0;
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .profiles-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .profiles-table-container {
+        height: calc(100vh - 280px);
+    }
+
+    .submodules-section {
+        margin-left: 1rem;
+    }
 } 
