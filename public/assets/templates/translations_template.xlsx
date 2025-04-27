@@ -8,4 +8,7 @@ profiles.description,Description,Description,Descripción,الوصف
 profiles.status,Statut,Status,Estado,الحالة
 profiles.actions,Actions,Actions,Acciones,الإجراءات
 profiles.status.active,Actif,Active,Activo,نشط
-profiles.status.inactive,Inactif,Inactive,Inactivo,غير نشط 
+profiles.status.inactive,Inactif,Inactive,Inactivo,غير نشط
+users.confirmPassword,Confirmer le mot de passe,Confirm Password,Confirmar contraseña,تأكيد كلمة المرور
+users.confirmPasswordRequired,La confirmation du mot de passe est requise,Password confirmation is required,Se requiere confirmación de contraseña,مطلوب تأكيد كلمة المرور
+users.passwordsDoNotMatch,Les mots de passe ne correspondent pas,Passwords do not match,Las contraseñas no coinciden,كلمات المرور غير متطابقة 

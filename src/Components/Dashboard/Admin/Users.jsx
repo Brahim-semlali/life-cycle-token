@@ -32,7 +32,9 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { ensureProfileExists } from '../../../services/ProfileService';
@@ -47,6 +49,8 @@ const Users = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [formErrors, setFormErrors] = useState({});
     const [selectedUsers, setSelectedUsers] = useState([]);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordRules, setPasswordRules] = useState({
         minLength: 8,
         requireUppercase: true,
@@ -60,6 +64,7 @@ const Users = () => {
         lastName: '',
         email: '',
         password: '',
+        confirmPassword: '',
         profileId: '',
         profile: null,
         status: 'active'
@@ -152,6 +157,7 @@ const Users = () => {
         if (!user.lastName.trim()) errors.lastName = t('users.lastNameRequired');
         if (!user.email.trim()) errors.email = t('users.emailRequired');
         if (!user.password.trim()) errors.password = t('users.passwordRequired');
+        if (!user.confirmPassword.trim()) errors.confirmPassword = t('users.confirmPasswordRequired');
         if (!user.profileId) errors.profileId = t('users.profileRequired');
         
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,6 +179,11 @@ const Users = () => {
             if (passwordErrors.length > 0) {
                 errors.password = passwordErrors.join('\n');
             }
+        }
+
+        // Vérification de la correspondance des mots de passe
+        if (user.password !== user.confirmPassword) {
+            errors.confirmPassword = t('users.passwordsDoNotMatch');
         }
 
         return errors;
@@ -212,26 +223,12 @@ const Users = () => {
                 return;
             }
 
-            // Créer un profil personnalisé pour l'utilisateur
-            const customProfile = {
-                    ...selectedProfile,
-                id: `custom-${Date.now()}`,
-                name: `${newUser.firstName} ${newUser.lastName}`,
-                description: `Profil personnalisé pour ${newUser.firstName} ${newUser.lastName}`,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                status: 'active'
-            };
-
-            // S'assurer que le profil personnalisé est créé dans la section Profiles
-            const ensuredProfile = await ensureProfileExists(customProfile);
-
-            // Créer le nouvel utilisateur avec le profil personnalisé
+            // Créer le nouvel utilisateur avec le profil sélectionné
             const userToSave = {
                 ...newUser,
                 id: `user-${Date.now()}`,
-                profileId: ensuredProfile.id,
-                profile: ensuredProfile,
+                profileId: selectedProfile.id,
+                profile: selectedProfile,
                 status: newUser.status || 'active',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -691,19 +688,52 @@ const Users = () => {
                             <TextField
                                 fullWidth
                                 label={t('users.password')}
-                            type="password"
-                            name="password"
+                                type={showPassword ? "text" : "password"}
+                                name="password"
                                 value={newUser.password}
-                            onChange={handleInputChange}
+                                onChange={handleInputChange}
                                 error={!!formErrors.password}
                                 helperText={formErrors.password}
                                 required
-                                sx={{ mb: 2 }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            edge="end"
+                                        >
+                                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                        </IconButton>
+                                    ),
+                                }}
                             />
-                            <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                                {t('security.passwordRules.help')}
-                            </Typography>
+                            <TextField
+                                fullWidth
+                                label={t('users.confirmPassword')}
+                                type={showConfirmPassword ? "text" : "password"}
+                                name="confirmPassword"
+                                value={newUser.confirmPassword}
+                                onChange={handleInputChange}
+                                error={!!formErrors.confirmPassword}
+                                helperText={formErrors.confirmPassword}
+                                required
+                                InputProps={{
+                                    endAdornment: (
+                                        <IconButton
+                                            aria-label="toggle confirm password visibility"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            edge="end"
+                                        >
+                                            {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                        </IconButton>
+                                    ),
+                                }}
+                            />
                         </Box>
+
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                            {t('security.passwordRules.help')}
+                        </Typography>
 
                         <FormControl fullWidth>
                             <InputLabel>{t('users.status')}</InputLabel>

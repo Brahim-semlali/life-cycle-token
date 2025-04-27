@@ -8,6 +8,8 @@
 5. [Getting Started](#getting-started)
 6. [API Configuration](#api-configuration)
 7. [Environment Variables](#environment-variables)
+8. [Password Management](#password-management)
+9. [Internationalization](#internationalization)
 
 ## Overview
 This project is a web application developed with React.js, implementing a modern user interface with authentication, user management, and dashboard features.
@@ -226,4 +228,85 @@ npm start
 - Component documentation
 - Unit tests for critical features
 - User management documentation
+
+## Password Management
+
+### Password Security Features
+- Password visibility toggle
+- Password confirmation requirement
+- Password strength validation
+- Password rules enforcement:
+  - Minimum length (8 characters)
+  - Uppercase letters required
+  - Lowercase letters required
+  - Numbers required
+  - Special characters required
+
+### Password Rules Configuration
+Password rules can be configured through the security settings:
+```javascript
+const passwordRules = {
+    minLength: 8,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumbers: true,
+    requireSpecialChars: true
+};
+```
+
+### Password Validation
+The system validates passwords against the following criteria:
+- Length requirements
+- Character type requirements
+- Password confirmation match
+- Password history (if enabled)
+- Password expiration (if enabled)
+
+## Internationalization
+
+### Supported Languages
+The application supports multiple languages:
+- English (en)
+- French (fr)
+- Spanish (es)
+- Arabic (ar)
+
+### Translation Management
+Translations are managed through:
+1. Excel template (`public/assets/templates/translations_template.xlsx`)
+2. JSON files in `src/translations/`
+3. Dynamic import/export functionality
+
+### Translation Structure
+The translation system uses a key-value structure:
+```javascript
+{
+  'key': {
+    'fr': 'French translation',
+    'en': 'English translation',
+    'es': 'Spanish translation',
+    'ar': 'Arabic translation'
+  }
+}
+```
+
+### Adding New Translations
+1. Use the Excel template to add new translations
+2. Import translations through the admin interface
+3. Translations are automatically synchronized across the application
+
+### Translation Keys
+Common translation keys include:
+- User interface elements
+- Error messages
+- Success messages
+- Form labels
+- Button texts
+- Status messages
+
+### Language Switching
+Users can switch languages through:
+1. User settings
+2. Language selector in the header
+3. Browser language detection
 

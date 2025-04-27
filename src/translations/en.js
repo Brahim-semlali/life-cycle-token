@@ -108,6 +108,9 @@ export const en = {
   'users.errorCreate': 'Error creating user',
   'users.errorUpdate': 'Error updating user',
   'users.errorDelete': 'Error deleting user',
+  'users.confirmPassword': 'Confirm Password',
+  'users.confirmPasswordRequired': 'Password confirmation is required',
+  'users.passwordsDoNotMatch': 'Passwords do not match',
   
   // Security
   'security.title': 'Security',
