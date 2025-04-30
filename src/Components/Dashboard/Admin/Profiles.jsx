@@ -273,18 +273,28 @@ const Profiles = () => {
         }
     ], [selectedProfiles, profiles.length, handleRowClick, handleHeaderCheckboxClick]);
 
-    useEffect(() => {
-        const loadProfiles = () => {
-            // Initialiser et charger les profils
-            const loadedProfiles = initializeProfiles();
-            setProfiles(loadedProfiles.map(profile => ({
-                ...profile,
-                id: profile.id || `profile-${Date.now()}`
-            })));
-        };
+    // Chargement des profils
+    const loadProfiles = async () => {
+        try {
+            const loadedProfiles = await initializeProfiles();
+            if (Array.isArray(loadedProfiles)) {
+                setProfiles(loadedProfiles.map(profile => ({
+                    ...profile,
+                    id: profile.id || `profile-${Date.now()}-${Math.random()}`
+                })));
+            } else {
+                console.error('Les profils chargés ne sont pas un tableau:', loadedProfiles);
+                setProfiles([]);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des profils:', error);
+            setProfiles([]);
+        }
+    };
 
+    useEffect(() => {
         loadProfiles();
-    }, []); // Exécuter uniquement au montage du composant
+    }, []);
 
     const validateForm = (profile) => {
         const errors = {};

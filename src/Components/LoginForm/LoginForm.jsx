@@ -38,10 +38,7 @@ const LoginForm = () => {
         setIsLoading(true);
 
         try {
-            const response = await authService.login(credentials.email, credentials.password);
-            
-            // Le serveur va définir un cookie de session automatiquement
-            // grâce à credentials: 'include' dans la requête
+            await authService.login(credentials.email, credentials.password);
             await login();
             navigate('/dashboard');
         } catch (error) {

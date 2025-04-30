@@ -1,50 +1,33 @@
 import { PREDEFINED_PROFILES, getPredefinedProfilesArray } from '../config/predefinedProfiles';
+import api from './api';
 
-// Stockage local des profils
+// Cache local des profils
 let profiles = [];
 
 // Initialiser les profils prédéfinis
-export const initializeProfiles = () => {
-    // Charger les profils prédéfinis
-    const predefinedProfiles = getPredefinedProfilesArray();
-    const predefinedIds = predefinedProfiles.map(p => p.id);
-    
-    // Vérifier si des profils existent déjà dans le stockage local
-    const storedProfiles = localStorage.getItem('profiles');
-    
-    if (!storedProfiles) {
-        // Si aucun profil n'existe, initialiser avec les profils prédéfinis
-        profiles = predefinedProfiles;
-    } else {
-        try {
-            // Charger les profils existants
-            const existingProfiles = JSON.parse(storedProfiles);
-            
-            // Séparer les profils personnalisés des prédéfinis
-            const customProfiles = existingProfiles.filter(profile => 
-                !predefinedIds.includes(profile.id) && profile.id.startsWith('custom-')
-            );
-            
-            // Fusionner les profils prédéfinis avec les profils personnalisés
-            profiles = [...predefinedProfiles, ...customProfiles];
-            
-            console.log('Profils chargés:', profiles);
-        } catch (error) {
-            console.error('Erreur lors du chargement des profils:', error);
-            profiles = predefinedProfiles;
+export const initializeProfiles = async () => {
+    try {
+        // Charger les profils depuis l'API
+        const response = await api.request('/profiles/', 'GET');
+        if (response) {
+            profiles = response;
+        } else {
+            // Fallback aux profils prédéfinis si l'API échoue
+            profiles = getPredefinedProfilesArray();
         }
+        return profiles;
+    } catch (error) {
+        console.error('Erreur lors du chargement des profils:', error);
+        // Fallback aux profils prédéfinis en cas d'erreur
+        profiles = getPredefinedProfilesArray();
+        return profiles;
     }
-
-    // Sauvegarder les profils fusionnés
-    localStorage.setItem('profiles', JSON.stringify(profiles));
-    return profiles;
 };
 
 // Récupérer tous les profils
-export const getAllProfiles = () => {
-    // S'assurer que les profils sont initialisés
+export const getAllProfiles = async () => {
     if (profiles.length === 0) {
-        return initializeProfiles();
+        return await initializeProfiles();
     }
     return [...profiles];
 };
@@ -73,120 +56,111 @@ export const hasSubModuleAccess = (profileId, moduleName, subModuleName) => {
 };
 
 // Créer un nouveau profil
-export const createProfile = (profile) => {
-    // Vérifier si c'est un profil prédéfini
-    const predefinedProfiles = getPredefinedProfilesArray();
-    const isPredefined = predefinedProfiles.some(p => p.id === profile.id);
-    
-    if (isPredefined) {
-        console.warn('Impossible de modifier un profil prédéfini');
+export const createProfile = async (profile) => {
+    try {
+        const predefinedProfiles = getPredefinedProfilesArray();
+        const isPredefined = predefinedProfiles.some(p => p.id === profile.id);
+        
+        if (isPredefined) {
+            console.warn('Impossible de modifier un profil prédéfini');
+            return null;
+        }
+
+        const newProfile = {
+            ...profile,
+            id: profile.id || `profile-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const response = await api.request('/profiles/', 'POST', newProfile);
+        if (response) {
+            profiles.push(response);
+            return response;
+        }
+        return null;
+    } catch (error) {
+        console.error('Erreur lors de la création du profil:', error);
         return null;
     }
-
-    const newProfile = {
-        ...profile,
-        id: profile.id || `profile-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-
-    profiles.push(newProfile);
-    localStorage.setItem('profiles', JSON.stringify(profiles));
-    return newProfile;
 };
 
 // Mettre à jour un profil existant
-export const updateProfile = (id, updatedProfile) => {
-    // Vérifier si c'est un profil prédéfini
-    const predefinedProfiles = getPredefinedProfilesArray();
-    const isPredefined = predefinedProfiles.some(p => p.id === id);
-    
-    if (isPredefined) {
-        console.warn('Impossible de modifier un profil prédéfini');
-        return null;
-    }
+export const updateProfile = async (id, updatedProfile) => {
+    try {
+        const predefinedProfiles = getPredefinedProfilesArray();
+        const isPredefined = predefinedProfiles.some(p => p.id === id);
+        
+        if (isPredefined) {
+            console.warn('Impossible de modifier un profil prédéfini');
+            return null;
+        }
 
-    const index = profiles.findIndex(p => p.id === id);
-    if (index !== -1) {
-        profiles[index] = {
+        const response = await api.request(`/profiles/${id}`, 'PUT', {
             ...updatedProfile,
             updatedAt: new Date().toISOString()
-        };
-        localStorage.setItem('profiles', JSON.stringify(profiles));
-        return profiles[index];
+        });
+
+        if (response) {
+            const index = profiles.findIndex(p => p.id === id);
+            if (index !== -1) {
+                profiles[index] = response;
+            }
+            return response;
+        }
+        return null;
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du profil:', error);
+        return null;
     }
-    return null;
 };
 
 // Supprimer un profil
-export const deleteProfile = (id) => {
-    // Vérifier si c'est un profil prédéfini
-    const predefinedProfiles = getPredefinedProfilesArray();
-    const isPredefined = predefinedProfiles.some(p => p.id === id);
-    
-    if (isPredefined) {
-        console.warn('Impossible de supprimer un profil prédéfini');
+export const deleteProfile = async (id) => {
+    try {
+        const predefinedProfiles = getPredefinedProfilesArray();
+        const isPredefined = predefinedProfiles.some(p => p.id === id);
+        
+        if (isPredefined) {
+            console.warn('Impossible de supprimer un profil prédéfini');
+            return false;
+        }
+
+        const response = await api.request(`/profiles/${id}`, 'DELETE');
+        if (response) {
+            const index = profiles.findIndex(p => p.id === id);
+            if (index !== -1) {
+                profiles.splice(index, 1);
+            }
+            return true;
+        }
         return false;
-    }
-
-    const index = profiles.findIndex(p => p.id === id);
-    if (index !== -1) {
-        profiles.splice(index, 1);
-        localStorage.setItem('profiles', JSON.stringify(profiles));
-        return true;
-    }
-    return false;
-};
-
-// Charger les profils depuis le localStorage
-const loadProfiles = () => {
-    try {
-        const storedProfiles = localStorage.getItem('profiles');
-        return storedProfiles ? JSON.parse(storedProfiles) : [];
     } catch (error) {
-        console.error('Erreur lors du chargement des profils:', error);
-        return [];
-    }
-};
-
-// Sauvegarder les profils dans le localStorage
-const saveProfiles = (profiles) => {
-    try {
-        localStorage.setItem('profiles', JSON.stringify(profiles));
-    } catch (error) {
-        console.error('Erreur lors de la sauvegarde des profils:', error);
-        throw error;
+        console.error('Erreur lors de la suppression du profil:', error);
+        return false;
     }
 };
 
 // Vérifier si un profil existe et le créer s'il n'existe pas
-export const ensureProfileExists = (profile) => {
+export const ensureProfileExists = async (profile) => {
     try {
-        // Charger les profils existants
-        let profiles = loadProfiles();
-        
-        // Vérifier si le profil existe déjà
         const existingProfile = profiles.find(p => p.id === profile.id);
         if (existingProfile) {
-            console.log('Profil existant trouvé:', existingProfile);
             return existingProfile;
         }
 
-        // Ajouter le nouveau profil
-        const newProfile = {
+        const response = await api.request('/profiles/', 'POST', {
             ...profile,
             updatedAt: new Date().toISOString()
-        };
+        });
 
-        profiles.push(newProfile);
-        
-        // Sauvegarder les profils mis à jour
-        saveProfiles(profiles);
-        
-        console.log('Nouveau profil créé:', newProfile);
-        return newProfile;
+        if (response) {
+            profiles.push(response);
+            return response;
+        }
+        return null;
     } catch (error) {
         console.error('Erreur lors de la création du profil:', error);
-        throw error;
+        return null;
     }
 };

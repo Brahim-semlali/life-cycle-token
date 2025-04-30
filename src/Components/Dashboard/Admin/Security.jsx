@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import "./Security.css";
 import { Save as SaveIcon } from '@mui/icons-material';
 import { Button } from '@mui/material';
+import api from '../../../services/api';
 
 const Security = () => {
     const { isMinimized } = useMenu();
@@ -31,12 +32,19 @@ const Security = () => {
         feedback: []
     });
 
-    // Charger les règles depuis le localStorage au démarrage
+    // Charger les règles depuis l'API au démarrage
     useEffect(() => {
-        const savedRules = localStorage.getItem('passwordRules');
-        if (savedRules) {
-            setPasswordRules(JSON.parse(savedRules));
-        }
+        const loadPasswordRules = async () => {
+            try {
+                const response = await api.request('/security/password-rules/', 'GET');
+                if (response) {
+                    setPasswordRules(response);
+                }
+            } catch (error) {
+                console.error('Error loading password rules:', error);
+            }
+        };
+        loadPasswordRules();
     }, []);
 
     const handleRuleChange = (name, value) => {
@@ -46,11 +54,13 @@ const Security = () => {
         }));
     };
 
-    const handleSave = () => {
-        // Sauvegarder les règles dans le localStorage
-        localStorage.setItem('passwordRules', JSON.stringify(passwordRules));
-        // Émettre un événement personnalisé pour notifier les autres composants
-        window.dispatchEvent(new CustomEvent('passwordRulesUpdated', { detail: passwordRules }));
+    const handleSave = async () => {
+        try {
+            await api.request('/security/password-rules/', 'POST', passwordRules);
+            console.log('Password rules saved successfully');
+        } catch (error) {
+            console.error('Error saving password rules:', error);
+        }
     };
 
     const validatePassword = (password) => {

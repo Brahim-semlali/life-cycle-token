@@ -1,32 +1,40 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import api from '../services/api';
 
 // Create the theme context
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
 
 // Theme provider component
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false); // Default theme is light
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  useEffect(() => {
-    // Load theme preference from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
-
-  // Function to toggle the theme
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (!isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('theme', 'light');
+  const toggleTheme = async () => {
+    try {
+      const newTheme = !isDarkMode;
+      const response = await api.request('/user/preferences/theme', 'POST', { theme: newTheme ? 'dark' : 'light' });
+      if (response && response.success) {
+        setIsDarkMode(newTheme);
+      }
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
     }
   };
+
+  // Charger le thème initial
+  React.useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const response = await api.request('/user/preferences/theme', 'GET');
+        if (response && response.theme) {
+          setIsDarkMode(response.theme === 'dark');
+        }
+      } catch (error) {
+        console.error('Error loading theme preference:', error);
+        // En cas d'erreur, on garde le thème par défaut (light)
+      }
+    };
+    loadTheme();
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>

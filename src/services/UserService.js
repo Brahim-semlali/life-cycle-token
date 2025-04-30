@@ -1,11 +1,9 @@
 import api from './api';
-import AuthService from './AuthService';
 
 class UserService {
     async getAllUsers() {
         try {
-            // Les cookies sont envoyés automatiquement avec credentials: 'include'
-            const response = await api.request('/user/getall/', 'POST', null);
+            const response = await api.request('/user/getall/', 'POST');
             console.log('Users fetched successfully:', response);
             return response;
         } catch (error) {
@@ -16,7 +14,6 @@ class UserService {
 
     async createUser(userData) {
         try {
-            // Les cookies sont envoyés automatiquement avec credentials: 'include'
             const formattedData = {
                 email: userData.email,
                 password: userData.password,
@@ -40,7 +37,6 @@ class UserService {
 
     async updateUser(id, userData) {
         try {
-            // Les cookies sont envoyés automatiquement avec credentials: 'include'
             const formattedData = {
                 id: id,
                 first_name: userData.firstName,
@@ -66,7 +62,6 @@ class UserService {
 
     async deleteUser(id) {
         try {
-            // Les cookies sont envoyés automatiquement avec credentials: 'include'
             console.log(`Deleting user with ID: ${id}`);
             const response = await api.request('/user/delete/', 'POST', { id });
             console.log('User deleted successfully:', response);

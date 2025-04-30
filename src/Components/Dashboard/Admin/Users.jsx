@@ -48,6 +48,7 @@ import {
 import "./Users.css";
 import { ensureProfileExists } from '../../../services/ProfileService';
 import userService from '../../../services/UserService';
+import api from '../../../services/api';
 
 const Users = () => {
     const { isMinimized } = useMenu();
@@ -118,32 +119,24 @@ const Users = () => {
 
     // Charger les règles de mot de passe au démarrage
     useEffect(() => {
-        const savedRules = localStorage.getItem('passwordRules');
-        if (savedRules) {
-            const rules = JSON.parse(savedRules);
-            setPasswordRules({
-                minLength: rules.minLength,
-                requireUppercase: rules.requireUppercase,
-                requireLowercase: rules.requireLowercase,
-                requireNumbers: rules.requireNumbers,
-                requireSpecialChars: rules.requireSpecialChars
-            });
-        }
-
-        // Écouter les mises à jour des règles
-        const handlePasswordRulesUpdate = (event) => {
-            const rules = event.detail;
-            setPasswordRules({
-                minLength: rules.minLength,
-                requireUppercase: rules.requireUppercase,
-                requireLowercase: rules.requireLowercase,
-                requireNumbers: rules.requireNumbers,
-                requireSpecialChars: rules.requireSpecialChars
-            });
+        const loadPasswordRules = async () => {
+            try {
+                const response = await api.request('/security/password-rules/', 'GET');
+                if (response) {
+                    setPasswordRules({
+                        minLength: response.minLength,
+                        requireUppercase: response.requireUppercase,
+                        requireLowercase: response.requireLowercase,
+                        requireNumbers: response.requireNumbers,
+                        requireSpecialChars: response.requireSpecialChars
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading password rules:', error);
+            }
         };
 
-        window.addEventListener('passwordRulesUpdated', handlePasswordRulesUpdate);
-        return () => window.removeEventListener('passwordRulesUpdated', handlePasswordRulesUpdate);
+        loadPasswordRules();
     }, []);
 
     const validatePassword = (password) => {

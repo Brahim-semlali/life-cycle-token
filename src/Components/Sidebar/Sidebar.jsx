@@ -31,10 +31,13 @@ const Sidebar = () => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        localStorage.clear();
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
     };
 
     const toggleSidebar = () => {

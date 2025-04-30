@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { PREDEFINED_PROFILES } from '../config/predefinedProfiles';
-import { checkUserCredentials } from '../config/predefinedUsers';
+import { authService } from '../services/api';
 
 // Création du contexte d'authentification
 const AuthContext = createContext(null);
@@ -16,51 +15,43 @@ export const useAuth = () => {
 
 // Provider du contexte d'authentification
 export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
-  const login = async (email, password) => {
-    console.log('Tentative de connexion pour:', email);
+  const login = async () => {
+    setIsAuthenticated(true);
+  };
 
-    const authenticatedUser = checkUserCredentials(email, password);
-    
-    if (authenticatedUser) {
-      console.log('Utilisateur authentifié:', { ...authenticatedUser, password: '***' });
-      setUser(authenticatedUser);
-      localStorage.setItem('user', JSON.stringify(authenticatedUser));
-      return true;
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setIsAuthenticated(false);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
     }
-
-    console.log('Échec de la connexion');
-    return false;
   };
 
-  const logout = () => {
-    console.log('Déconnexion...');
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-
-  // Toujours retourner true pour donner un accès complet
+  // Vérification des accès basée sur les cookies de session
   const checkModuleAccess = (moduleName) => {
-    return true;
+    return isAuthenticated;
   };
 
-  // Toujours retourner true pour donner un accès complet
   const checkSubModuleAccess = (moduleName, subModuleName) => {
-    return true;
+    return isAuthenticated;
   };
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      checkModuleAccess,
-      checkSubModuleAccess
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    checkModuleAccess,
+    checkSubModuleAccess
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

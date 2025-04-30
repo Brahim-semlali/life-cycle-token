@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
+import api from '../services/api';
 
 // Create the language context
 const LanguageContext = createContext();
@@ -8,18 +9,30 @@ export const LanguageProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('en'); // Default language is English
 
   // Function to change the language
-  const changeLanguage = (languageCode) => {
-    setCurrentLanguage(languageCode);
-    // Store the language preference in localStorage for persistence
-    localStorage.setItem('appLanguage', languageCode);
+  const changeLanguage = async (languageCode) => {
+    try {
+      const response = await api.request('/user/preferences/language', 'POST', { language: languageCode });
+      if (response && response.success) {
+        setCurrentLanguage(languageCode);
+      }
+    } catch (error) {
+      console.error('Error saving language preference:', error);
+    }
   };
 
   // Load the saved language preference on initial render
   React.useEffect(() => {
-    const savedLanguage = localStorage.getItem('appLanguage');
-    if (savedLanguage) {
-      setCurrentLanguage(savedLanguage);
-    }
+    const loadLanguage = async () => {
+      try {
+        const response = await api.request('/user/preferences/language', 'GET');
+        if (response && response.language) {
+          setCurrentLanguage(response.language);
+        }
+      } catch (error) {
+        console.error('Error loading language preference:', error);
+      }
+    };
+    loadLanguage();
   }, []);
 
   return (

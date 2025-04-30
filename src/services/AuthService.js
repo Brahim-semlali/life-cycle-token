@@ -5,14 +5,12 @@ class AuthService {
     async login(email, password) {
         try {
             // Envoi des identifiants au serveur
-            const response = await api.request('/user/login/', 'POST', { email, password });
-            
-            // Le serveur va définir un cookie de session automatiquement
-            // grâce à credentials: 'include' dans la requête
-            console.log('Login successful, session cookie set');
-            return response;
+            // Le serveur définira un cookie de session sécurisé
+            await api.request('/user/login/', 'POST', { email, password });
+            console.log('Login successful');
+            return true;
         } catch (error) {
-            console.error('Login error details:', error.message);
+            console.error('Login error:', error.message);
             throw new Error(error.message || 'Authentication failed');
         }
     }
@@ -20,9 +18,9 @@ class AuthService {
     // Fonction de déconnexion
     async logout() {
         try {
-            // Appel au serveur pour invalider la session
+            // Le serveur invalidera le cookie de session
             await api.request('/user/logout/', 'POST', {});
-            console.log('Logout successful, session cookie cleared');
+            console.log('Logout successful');
         } catch (error) {
             console.error('Logout error:', error.message);
             throw error;
@@ -32,19 +30,8 @@ class AuthService {
     // Vérifie si l'utilisateur est authentifié
     // Le serveur vérifiera automatiquement le cookie de session
     isAuthenticated() {
-        return true; // La vérification se fait côté serveur via les cookies
-    }
-
-    // Cette fonction n'est plus nécessaire car nous utilisons les cookies
-    // mais nous la gardons pour la compatibilité
-    getToken() {
-        return null;
-    }
-
-    // Cette fonction n'est plus nécessaire car nous utilisons les cookies
-    // mais nous la gardons pour la compatibilité
-    getUserFromToken() {
-        return null;
+        // La vérification se fait côté serveur via le cookie de session
+        return true;
     }
 }
 
