@@ -47,6 +47,7 @@ import {
 } from '@mui/icons-material';
 import "./Users.css";
 import { ensureProfileExists } from '../../../services/ProfileService';
+import userService from '../../../services/UserService';
 
 const Users = () => {
     const { isMinimized } = useMenu();
@@ -86,29 +87,29 @@ const Users = () => {
 
     const [newUser, setNewUser] = useState(emptyUser);
 
-    const loadUsers = () => {
-        const loadData = async () => {
+    const loadUsers = async () => {
         try {
-            const allUsers = getAllUsers();
-                console.log('Structure complète des utilisateurs:', JSON.stringify(allUsers, null, 2));
-                const sortedUsers = allUsers.map(user => ({
-                    ...user,
-                    id: user.id || `user-${Date.now()}`,
-                    fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-                    profileName: profiles.find(p => p.id === user.profileId)?.name || ''
-                })).sort((a, b) => {
-                if (a.isPredefined !== b.isPredefined) {
-                    return a.isPredefined ? 1 : -1;
-                }
-                    return (a.firstName || '').localeCompare(b.firstName || '');
-                });
-                console.log('Utilisateurs transformés:', JSON.stringify(sortedUsers, null, 2));
+            const allUsers = await userService.getAllUsers();
+            console.log(allUsers);
+            const sortedUsers = allUsers.map(user => ({
+                ...user,
+                id: user.id|| user.email,
+                fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                firstName: user.first_name,
+                lastName: user.last_name,
+                profileId: user.profile_id,
+                profile: user.profile,
+                status: user.status || 'active'
+            })).sort((a, b) => {
+                return (a.firstName || '').localeCompare(b.firstName || '');
+            });
+
+            console.log("Sorted Users:", sortedUsers);
+
             setUsers(sortedUsers);
         } catch (error) {
             console.error('Erreur lors du chargement des utilisateurs:', error);
         }
-    };
-        loadData();
     };
 
     useEffect(() => {
@@ -167,11 +168,21 @@ const Users = () => {
 
     const validateForm = (user) => {
         const errors = {};
-        if (!user.firstName.trim()) errors.firstName = t('users.firstNameRequired');
-        if (!user.lastName.trim()) errors.lastName = t('users.lastNameRequired');
-        if (!user.email.trim()) errors.email = t('users.emailRequired');
-        if (!user.password.trim()) errors.password = t('users.passwordRequired');
-        if (!user.confirmPassword.trim()) errors.confirmPassword = t('users.confirmPasswordRequired');
+        if (!user.firstName?.trim()) errors.firstName = t('users.firstNameRequired');
+        if (!user.lastName?.trim()) errors.lastName = t('users.lastNameRequired');
+        if (!user.email?.trim()) errors.email = t('users.emailRequired');
+        
+        // Vérifier le mot de passe uniquement lors de la création ou s'il est fourni lors de la mise à jour
+        if (!editingUser) {
+            if (!user.password?.trim()) errors.password = t('users.passwordRequired');
+            if (!user.confirmPassword?.trim()) errors.confirmPassword = t('users.confirmPasswordRequired');
+        } else if (user.password || user.confirmPassword) {
+            // Si un mot de passe est fourni lors de la mise à jour, valider la confirmation
+            if (user.password !== user.confirmPassword) {
+                errors.confirmPassword = t('users.passwordsDoNotMatch');
+            }
+        }
+        
         if (!user.profileId) errors.profileId = t('users.profileRequired');
         
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -185,19 +196,6 @@ const Users = () => {
         );
         if (existingUser) {
             errors.email = t('users.emailExists');
-        }
-
-        // Vérification des critères de sécurité du mot de passe
-        if (user.password) {
-            const passwordErrors = validatePassword(user.password);
-            if (passwordErrors.length > 0) {
-                errors.password = passwordErrors.join('\n');
-            }
-        }
-
-        // Vérification de la correspondance des mots de passe
-        if (user.password !== user.confirmPassword) {
-            errors.confirmPassword = t('users.passwordsDoNotMatch');
         }
 
         return errors;
@@ -230,41 +228,48 @@ const Users = () => {
         }
 
         try {
-            // Récupérer le profil sélectionné
-            const selectedProfile = profiles.find(p => p.id === newUser.profileId);
-            if (!selectedProfile) {
-                console.error('Profil non trouvé');
-                return;
-            }
-
-            // Créer le nouvel utilisateur avec le profil sélectionné
             const userToSave = {
-                ...newUser,
-                id: `user-${Date.now()}`,
-                profileId: selectedProfile.id,
-                profile: selectedProfile,
-                status: newUser.status || 'active',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                email: newUser.email,
+                password: newUser.password,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                profileId: newUser.profileId,
+                status: newUser.status || 'ACTIVE'
             };
 
-            // Sauvegarder l'utilisateur
-            const savedUser = await saveCustomUser(userToSave);
+            console.log('Submitting user data:', userToSave);
+
+            let savedUser;
+            if (editingUser !== null) {
+                savedUser = await userService.updateUser(users[editingUser].id, userToSave);
+            } else {
+                savedUser = await userService.createUser(userToSave);
+            }
             
             if (savedUser) {
-                // Mettre à jour la liste des utilisateurs
-                setUsers(prevUsers => [...prevUsers, savedUser]);
+                setUsers(prevUsers => {
+                    if (editingUser !== null) {
+                        return prevUsers.map((user, index) => 
+                            index === editingUser ? {
+                                ...savedUser,
+                                fullName: `${savedUser.first_name || ''} ${savedUser.last_name || ''}`.trim()
+                            } : user
+                        );
+                    }
+                    return [...prevUsers, {
+                        ...savedUser,
+                        fullName: `${savedUser.first_name || ''} ${savedUser.last_name || ''}`.trim()
+                    }];
+                });
                 setNewUser(emptyUser);
                 setEditingUser(null);
                 setFormErrors({});
                 setOpenDialog(false);
-                
-                // Recharger la liste des utilisateurs pour afficher les modifications
                 loadUsers();
             }
         } catch (error) {
-            console.error('Erreur lors de la création de l\'utilisateur:', error);
-            alert(t('users.errorCreating'));
+            console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
+            alert(t('users.errorSaving'));
         }
     };
 
@@ -280,12 +285,13 @@ const Users = () => {
         }
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm(t('users.confirmDelete'))) {
-            const success = deleteUser(id);
-            if (success) {
+            try {
+                await userService.deleteUser(id);
                 loadUsers();
-            } else {
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
                 alert(t('users.errorDeleting'));
             }
         }
@@ -481,11 +487,11 @@ const Users = () => {
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
             const matchesSearch = 
-                user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchQuery.toLowerCase());
+                (user.firstName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (user.lastName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (user.email || '').toLowerCase().includes(searchQuery.toLowerCase());
             
-            const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+            const matchesStatus = filterStatus === 'all' || (user.status || '').toLowerCase() === filterStatus.toLowerCase();
             const matchesProfile = filterProfile === 'all' || user.profileId === filterProfile;
 
             return matchesSearch && matchesStatus && matchesProfile;
@@ -495,11 +501,11 @@ const Users = () => {
     // Fonction d'export
     const handleExport = (format) => {
         const data = filteredUsers.map(user => ({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            profile: user.profileName,
-            status: user.status
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            profile: user.profile?.name || '',
+            status: user.status || ''
         }));
 
         if (format === 'csv') {
@@ -708,6 +714,7 @@ const Users = () => {
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[10, 25, 50]}
+                    getRowId={(row) => row.id || row.email || `${row.first_name}-${row.last_name}-${Math.random().toString(36).substr(2, 9)}`}
                     checkboxSelection={false}
                     disableSelectionOnClick
                     disableColumnMenu

@@ -4,16 +4,18 @@ import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from '../Assets/logo2.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/api';
 
 const LoginForm = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
     const [credentials, setCredentials] = useState({
         email: '',
         password: ''
     });
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         document.body.classList.add('login-body');
@@ -27,23 +29,45 @@ const LoginForm = () => {
             ...credentials,
             [e.target.name]: e.target.value
         });
+        // Effacer le message d'erreur quand l'utilisateur commence à taper
+        setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         try {
-            const success = await login(credentials.email, credentials.password);
-            if (success) {
+            const response = await authService.login(credentials.email, credentials.password);
+            
+            if (response.jwt) {
+                localStorage.setItem('token', response.jwt);
+                await login(response.jwt);
                 navigate('/dashboard');
             } else {
-                setError('Invalid email or password');
+                setError('Invalid response from server');
+                console.error('Invalid response structure:', response);
             }
         } catch (err) {
-            setError('An error occurred during login');
-            console.error('Login error:', err);
+            console.error('Login error details:', err);
+            if (err.response) {
+                // Erreur avec réponse du serveur
+                setError(err.response.data?.detail || 'Invalid credentials');
+            } else if (err.request) {
+                // Erreur sans réponse du serveur
+                setError('Unable to reach the server. Please check your connection.');
+            } else {
+                // Erreur de configuration de la requête
+                setError('An error occurred while processing your request.');
+            }
+        } finally {
+            setIsLoading(false);
         }
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     return (
@@ -55,14 +79,7 @@ const LoginForm = () => {
                 <h1>Login</h1>
 
                 {error && (
-                    <div className="error-message" style={{
-                        color: 'red',
-                        marginBottom: '10px',
-                        padding: '10px',
-                        backgroundColor: '#ffebee',
-                        borderRadius: '4px',
-                        border: '1px solid #ffcdd2'
-                    }}>
+                    <div className="error-message">
                         {error}
                     </div>
                 )}
@@ -75,6 +92,7 @@ const LoginForm = () => {
                         required
                         value={credentials.email}
                         onChange={handleChange}
+                        disabled={isLoading}
                     />
                     <FaUser className="icon" />
                 </div>
@@ -87,12 +105,10 @@ const LoginForm = () => {
                         required
                         value={credentials.password}
                         onChange={handleChange}
+                        disabled={isLoading}
                     />
                     <FaLock className="icon" />
-                    <div 
-                        className="password-toggle"
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
+                    <div className="password-toggle" onClick={togglePasswordVisibility}>
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </div>
                 </div>
@@ -104,7 +120,9 @@ const LoginForm = () => {
                     <a href="#">Forgot password?</a>
                 </div>
 
-                <button type="submit">Login</button>
+                <button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Logging in...' : 'Login'}
+                </button>
             </form>
         </div>
     );

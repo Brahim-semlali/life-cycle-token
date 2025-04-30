@@ -17,7 +17,6 @@ export const useAuth = () => {
 // Provider du contexte d'authentification
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
 
   const login = async (email, password) => {
     console.log('Tentative de connexion pour:', email);
@@ -27,7 +26,6 @@ export const AuthProvider = ({ children }) => {
     if (authenticatedUser) {
       console.log('Utilisateur authentifié:', { ...authenticatedUser, password: '***' });
       setUser(authenticatedUser);
-      setProfile(authenticatedUser.profile);
       localStorage.setItem('user', JSON.stringify(authenticatedUser));
       return true;
     }
@@ -39,34 +37,22 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     console.log('Déconnexion...');
     setUser(null);
-    setProfile(null);
     localStorage.removeItem('user');
   };
 
+  // Toujours retourner true pour donner un accès complet
   const checkModuleAccess = (moduleName) => {
-    if (!profile) {
-      console.log('Pas de profil, accès refusé pour:', moduleName);
-      return false;
-    }
-    const hasAccess = profile.modules[moduleName]?.access || false;
-    console.log('Vérification accès module:', moduleName, 'Résultat:', hasAccess);
-    return hasAccess;
+    return true;
   };
 
+  // Toujours retourner true pour donner un accès complet
   const checkSubModuleAccess = (moduleName, subModuleName) => {
-    if (!profile) {
-      console.log('Pas de profil, accès sous-module refusé pour:', moduleName, subModuleName);
-      return false;
-    }
-    const hasAccess = profile.modules[moduleName]?.subModules[subModuleName] || false;
-    console.log('Vérification accès sous-module:', moduleName, subModuleName, 'Résultat:', hasAccess);
-    return hasAccess;
+    return true;
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      profile,
       login,
       logout,
       checkModuleAccess,
@@ -77,4 +63,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export default AuthContext; 
+export default AuthContext;

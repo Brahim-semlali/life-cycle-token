@@ -1,37 +1,43 @@
-import axios from 'axios';
+import authService from './AuthService';
+import userService from './UserService';
 
-const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const api = {
+    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+    
+    async request(endpoint, method = 'GET', data = null, token = null) {
+        const headers = {
+            'Content-Type': 'application/json',
+        };
 
-// Intercepteur pour ajouter le token d'authentification
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            headers.Authorization = `Bearer ${token}`;
         }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
-// Intercepteur pour gérer les erreurs
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Gérer la déconnexion si le token est invalide
-            localStorage.removeItem('token');
-            window.location.href = '/';
+        const fetchOptions = {
+            method,
+            headers,
+            body: data ? JSON.stringify(data) : null,
+            credentials: 'include',
+            mode: 'cors',
+        };
+
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, fetchOptions);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error details:', errorData); 
+                throw new Error(errorData.detail || 'Request failed');
+            }
+
+            return response.json();
+        } catch (error) {
+            console.error('API request error:', error);
+            throw error;
         }
-        return Promise.reject(error);
     }
-);
+};
 
-export default api; 
+// Export the services
+export { authService, userService };
+export default api;
