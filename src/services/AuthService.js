@@ -1,13 +1,15 @@
 import api from './api';
 
 class AuthService {
+    // Fonction de connexion
     async login(email, password) {
         try {
+            // Envoi des identifiants au serveur
             const response = await api.request('/user/login/', 'POST', { email, password });
-            if (response.jwt) {
-                localStorage.setItem('token', response.jwt);
-                console.log('Login successful, token stored');
-            }
+            
+            // Le serveur va définir un cookie de session automatiquement
+            // grâce à credentials: 'include' dans la requête
+            console.log('Login successful, session cookie set');
             return response;
         } catch (error) {
             console.error('Login error details:', error.message);
@@ -15,42 +17,34 @@ class AuthService {
         }
     }
 
+    // Fonction de déconnexion
     async logout() {
         try {
-            const token = this.getToken();
-            if (!token) {
-                throw new Error('No token found');
-            }
-            
-            await api.request('/user/logout/', 'POST', {}, token);
-            localStorage.removeItem('token');
+            // Appel au serveur pour invalider la session
+            await api.request('/user/logout/', 'POST', {});
+            console.log('Logout successful, session cookie cleared');
         } catch (error) {
             console.error('Logout error:', error.message);
-            localStorage.removeItem('token');
             throw error;
         }
     }
 
+    // Vérifie si l'utilisateur est authentifié
+    // Le serveur vérifiera automatiquement le cookie de session
     isAuthenticated() {
-        const token = this.getToken();
-        return !!token;
+        return true; // La vérification se fait côté serveur via les cookies
     }
 
+    // Cette fonction n'est plus nécessaire car nous utilisons les cookies
+    // mais nous la gardons pour la compatibilité
     getToken() {
-        return localStorage.getItem('token');
+        return null;
     }
 
+    // Cette fonction n'est plus nécessaire car nous utilisons les cookies
+    // mais nous la gardons pour la compatibilité
     getUserFromToken() {
-        const token = this.getToken();
-        if (!token) return null;
-        
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload;
-        } catch (error) {
-            console.error('Error decoding token:', error);
-            return null;
-        }
+        return null;
     }
 }
 

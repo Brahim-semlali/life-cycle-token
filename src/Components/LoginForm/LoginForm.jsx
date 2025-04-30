@@ -29,7 +29,6 @@ const LoginForm = () => {
             ...credentials,
             [e.target.name]: e.target.value
         });
-        // Effacer le message d'erreur quand l'utilisateur commence à taper
         setError('');
     };
 
@@ -41,26 +40,13 @@ const LoginForm = () => {
         try {
             const response = await authService.login(credentials.email, credentials.password);
             
-            if (response.jwt) {
-                localStorage.setItem('token', response.jwt);
-                await login(response.jwt);
-                navigate('/dashboard');
-            } else {
-                setError('Invalid response from server');
-                console.error('Invalid response structure:', response);
-            }
-        } catch (err) {
-            console.error('Login error details:', err);
-            if (err.response) {
-                // Erreur avec réponse du serveur
-                setError(err.response.data?.detail || 'Invalid credentials');
-            } else if (err.request) {
-                // Erreur sans réponse du serveur
-                setError('Unable to reach the server. Please check your connection.');
-            } else {
-                // Erreur de configuration de la requête
-                setError('An error occurred while processing your request.');
-            }
+            // Le serveur va définir un cookie de session automatiquement
+            // grâce à credentials: 'include' dans la requête
+            await login();
+            navigate('/dashboard');
+        } catch (error) {
+            setError(error.message || 'Authentication failed');
+            console.error('Login error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -72,56 +58,41 @@ const LoginForm = () => {
 
     return (
         <div className="wrapper">
+            <div className="company-logo">
+                <img src={logo} alt="Company Logo" />
+            </div>
+            <h1>Login</h1>
             <form onSubmit={handleSubmit}>
-                <div className="company-logo">
-                    <img src={logo} alt="TITRIT TECHNOLOGIES" />
-                </div>
-                <h1>Login</h1>
-
-                {error && (
-                    <div className="error-message">
-                        {error}
-                    </div>
-                )}
-
                 <div className="input-box">
                     <input
                         type="email"
                         name="email"
                         placeholder="Email"
-                        required
                         value={credentials.email}
                         onChange={handleChange}
-                        disabled={isLoading}
+                        required
                     />
                     <FaUser className="icon" />
                 </div>
-
                 <div className="input-box">
                     <input
                         type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="Password"
-                        required
                         value={credentials.password}
                         onChange={handleChange}
-                        disabled={isLoading}
+                        required
                     />
                     <FaLock className="icon" />
-                    <div className="password-toggle" onClick={togglePasswordVisibility}>
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </div>
+                    {showPassword ? (
+                        <FaEyeSlash className="password-toggle" onClick={togglePasswordVisibility} />
+                    ) : (
+                        <FaEye className="password-toggle" onClick={togglePasswordVisibility} />
+                    )}
                 </div>
-
-                <div className="remember-forgot">
-                    <label>
-                        <input type="checkbox" /> Remember me
-                    </label>
-                    <a href="#">Forgot password?</a>
-                </div>
-
+                {error && <div className="error-message">{error}</div>}
                 <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login'}
+                    {isLoading ? 'Loading...' : 'Login'}
                 </button>
             </form>
         </div>
