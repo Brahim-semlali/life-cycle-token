@@ -4,6 +4,7 @@ import userService from './UserService';
 const api = {
     // URL de base de l'API, utilise la variable d'environnement ou localhost par défaut
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+
     
     // Fonction principale pour faire les requêtes API
     async request(endpoint, method = 'GET', data = null) {
@@ -11,6 +12,8 @@ const api = {
         const headers = {
             'Content-Type': 'application/json',
         };
+
+        
 
         // Configuration de la requête fetch
         const fetchOptions = {

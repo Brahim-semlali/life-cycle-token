@@ -176,8 +176,6 @@ const Users = () => {
             }
         }
         
-        if (!user.profileId) errors.profileId = t('users.profileRequired');
-        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (user.email && !emailRegex.test(user.email)) {
             errors.email = t('users.invalidEmail');
@@ -226,7 +224,7 @@ const Users = () => {
                 password: newUser.password,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
-                profileId: newUser.profileId,
+                profileId: newUser.profileId || null, // Allow null profileId
                 status: newUser.status || 'ACTIVE'
             };
 
