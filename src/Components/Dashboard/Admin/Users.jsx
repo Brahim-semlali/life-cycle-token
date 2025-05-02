@@ -43,7 +43,11 @@ import {
   FilterList as FilterListIcon,
   GridView as GridViewIcon,
   ViewList as ViewListIcon,
-  FileDownload as FileDownloadIcon
+  FileDownload as FileDownloadIcon,
+  Phone as PhoneIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { ensureProfileExists } from '../../../services/ProfileService';
@@ -83,7 +87,8 @@ const Users = () => {
         confirmPassword: '',
         profileId: '',
         profile: null,
-        status: 'active'
+        status: 'active',
+        phone: ''
     };
 
     const [newUser, setNewUser] = useState(emptyUser);
@@ -224,8 +229,9 @@ const Users = () => {
                 password: newUser.password,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
-                profileId: newUser.profileId || null, // Allow null profileId
-                status: newUser.status || 'ACTIVE'
+                profileId: newUser.profileId || null,
+                status: newUser.status || 'ACTIVE',
+                phone: newUser.phone
             };
 
             console.log('Submitting user data:', userToSave);
@@ -407,6 +413,20 @@ const Users = () => {
             flex: 2,
             minWidth: 200
         },
+        {
+            field: 'phone',
+            headerName: t('users.phone'),
+            flex: 1.5,
+            minWidth: 150,
+            renderCell: (params) => (
+                <Box className="phone-cell" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhoneIcon sx={{ color: '#4299e1', fontSize: 20, mr: 1 }} />
+                    <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
+                        {params.row.phone || ''}
+                    </Typography>
+                </Box>
+            )
+        },
         { 
             field: 'profile', 
             headerName: t('users.profile'), 
@@ -427,7 +447,7 @@ const Users = () => {
             field: 'status', 
             headerName: t('users.status'), 
             flex: 1,
-            minWidth: 120,
+            minWidth: 160,
             renderCell: (params) => {
                 if (!params?.row?.status) return null;
                 return (
@@ -442,7 +462,7 @@ const Users = () => {
             type: 'actions',
             headerName: t('users.actions'),
             flex: 1,
-            minWidth: 100,
+            minWidth: 140,
             getActions: (params) => [
                 <Tooltip title={t('users.edit')} arrow placement="top">
                     <GridActionsCellItem
@@ -632,6 +652,8 @@ const Users = () => {
                                 <MenuItem value="all">{t('users.allStatuses')}</MenuItem>
                                 <MenuItem value="active">{t('users.statusActive')}</MenuItem>
                                 <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
+                                <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
+                                <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
                             </Select>
                         </FormControl>
                         <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -744,20 +766,34 @@ const Users = () => {
                             <TextField
                                 fullWidth
                                 label={t('users.firstName')}
-                            name="firstName"
+                                name="firstName"
                                 value={newUser.firstName}
-                            onChange={handleInputChange}
+                                onChange={handleInputChange}
                                 error={!!formErrors.firstName}
                                 helperText={formErrors.firstName}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PersonIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                             />
                             <TextField
                                 fullWidth
                                 label={t('users.lastName')}
-                            name="lastName"
+                                name="lastName"
                                 value={newUser.lastName}
-                            onChange={handleInputChange}
+                                onChange={handleInputChange}
                                 error={!!formErrors.lastName}
                                 helperText={formErrors.lastName}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PersonIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                             />
                         </Box>
 
@@ -765,19 +801,47 @@ const Users = () => {
                             <TextField
                                 fullWidth
                                 label={t('users.email')}
-                            name="email"
+                                name="email"
                                 value={newUser.email}
-                            onChange={handleInputChange}
+                                onChange={handleInputChange}
                                 error={!!formErrors.email}
                                 helperText={formErrors.email}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <EmailIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <TextField
+                                fullWidth
+                                label={t('users.phone')}
+                                name="phone"
+                                value={newUser.phone}
+                                onChange={handleInputChange}
+                                error={!!formErrors.phone}
+                                helperText={formErrors.phone}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PhoneIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                             />
                             <FormControl fullWidth error={!!formErrors.profileId}>
                                 <InputLabel>{t('users.profile')}</InputLabel>
                                 <Select
                                     name="profileId"
                                     value={newUser.profileId}
-                            onChange={handleInputChange}
+                                    onChange={handleInputChange}
                                     label={t('users.profile')}
+                                    startAdornment={
+                                        <InputAdornment position="start">
+                                            <AccountCircleIcon />
+                                        </InputAdornment>
+                                    }
                                 >
                                     <MenuItem value="">{t('users.selectProfile')}</MenuItem>
                                     {profiles.map((profile) => (
@@ -848,13 +912,15 @@ const Users = () => {
                         <FormControl fullWidth>
                             <InputLabel>{t('users.status')}</InputLabel>
                             <Select
-                            name="status"
+                                name="status"
                                 value={newUser.status}
-                            onChange={handleInputChange}
+                                onChange={handleInputChange}
                                 label={t('users.status')}
                             >
                                 <MenuItem value="active">{t('users.statusActive')}</MenuItem>
                                 <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
+                                <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
+                                <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

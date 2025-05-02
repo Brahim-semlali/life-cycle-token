@@ -19,10 +19,11 @@ class UserService {
                 password: userData.password,
                 first_name: userData.firstName,
                 last_name: userData.lastName,
-                profile_id: parseInt(userData.profileId),
-                status: 'ACTIVE',
+                profile_id: userData.profileId ? parseInt(userData.profileId) : null,
+                status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
                 is_staff: true,
-                is_active: true
+                is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
+                phone: userData.phone || ''
             };
 
             console.log('Creating user with data:', formattedData);
@@ -42,8 +43,10 @@ class UserService {
                 first_name: userData.firstName,
                 last_name: userData.lastName,
                 email: userData.email,
-                profile_id: parseInt(userData.profileId),
-                status: 'ACTIVE'
+                profile_id: userData.profileId ? parseInt(userData.profileId) : null,
+                status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
+                is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
+                phone: userData.phone || ''
             };
 
             if (userData.password && userData.password.trim()) {
