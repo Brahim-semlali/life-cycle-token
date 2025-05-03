@@ -13,8 +13,8 @@
     top: 0;
     right: 0;
     overflow-y: auto;
-    background-color: #f8fafc;
-    color: #2d3748;
+    background-color: #f5f7ff;
+    color: #6b7a99;
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -40,10 +40,18 @@
 }
 
 .profiles-container h2 {
-    color: var(--text-primary);
+    color: #b0b8d1;
     margin-bottom: 30px;
     font-size: 24px;
     font-weight: 600;
+    text-align: center;
+}
+
+.profiles-container h3 {
+    color: #b0b8d1;
+    margin: 30px 0 20px;
+    font-size: 20px;
+    font-weight: 500;
     text-align: center;
 }
 
@@ -83,10 +91,10 @@
 }
 
 .module-section {
-    background: #f7fafc;
+    background: #fff;
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e3e8f7;
 }
 
 .dark-mode .module-section {
@@ -161,14 +169,6 @@
 .profiles-container button:hover {
     background-color: #6899ca;
     transform: translateY(-1px);
-}
-
-.profiles-container h3 {
-    color: #2c3e50;
-    margin: 30px 0 20px;
-    font-size: 20px;
-    font-weight: 500;
-    text-align: center;
 }
 
 .profiles-container ul {
@@ -282,14 +282,13 @@ input[type="checkbox"]:checked::after {
 }
 
 .submit-button {
-    background-color: var(--accent-color);
-    color: white;
+    background-color: #7c3aed;
+    color: #fff;
     border: none;
 }
 
 .submit-button:hover {
-    background-color: var(--accent-color);
-    opacity: 0.9;
+    background-color: #a78bfa;
 }
 
 .cancel-button {
@@ -461,13 +460,13 @@ input[type="checkbox"]:checked::after {
 }
 
 .profiles-table-container {
-    background: white;
+    background: #fff;
     border-radius: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     height: calc(100vh - 240px);
     animation: fadeIn 0.5s ease-in-out;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid #e3e8f7;
     transition: all 0.3s ease;
 }
 
@@ -548,9 +547,9 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.active {
-    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(72, 187, 120, 0.2));
-    color: #2f855a;
-    border: 1px solid rgba(72, 187, 120, 0.3);
+    background: #e3e8f7;
+    color: #7c3aed;
+    border: 1px solid #e3e8f7;
 }
 
 .status-badge.active::before {
@@ -559,9 +558,9 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.inactive {
-    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(245, 101, 101, 0.2));
-    color: #c53030;
-    border: 1px solid rgba(245, 101, 101, 0.3);
+    background: #f0eaff;
+    color: #b0b8d1;
+    border: 1px solid #e3e8f7;
 }
 
 .status-badge.inactive::before {
@@ -767,10 +766,10 @@ input[type="checkbox"]:checked::after {
 }
 
 .modules-group {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    background: #fff;
     border-radius: 16px;
     padding: 1.5rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e3e8f7;
     transition: all 0.3s ease;
 }
 
@@ -781,7 +780,7 @@ input[type="checkbox"]:checked::after {
 .module-section {
     margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e3e8f7;
 }
 
 .dark-mode .module-section {
@@ -839,15 +838,15 @@ input[type="checkbox"]:checked::after {
 }
 
 .submit-button {
-    background-color: #4299e1 !important;
-    color: white !important;
+    background-color: #7c3aed !important;
+    color: #fff !important;
     padding: 0.5rem 2rem !important;
     font-weight: 500 !important;
     transition: all 0.2s ease !important;
 }
 
 .submit-button:hover {
-    background-color: #3182ce !important;
+    background-color: #a78bfa !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2) !important;
 }
@@ -1325,8 +1324,8 @@ input[type="checkbox"]:checked::after {
     top: 0;
     right: 0;
     overflow-y: auto;
-    background-color: #f8fafc;
-    color: #2d3748;
+    background-color: #f5f7ff;
+    color: #6b7a99;
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -1440,15 +1439,15 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.active {
-    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(72, 187, 120, 0.2));
-    color: #2f855a;
-    border: 1px solid rgba(72, 187, 120, 0.3);
+    background: #e3e8f7;
+    color: #7c3aed;
+    border: 1px solid #e3e8f7;
 }
 
 .status-badge.inactive {
-    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(245, 101, 101, 0.2));
-    color: #c53030;
-    border: 1px solid rgba(245, 101, 101, 0.3);
+    background: #f0eaff;
+    color: #b0b8d1;
+    border: 1px solid #e3e8f7;
 }
 
 /* Amélioration des boutons d'action */
@@ -1496,10 +1495,10 @@ input[type="checkbox"]:checked::after {
 
 /* Amélioration des modules */
 .modules-group {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    background: #fff;
     border-radius: 16px;
     padding: 1.5rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e3e8f7;
     transition: all 0.3s ease;
 }
 
@@ -1624,4 +1623,91 @@ input[type="checkbox"]:checked::after {
     .submodules-section {
         margin-left: 1rem;
     }
+}
+
+/* Cartes/conteneurs */
+.profiles-header, .profiles-table-container, .profile-item, .module-section, .modules-group, .filter-section {
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
+    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
+    border: 1.5px solid #e3e8f7;
+}
+
+.profiles-header:hover, .profiles-table-container:hover, .profile-item:hover, .module-section:hover, .modules-group:hover, .filter-section:hover {
+    box-shadow: 0 16px 40px rgba(124, 58, 237, 0.13), 0 2px 12px rgba(60,60,60,0.08);
+    border: 1.5px solid #a78bfa;
+    transform: translateY(-2px) scale(1.01);
+}
+
+/* Titres principaux avec dégradé */
+.profiles-header h2, .profiles-container h2, .profiles-container h3 {
+    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* Boutons modernes */
+.submit-button, .edit-button, .create-button {
+    background: linear-gradient(90deg, #7c3aed 0%, #38bdf8 100%);
+    color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
+    font-weight: 700;
+    border: none;
+    transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+}
+.submit-button:hover, .edit-button:hover, .create-button:hover {
+    background: linear-gradient(90deg, #a78bfa 0%, #38bdf8 100%);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
+    transform: translateY(-1px) scale(1.03);
+}
+.submit-button:active, .edit-button:active, .create-button:active {
+    transform: scale(0.98);
+}
+
+/* Badges/statuts */
+.status-badge {
+    border-radius: 16px !important;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 18px 6px 28px;
+    position: relative;
+    background: #f0eaff;
+    color: #7c3aed;
+    border: 1.5px solid #e3e8f7;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+    transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
+}
+.status-badge::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #38bdf8);
+    box-shadow: 0 0 8px #a78bfa;
+    animation: badgePulse 1.5s infinite;
+}
+@keyframes badgePulse {
+    0% { box-shadow: 0 0 0 0 #a78bfa44; }
+    70% { box-shadow: 0 0 0 8px #a78bfa11; }
+    100% { box-shadow: 0 0 0 0 #a78bfa44; }
+}
+
+.status-badge.inactive {
+    background: #e3e8f7;
+    color: #b0b8d1;
+    border: 1.5px solid #e3e8f7;
+}
+
+/* Transitions douces */
+.sidebar a, .sidebar button, .admin-toggle, .profiles-header, .profiles-table-container, .profile-item, .module-section, .modules-group, .filter-section, .submit-button, .edit-button, .create-button, .status-badge {
+    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s;
 } 

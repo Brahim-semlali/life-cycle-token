@@ -136,25 +136,21 @@ const Sidebar = () => {
                                 </Link>
                             </li>
                         )}
-                        
-                        <li>
-                            <Link 
-                                to="/dashboard/settings"
-                                className={location.pathname === '/dashboard/settings' ? 'active' : ''}
-                            >
-                                <span className="material-icons">settings</span>
-                                <span className="menu-text">{t('settings.title')}</span>
-                            </Link>
-                        </li>
-
-                        <li>
-                            <button onClick={handleLogout}>
-                                <span className="material-icons">logout</span>
-                                <span className="menu-text">{t('common.logout')}</span>
-                            </button>
-                        </li>
                     </ul>
                 </nav>
+                <div className="sidebar-bottom">
+                    <Link 
+                        to="/dashboard/settings"
+                        className={location.pathname === '/dashboard/settings' ? 'active' : ''}
+                    >
+                        <span className="material-icons">settings</span>
+                        <span className="menu-text">{t('settings.title')}</span>
+                    </Link>
+                    <button onClick={handleLogout}>
+                        <span className="material-icons">logout</span>
+                        <span className="menu-text">{t('common.logout')}</span>
+                    </button>
+                </div>
             </div>
         </div>
     );

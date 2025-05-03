@@ -11,8 +11,8 @@
     bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
-    color: #2d3748;
+    background: #f5f7ff;
+    color: #6b7a99;
     animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
@@ -47,7 +47,7 @@
 .users-container h1 {
     font-size: 2.25rem;
     font-weight: 700;
-    color: #2d3748;
+    color: #b0b8d1;
     margin-bottom: 2rem;
     padding: 0.5rem 0 1rem;
     position: relative;
@@ -141,20 +141,19 @@
 }
 
 .users-header {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fff;
     padding: 1.75rem 2rem;
-    border-radius: 20px;
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1.5px solid #e3e8f7;
     position: relative;
     overflow: hidden;
+    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
 }
 
 .users-header::before {
@@ -182,14 +181,16 @@
 .users-header h2 {
     font-size: 1.875rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #2d3748, #4a5568);
+    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
 }
 
 .dark-mode .users-header h2 {
@@ -328,12 +329,12 @@
 }
 
 .submit-button {
-    background-color: #4a7ab0;
-    color: white;
+    background-color: #7c3aed;
+    color: #fff;
 }
 
 .submit-button:hover {
-    background-color: #6899ca;
+    background-color: #a78bfa;
 }
 
 .cancel-button {
@@ -362,15 +363,16 @@
 }
 
 .user-item {
-    background: var(--bg-secondary);
+    background: #fff;
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: 22px;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
+    border: 1.5px solid #e3e8f7;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
 }
 
 .dark-mode .user-item {
@@ -424,12 +426,12 @@
 }
 
 .edit-button {
-    background-color: #4a7ab0;
-    color: white;
+    background-color: #7c3aed;
+    color: #fff;
 }
 
 .edit-button:hover:not(:disabled) {
-    background-color: #6899ca;
+    background-color: #a78bfa;
 }
 
 .edit-button:disabled {
@@ -453,32 +455,39 @@
     align-items: center;
     justify-content: center;
     margin-top: -20px;
-    border-radius: 0px;
-    font-size: 17px;
-    font-weight: 600;
+    border-radius: 16px !important;
+    font-size: 1rem;
+    font-weight: 700;
     letter-spacing: 0.3px;
     text-transform: capitalize;
     min-width: 120px;
     position: relative;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+    padding: 6px 18px 6px 28px;
+    background: #f0eaff;
+    color: #7c3aed;
+    border: 1.5px solid #e3e8f7;
 }
 
 .status-badge::before {
     content: '';
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    left: 10px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #38bdf8);
+    box-shadow: 0 0 8px #a78bfa;
+    animation: badgePulse 1.5s infinite;
 }
 
 .status-badge.active {
-    background: rgba(72, 187, 120, 0.1);
-    color: #2f855a;
-    border: 1px solid rgba(72, 187, 120, 0.2);
+    background: #e3e8f7;
+    color: #7c3aed;
+    border: 1px solid #e3e8f7;
     padding-left: 24px;
 }
 
@@ -488,9 +497,9 @@
 }
 
 .status-badge.inactive {
-    background: rgba(245, 101, 101, 0.1);
-    color: #c53030;
-    border: 1px solid rgba(245, 101, 101, 0.2);
+    background: #e3e8f7;
+    color: #b0b8d1;
+    border: 1px solid #e3e8f7;
     padding-left: 24px;
 }
 
@@ -648,121 +657,94 @@
 
 /* Dialog custom styles with enhanced animations */
 .MuiDialog-paper {
-    border-radius: 20px !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-    overflow: hidden !important;
-}
-
-.dark-mode .MuiDialog-paper {
-    background: linear-gradient(135deg, #1a202c, #2d3748) !important;
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+    border-radius: 28px !important;
+    box-shadow: 0 12px 48px rgba(124, 58, 237, 0.10), 0 2px 12px rgba(60,60,60,0.06) !important;
+    background: #fff !important;
+    border: 1.5px solid #e3e8f7 !important;
 }
 
 .MuiDialogTitle-root {
-    background: #f7fafc !important;
-    padding: 1.5rem 2rem !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
-.dark-mode .MuiDialogTitle-root {
-    background: #2d3748 !important;
-    color: #e2e8f0 !important;
-    border-bottom: 1px solid rgba(74, 85, 104, 0.3) !important;
+    background: #f5f7ff !important;
+    border-radius: 28px 28px 0 0 !important;
+    padding: 2.2rem 2.5rem 1.2rem 2.5rem !important;
+    border-bottom: 1.5px solid #e3e8f7 !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-fill-color: transparent !important;
 }
 
 .MuiDialogContent-root {
-    padding: 2rem !important;
+    padding: 2.5rem 2.5rem 1.5rem 2.5rem !important;
+    background: #fff !important;
+    border-radius: 0 0 28px 28px !important;
 }
 
-.dark-mode .MuiDialogContent-root {
-    background: #1a202c !important;
-    color: #e2e8f0 !important;
-}
-
-.MuiDialogActions-root {
-    padding: 1rem 1.5rem !important;
-    border-top: 1px solid #e2e8f0;
-    background: #f7fafc;
-}
-
-.dark-mode .MuiDialogActions-root {
-    background: #2d3748 !important;
-    border-top: 1px solid rgba(74, 85, 104, 0.3);
-}
-
-/* Form custom styles with enhanced interactions */
-.MuiFormControl-root {
-    margin-bottom: 1.5rem;
-    transition: all 0.2s ease;
-}
-
-.MuiInputLabel-root {
-    color: #4a5568;
-    transition: all 0.2s ease;
-}
-
-.dark-mode .MuiInputLabel-root {
-    color: #a0aec0 !important;
+.MuiFormControl-root, .MuiTextField-root {
+    margin-bottom: 1.7rem !important;
 }
 
 .MuiOutlinedInput-root {
-    border-radius: 12px !important;
-    transition: all 0.2s ease !important;
-}
-
-.dark-mode .MuiOutlinedInput-root {
-    background: rgba(45, 55, 72, 0.95) !important;
-    border-color: rgba(74, 85, 104, 0.5) !important;
-}
-
-.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-    border-color: rgba(66, 153, 225, 0.5) !important;
+    border-radius: 14px !important;
+    background: #f5f7ff !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
+    transition: box-shadow 0.2s, border 0.2s;
 }
 
 .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: #4299e1 !important;
-    border-width: 2px !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 2px #a78bfa44;
 }
 
-/* Button styles with enhanced animations */
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #38bdf8 !important;
+}
+
+.MuiInputAdornment-root .MuiSvgIcon-root, .MuiInputAdornment-root .material-icons {
+    color: #7c3aed !important;
+    opacity: 0.85;
+}
+
+.MuiInputLabel-root {
+    color: #6b7a99 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em;
+}
+
+.MuiInputLabel-root.Mui-focused {
+    color: #7c3aed !important;
+}
+
+.MuiDialogActions-root {
+    padding: 1.5rem 2.5rem 2rem 2.5rem !important;
+    border-top: 1.5px solid #e3e8f7 !important;
+    background: #f5f7ff !important;
+    border-radius: 0 0 28px 28px !important;
+}
+
 .MuiButton-root {
-    text-transform: none !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-    border-radius: 8px !important;
-    padding: 0.5rem 1.5rem !important;
+    border-radius: 16px !important;
+    background: linear-gradient(90deg, #7c3aed 0%, #38bdf8 100%) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10) !important;
+    transition: box-shadow 0.2s, transform 0.2s, background 0.2s !important;
+}
+.MuiButton-root:hover {
+    background: linear-gradient(90deg, #a78bfa 0%, #38bdf8 100%) !important;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18) !important;
+    transform: translateY(-1px) scale(1.03) !important;
+}
+.MuiButton-root:active {
+    transform: scale(0.98) !important;
 }
 
-.MuiButton-contained {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.MuiButton-contained::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
-}
-
-.MuiButton-contained:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-.MuiButton-contained:active {
-    transform: translateY(0);
+/* Transitions douces sur tous les champs */
+.MuiOutlinedInput-root, .MuiInputLabel-root, .MuiButton-root {
+    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s !important;
 }
 
 /* Responsive styles */
@@ -1030,17 +1012,15 @@
     background: linear-gradient(135deg, #4299e1, #3182ce);
     color: white;
     padding: 0.875rem 1.75rem;
-    border-radius: 12px;
+    border-radius: 16px;
     border: none;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-        0 4px 15px rgba(66, 153, 225, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
     text-transform: none;
     position: relative;
     overflow: hidden;
@@ -1068,13 +1048,11 @@
 
 .create-button:hover {
     transform: translateY(-2px);
-    box-shadow: 
-        0 6px 20px rgba(66, 153, 225, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
 }
 
 .create-button:active {
-    transform: translateY(1px);
+    transform: scale(0.98);
 }
 
 .create-button .material-icons {
@@ -1088,19 +1066,18 @@
 
 /* Table Container */
 .users-table-container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
     overflow: hidden;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1.5px solid #e3e8f7;
     height: calc(100vh - 240px);
     position: relative;
     width: 100%;
     flex: 1;
     display: flex;
     flex-direction: column;
+    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
 }
 
 .dark-mode .users-table-container {
@@ -1358,16 +1335,14 @@
 
 /* Styles pour les filtres */
 .filter-section {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fff;
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    transition: all 0.3s ease;
+    border: 1.5px solid #e3e8f7;
+    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
 }
 
 .dark-mode .filter-section {
@@ -1490,16 +1465,15 @@
 }
 
 .list-item {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fff;
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s ease;
-    box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.05),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
+    border: 1.5px solid #e3e8f7;
 }
 
 .dark-mode .list-item {
@@ -1514,4 +1488,9 @@
     box-shadow: 
         0 4px 6px rgba(0, 0, 0, 0.1),
         0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* Transitions douces */
+.sidebar a, .sidebar button, .admin-toggle, .users-header, .users-table-container, .user-item, .list-item, .filter-section, .submit-button, .edit-button, .create-button, .export-button, .status-badge {
+    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s;
 } 

@@ -27,9 +27,30 @@ class UserService {
             };
 
             console.log('Creating user with data:', formattedData);
-            const response = await api.request('/user/create/', 'POST', formattedData);
-            console.log('User created successfully:', response);
-            return response;
+            
+            // Try different variations of the endpoint path
+            const endpoints = [
+                '/user/create/',     // Standard pattern that works for profiles
+                '/users/create/',    // Alternate plural path
+                '/user/add/',        // Alternative verb
+                '/users/add/'        // Alternative verb with plural
+            ];
+            
+            let lastError = null;
+            for (const endpoint of endpoints) {
+                try {
+                    console.log(`Trying to create user with endpoint: ${endpoint}`);
+                    const response = await api.request(endpoint, 'POST', formattedData);
+                    console.log(`User created successfully with endpoint: ${endpoint}`, response);
+                    return response;
+                } catch (endpointError) {
+                    console.warn(`Failed to create user with endpoint ${endpoint}:`, endpointError);
+                    lastError = endpointError;
+                }
+            }
+            
+            // If all endpoints failed, throw the last error
+            throw lastError || new Error('All user creation endpoints failed');
         } catch (error) {
             console.error('Error creating user:', error.message);
             throw new Error(error.message || 'Error creating user');

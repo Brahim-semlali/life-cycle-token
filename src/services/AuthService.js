@@ -7,7 +7,7 @@ class AuthService {
             // Envoi des identifiants au serveur
             // Le serveur définira un cookie de session sécurisé
             await api.request('/user/login/', 'POST', { email, password });
-            console.log('Login successful');
+            console.log('Login successful - cookie established');
             return true;
         } catch (error) {
             console.error('Login error:', error.message);
@@ -30,8 +30,10 @@ class AuthService {
     // Vérifie si l'utilisateur est authentifié
     // Le serveur vérifiera automatiquement le cookie de session
     isAuthenticated() {
-        // La vérification se fait côté serveur via le cookie de session
-        return true;
+        // Cette méthode ne peut pas vérifier localement l'état d'authentification
+        // car les cookies sont gérés par le navigateur et ne sont pas accessibles via JavaScript
+        // L'authentification sera vérifiée par le serveur à chaque requête
+        return true; // Supposons que l'utilisateur est authentifié jusqu'à preuve du contraire
     }
 }
 
