@@ -1493,4 +1493,93 @@
 /* Transitions douces */
 .sidebar a, .sidebar button, .admin-toggle, .users-header, .users-table-container, .user-item, .list-item, .filter-section, .submit-button, .edit-button, .create-button, .export-button, .status-badge {
     transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s;
+}
+
+/* Custom Edit Button Styling */
+.custom-edit-button {
+    background-color: #9333ea !important; /* Vibrant purple color */
+    color: white !important;
+    border-radius: 30px !important;
+    padding: 8px 20px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    min-width: 120px !important;
+    border: none !important;
+    letter-spacing: 0.5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.custom-edit-button:hover {
+    background-color: #7e22ce !important; /* Darker purple on hover */
+    box-shadow: 0 6px 12px rgba(147, 51, 234, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+.custom-edit-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 5px rgba(147, 51, 234, 0.3) !important;
+}
+
+.custom-edit-button .MuiButton-startIcon {
+    margin-right: 6px !important;
+    font-size: 18px !important;
+}
+
+/* Custom Delete Button Styling */
+.custom-delete-button {
+    background-color: #ef4444 !important; /* Red color */
+    color: white !important;
+    border-radius: 30px !important;
+    padding: 8px 20px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    min-width: 120px !important;
+    border: none !important;
+    letter-spacing: 0.5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.custom-delete-button:hover {
+    background-color: #dc2626 !important; /* Darker red on hover */
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+.custom-delete-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3) !important;
+}
+
+.custom-delete-button .MuiButton-startIcon {
+    margin-right: 6px !important;
+    font-size: 18px !important;
+}
+
+/* Dark mode styles */
+.dark-mode .custom-edit-button {
+    background-color: #9333ea !important;
+    box-shadow: 0 4px 10px rgba(147, 51, 234, 0.5) !important;
+}
+
+.dark-mode .custom-edit-button:hover {
+    background-color: #7e22ce !important;
+    box-shadow: 0 6px 12px rgba(147, 51, 234, 0.6) !important;
+}
+
+.dark-mode .custom-delete-button {
+    background-color: #ef4444 !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5) !important;
+}
+
+.dark-mode .custom-delete-button:hover {
+    background-color: #dc2626 !important;
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.6) !important;
 } 

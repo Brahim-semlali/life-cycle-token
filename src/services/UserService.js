@@ -1,10 +1,28 @@
 import api from './api';
+import { getAllProfiles } from './ProfileService';
 
 class UserService {
     async getAllUsers() {
         try {
             const response = await api.request('/user/getall/', 'POST');
             console.log('Users fetched successfully:', response);
+            
+            // Récupérer tous les profils
+            const profiles = await getAllProfiles();
+            
+            // Associer les profils aux utilisateurs
+            if (Array.isArray(response) && profiles.length > 0) {
+                return response.map(user => {
+                    // Trouver le profil correspondant à l'utilisateur
+                    const userProfile = profiles.find(p => p.id === user.profile_id);
+                    
+                    return {
+                        ...user,
+                        profile: userProfile || null
+                    };
+                });
+            }
+            
             return response;
         } catch (error) {
             console.error('Error fetching users:', error.message);

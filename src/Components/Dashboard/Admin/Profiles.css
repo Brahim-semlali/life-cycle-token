@@ -4,29 +4,10 @@
 }
 
 .profiles-container {
-    padding: 2rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-left: 250px;
+    background: var(--bg-primary);
     min-height: 100vh;
-    width: calc(100% - 250px);
-    position: absolute;
-    top: 0;
-    right: 0;
-    overflow-y: auto;
-    background-color: #f5f7ff;
-    color: #6b7a99;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .profiles-container.dark-mode {
@@ -418,18 +399,18 @@ input[type="checkbox"]:checked::after {
 }
 
 .profiles-header {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding: 1.5rem 2rem;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    margin-bottom: 2rem;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    animation: slideDown 0.5s ease-out;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    backdrop-filter: blur(10px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(229, 231, 235, 0.8);
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .profiles-header:hover {
@@ -443,20 +424,27 @@ input[type="checkbox"]:checked::after {
     align-items: center;
 }
 
-.search-input {
-    padding: 0.5rem 1rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    width: 300px;
-    background-color: white;
-    color: #2d3748;
+.search-container {
+    border-radius: 20px !important;
+    overflow: visible !important;
+    background-color: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
-.dark-mode .search-input {
-    background-color: #2d3748;
-    border-color: #4a5568;
-    color: #e2e8f0;
+.search-container:hover {
+    border-color: #d1d5db !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.search-icon {
+    color: #9ca3af !important;
+    padding: 0 12px 0 15px !important;
+    background-color: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .profiles-table-container {
@@ -768,9 +756,12 @@ input[type="checkbox"]:checked::after {
 .modules-group {
     background: #fff;
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1rem;
     border: 1px solid #e3e8f7;
     transition: all 0.3s ease;
+    gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .modules-group:hover {
@@ -778,8 +769,8 @@ input[type="checkbox"]:checked::after {
 }
 
 .module-section {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid #e3e8f7;
 }
 
@@ -870,44 +861,22 @@ input[type="checkbox"]:checked::after {
 
 /* Create Button Styling */
 .create-button {
-    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
+    background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%) !important;
+    border-radius: 24px !important;
+    padding: 8px 16px !important;
+    height: 38px !important;
     color: white !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500 !important;
-    border-radius: 12px !important;
-    transition: all 0.3s ease !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2) !important;
+    transition: all 0.2s ease !important;
     text-transform: none !important;
-    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3) !important;
-    position: relative;
-    overflow: hidden;
 }
 
 .create-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4) !important;
-}
-
-.create-button:active {
-    transform: translateY(0);
-}
-
-/* Create Button Ripple Effect */
-.create-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
-}
-
-.create-button:focus:not(:active)::after {
-    animation: ripple 1s ease-out;
+    background: linear-gradient(90deg, #6d28d9 0%, #5b21b6 100%) !important;
+    box-shadow: 0 3px 8px rgba(124, 58, 237, 0.3) !important;
+    transform: translateY(-1px) !important;
 }
 
 /* DataGrid Customization */
@@ -1050,7 +1019,7 @@ input[type="checkbox"]:checked::after {
 .grid-action-item {
     padding: 8px !important;
     margin: 0 4px !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     transition: all 0.2s ease !important;
 }
 
@@ -1140,26 +1109,57 @@ input[type="checkbox"]:checked::after {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .profiles-table-container {
+        height: calc(100vh - 200px);
+    }
+    
+    .profiles-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .profiles-header > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
 @media (max-width: 768px) {
     .profiles-container {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 0 !important;
+        width: 100% !important;
         padding: 1rem;
     }
 
     .profiles-header {
         flex-direction: column;
         gap: 1rem;
-        text-align: center;
-        padding: 1rem;
+        padding: 16px;
     }
 
-    .profiles-table-container {
-        height: calc(100vh - 280px);
+    .profiles-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .search-container {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .view-selector {
+        display: none;
     }
 
-    .submodules-section {
-        margin-left: 1rem;
+    .profiles-header h4 {
+        font-size: 18px;
+    }
+    
+    .create-button {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
     }
 }
 
@@ -1269,7 +1269,7 @@ input[type="checkbox"]:checked::after {
 
 /* Animations supplémentaires */
 @keyframes pulse {
-    0% {
+    from {
         transform: scale(1);
     }
     50% {
@@ -1290,424 +1290,435 @@ input[type="checkbox"]:checked::after {
     font-size: 0.95rem !important;
 }
 
-/* Style de la barre d'outils */
-.MuiDataGrid-toolbarContainer {
-    padding: 16px !important;
-    background-color: #f8fafc !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
-.dark-mode .MuiDataGrid-toolbarContainer {
-    background-color: #2d3748 !important;
-    border-bottom: 1px solid #4a5568 !important;
-}
-
-/* Style du footer */
-.MuiDataGrid-footerContainer {
-    border-top: 2px solid #e2e8f0 !important;
-    background-color: #f8fafc !important;
-}
-
-.dark-mode .MuiDataGrid-footerContainer {
-    border-top: 2px solid #4a5568 !important;
-    background-color: #2d3748 !important;
-}
-
-/* Améliorations générales */
-.profiles-container {
-    padding: 2rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-left: 250px;
-    min-height: 100vh;
-    width: calc(100% - 250px);
-    position: absolute;
-    top: 0;
-    right: 0;
-    overflow-y: auto;
-    background-color: #f5f7ff;
-    color: #6b7a99;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-/* Amélioration du header */
-.profiles-header {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding: 1.5rem 2rem;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    animation: slideDown 0.5s ease-out;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.profiles-header:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-}
-
-/* Amélioration des boutons */
-.create-button {
-    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
-    color: white !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 500 !important;
-    border-radius: 12px !important;
-    transition: all 0.3s ease !important;
-    text-transform: none !important;
-    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3) !important;
-    position: relative;
+/* Style de la barre de recherche */
+.search-container {
+    background-color: #f9fafb;
+    border-radius: 50px;
+    border: 1px solid #e5e7eb;
     overflow: hidden;
-}
-
-.create-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4) !important;
-}
-
-.create-button:active {
-    transform: translateY(0);
-}
-
-/* Effet de ripple pour les boutons */
-.create-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
-}
-
-.create-button:focus:not(:active)::after {
-    animation: ripple 1s ease-out;
-}
-
-/* Amélioration du tableau */
-.profiles-table-container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    height: calc(100vh - 240px);
-    animation: fadeIn 0.5s ease-in-out;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    transition: all 0.3s ease;
-}
-
-.profiles-table-container:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-}
-
-/* Amélioration des cellules */
-.name-cell {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 12px 0 !important;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
-.name-cell:hover {
-    transform: translateX(5px);
+.search-container:hover, .search-container:focus-within {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Amélioration des badges de statut */
-.status-badge {
-    display: inline-flex;
+.search-container:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.search-icon {
+    color: #9ca3af;
+    padding: 0 12px;
+    background-color: transparent;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: capitalize;
-    min-width: 100px;
+}
+
+.search-field {
+    background-color: transparent;
+    border: none;
+    font-size: 0.875rem;
+    color: #4b5563;
+    height: 100%;
+}
+
+.search-field:focus {
+    outline: none;
+}
+
+.search-field::placeholder {
+    color: #9ca3af;
+}
+
+/* Style pour les boutons de sélection de vue */
+.view-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f4f4f8;
+    border-radius: 30px;
+    padding: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     position: relative;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.status-badge.active {
-    background: #e3e8f7;
-    color: #7c3aed;
-    border: 1px solid #e3e8f7;
+.view-button {
+    min-width: 36px !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
 }
 
-.status-badge.inactive {
-    background: #f0eaff;
-    color: #b0b8d1;
-    border: 1px solid #e3e8f7;
+.view-button.active {
+    background-color: #ffffff !important;
+    color: #7c3aed !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Amélioration des boutons d'action */
-.grid-action-item {
-    padding: 8px !important;
-    margin: 0 4px !important;
-    border-radius: 12px !important;
-    transition: all 0.3s ease !important;
-    background-color: transparent !important;
+.view-button:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.grid-action-item:hover {
-    transform: translateY(-2px);
-    background-color: rgba(66, 153, 225, 0.08) !important;
+/* Animation pour les boutons de sélection de vue */
+.view-button.active {
+    transform: translateY(-1px);
 }
 
-/* Amélioration du dialogue */
-.profile-dialog .MuiDialog-paper {
-    border-radius: 24px;
+.view-button .MuiSvgIcon-root {
+    font-size: 16px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.view-button:hover .MuiSvgIcon-root {
+    transform: scale(1.1);
+}
+
+/* Animation pour les cartes */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-card {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Message de recherche sans résultats */
+.no-results-container {
+    background-color: #f9fafb;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.no-results-icon {
+    color: #9ca3af;
+    font-size: 48px;
+    margin-bottom: 16px;
+    }
+
+/* Styles pour le modal de profil */
+.profile-modal-paper {
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    animation: dialogSlideIn 0.3s ease-out;
+    animation: profileModalIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-.dialog-title {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    border-bottom: 1px solid #e2e8f0;
-    padding: 1.5rem 2rem !important;
+@keyframes profileModalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
-.dialog-content {
-    padding: 2rem !important;
+.profile-header-gradient {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Amélioration des champs de formulaire */
-.form-field .MuiOutlinedInput-root {
-    border-radius: 12px;
+.profile-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+
+.profile-avatar {
+    border: 6px solid white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
-.form-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-    border-color: #4299e1;
-    box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
+.profile-avatar:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+.profile-status-chip {
+    transition: all 0.3s ease;
+    }
+
+.profile-status-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Amélioration des modules */
-.modules-group {
-    background: #fff;
+.profile-module-chip {
+    transition: all 0.3s ease;
+}
+
+.profile-module-chip:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.profile-action-button {
+    transition: all 0.3s ease;
+}
+
+.profile-action-button:hover {
+    transform: translateY(-2px);
+}
+
+.profile-close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.profile-close-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Styles pour le formulaire de profil */
+.profile-form-modal-paper {
     border-radius: 16px;
-    padding: 1.5rem;
-    border: 1px solid #e3e8f7;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    animation: profileFormModalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes profileFormModalIn {
+    from {
+    opacity: 0;
+        transform: scale(0.95) translateY(10px);
+}
+    to {
+    opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.profile-form-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-form-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.profile-form-close-button {
     transition: all 0.3s ease;
 }
 
-.modules-group:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+.profile-form-close-button:hover {
+    transform: rotate(90deg);
+    background-color: rgba(255, 255, 255, 0.25) !important;
 }
 
-/* Amélioration des checkboxes */
-.MuiCheckbox-root {
+.profile-form-input .MuiOutlinedInput-root {
+    transition: all 0.3s ease;
+}
+
+.profile-form-input:hover .MuiOutlinedInput-root {
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.module-card {
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.module-card:hover {
+    transform: translateY(-3px);
+}
+
+.profile-form-submit-button, 
+.profile-form-cancel-button {
     transition: all 0.3s ease !important;
+}
+
+.profile-form-submit-button:hover {
+    transform: translateY(-2px);
+}
+
+.profile-form-cancel-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Animation au clic du bouton */
+.profile-form-submit-button:active {
+    transform: scale(0.98);
+}
+
+/* Animation checkbox */
+.MuiCheckbox-root {
+    transition: transform 0.2s ease;
 }
 
 .MuiCheckbox-root:hover {
     transform: scale(1.1);
 }
 
-/* Dark mode improvements */
-.dark-mode .profiles-header {
-    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    border-color: rgba(74, 85, 104, 0.3);
+.MuiCheckbox-root.Mui-checked {
+    animation: checkboxPulse 0.3s ease-in-out;
 }
 
-.dark-mode .profiles-table-container {
-    background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(74, 85, 104, 0.3);
-}
-
-.dark-mode .modules-group {
-    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-    border-color: rgba(74, 85, 104, 0.3);
-}
-
-/* Animations améliorées */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes dialogSlideIn {
-    from {
-        transform: translateY(-20px) scale(0.95);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes ripple {
+@keyframes checkboxPulse {
     0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-    }
-    20% {
-        transform: scale(25, 25);
-        opacity: 0.3;
-    }
+        transform: scale(1);
+}
+    50% {
+        transform: scale(1.2);
+}
     100% {
-        opacity: 0;
-        transform: scale(40, 40);
+        transform: scale(1);
     }
 }
 
-/* Scrollbar personnalisée */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.profile-module-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease forwards;
 }
 
-::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 4px;
+.profile-module-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
 }
 
-::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-module-header {
+    background-color: #eef2ff;
+    border-bottom: 1px solid #e0e7ff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-module-header-title {
+    font-weight: 600;
+    color: #4f46e5;
+    font-size: 0.95rem;
+}
+
+.profile-submodule-container {
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.profile-submodule-chip {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
+.profile-submodule-chip:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Responsive improvements */
-@media (max-width: 768px) {
-    .profiles-container {
-        margin-left: 0;
-        width: 100%;
-        padding: 1rem;
-    }
-
-    .profiles-header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-        padding: 1rem;
-    }
-
-    .profiles-table-container {
-        height: calc(100vh - 280px);
-    }
-
-    .submodules-section {
-        margin-left: 1rem;
-    }
+.profile-submodule-empty {
+    padding: 12px;
+    text-align: center;
+    font-style: italic;
+    color: #9ca3af;
+    font-size: 0.8rem;
 }
 
-/* Cartes/conteneurs */
-.profiles-header, .profiles-table-container, .profile-item, .module-section, .modules-group, .filter-section {
-    border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
-    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
-    border: 1.5px solid #e3e8f7;
+.profile-action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(229, 231, 235, 0.5);
 }
 
-.profiles-header:hover, .profiles-table-container:hover, .profile-item:hover, .module-section:hover, .modules-group:hover, .filter-section:hover {
-    box-shadow: 0 16px 40px rgba(124, 58, 237, 0.13), 0 2px 12px rgba(60,60,60,0.08);
-    border: 1.5px solid #a78bfa;
-    transform: translateY(-2px) scale(1.01);
+.profile-action-button {
+    min-width: 140px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    padding: 10px 24px !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
 }
 
-/* Titres principaux avec dégradé */
-.profiles-header h2, .profiles-container h2, .profiles-container h3 {
-    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-    font-weight: 800;
-    letter-spacing: 0.5px;
+.profile-action-button.edit-button {
+    background-color: #7c3aed !important;
+    color: white !important;
+    box-shadow: 0 4px 6px rgba(124, 58, 237, 0.2) !important;
 }
 
-/* Boutons modernes */
-.submit-button, .edit-button, .create-button {
-    background: linear-gradient(90deg, #7c3aed 0%, #38bdf8 100%);
-    color: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
-    font-weight: 700;
-    border: none;
-    transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
-}
-.submit-button:hover, .edit-button:hover, .create-button:hover {
-    background: linear-gradient(90deg, #a78bfa 0%, #38bdf8 100%);
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
-    transform: translateY(-1px) scale(1.03);
-}
-.submit-button:active, .edit-button:active, .create-button:active {
-    transform: scale(0.98);
+.profile-action-button.edit-button:hover {
+    background-color: #6d28d9 !important;
+    box-shadow: 0 6px 12px rgba(124, 58, 237, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
-/* Badges/statuts */
-.status-badge {
-    border-radius: 16px !important;
-    font-size: 1rem;
-    font-weight: 700;
-    padding: 6px 18px 6px 28px;
-    position: relative;
-    background: #f0eaff;
-    color: #7c3aed;
-    border: 1.5px solid #e3e8f7;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
-    transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
-}
-.status-badge::before {
-    content: '';
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7c3aed, #38bdf8);
-    box-shadow: 0 0 8px #a78bfa;
-    animation: badgePulse 1.5s infinite;
-}
-@keyframes badgePulse {
-    0% { box-shadow: 0 0 0 0 #a78bfa44; }
-    70% { box-shadow: 0 0 0 8px #a78bfa11; }
-    100% { box-shadow: 0 0 0 0 #a78bfa44; }
+.profile-action-button.close-button {
+    background-color: #f3f4f6 !important;
+    color: #4b5563 !important;
+    border: 1px solid #e5e7eb !important;
 }
 
-.status-badge.inactive {
-    background: #e3e8f7;
-    color: #b0b8d1;
-    border: 1.5px solid #e3e8f7;
-}
-
-/* Transitions douces */
-.sidebar a, .sidebar button, .admin-toggle, .profiles-header, .profiles-table-container, .profile-item, .module-section, .modules-group, .filter-section, .submit-button, .edit-button, .create-button, .status-badge {
-    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s;
+.profile-action-button.close-button:hover {
+    background-color: #e5e7eb !important;
+    transform: translateY(-2px) !important;
 } 

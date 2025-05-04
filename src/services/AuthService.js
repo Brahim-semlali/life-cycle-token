@@ -1,6 +1,24 @@
 import api from './api';
+import userService from './UserService';
 
 class AuthService {
+    // Récupérer les informations de l'utilisateur connecté et son profil
+    async getCurrentUser() {
+        try {
+            const userData = await api.request('/user/current/', 'GET');
+            if (userData && userData.id) {
+                // Obtenez tous les utilisateurs pour trouver celui correspondant avec son profil complet
+                const users = await userService.getAllUsers();
+                const currentUser = users.find(u => u.id === userData.id);
+                return currentUser || userData;
+            }
+            return null;
+        } catch (error) {
+            console.error('Erreur lors de la récupération de l\'utilisateur courant:', error);
+            return null;
+        }
+    }
+    
     // Fonction de connexion
     async login(email, password) {
         try {
@@ -8,7 +26,10 @@ class AuthService {
             // Le serveur définira un cookie de session sécurisé
             await api.request('/user/login/', 'POST', { email, password });
             console.log('Login successful - cookie established');
-            return true;
+            
+            // Récupérer les informations de l'utilisateur après la connexion
+            const currentUser = await this.getCurrentUser();
+            return currentUser || true;
         } catch (error) {
             console.error('Login error:', error.message);
             throw new Error(error.message || 'Authentication failed');
@@ -29,11 +50,14 @@ class AuthService {
 
     // Vérifie si l'utilisateur est authentifié
     // Le serveur vérifiera automatiquement le cookie de session
-    isAuthenticated() {
-        // Cette méthode ne peut pas vérifier localement l'état d'authentification
-        // car les cookies sont gérés par le navigateur et ne sont pas accessibles via JavaScript
-        // L'authentification sera vérifiée par le serveur à chaque requête
-        return true; // Supposons que l'utilisateur est authentifié jusqu'à preuve du contraire
+    async isAuthenticated() {
+        try {
+            const currentUser = await this.getCurrentUser();
+            return !!currentUser;
+        } catch (error) {
+            console.error('Erreur lors de la vérification de l\'authentification:', error);
+            return false;
+        }
     }
 }
 

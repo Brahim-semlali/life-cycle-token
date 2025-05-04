@@ -29,7 +29,19 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   InputAdornment,
-  Collapse
+  Collapse,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Chip,
+  Menu,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -42,15 +54,16 @@ import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
   GridView as GridViewIcon,
-  ViewList as ViewListIcon,
+  ViewList as ListViewIcon,
   FileDownload as FileDownloadIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
   Email as EmailIcon,
-  AccountCircle as AccountCircleIcon
+  AccountCircle as AccountCircleIcon,
+  MoreVert as MoreVertIcon
 } from '@mui/icons-material';
 import "./Users.css";
-import { ensureProfileExists } from '../../../services/ProfileService';
+import { getAllProfiles } from '../../../services/ProfileService';
 import userService from '../../../services/UserService';
 import api from '../../../services/api';
 
@@ -60,7 +73,7 @@ const Users = () => {
     const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
-    const [profiles] = useState(Object.values(PREDEFINED_PROFILES));
+    const [profiles, setProfiles] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [formErrors, setFormErrors] = useState({});
     const [selectedUsers, setSelectedUsers] = useState([]);
@@ -78,6 +91,8 @@ const Users = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterProfile, setFilterProfile] = useState('all');
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [menuUser, setMenuUser] = useState(null);
 
     const emptyUser = {
         firstName: '',
@@ -93,13 +108,22 @@ const Users = () => {
 
     const [newUser, setNewUser] = useState(emptyUser);
 
+    const loadProfiles = async () => {
+        try {
+            const allProfiles = await getAllProfiles();
+            setProfiles(allProfiles);
+        } catch (error) {
+            console.error('Erreur lors du chargement des profils:', error);
+        }
+    };
+
     const loadUsers = async () => {
         try {
             const allUsers = await userService.getAllUsers();
             console.log(allUsers);
             const sortedUsers = allUsers.map(user => ({
                 ...user,
-                id: user.id|| user.email,
+                id: user.id || user.email,
                 fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                 firstName: user.first_name,
                 lastName: user.last_name,
@@ -117,6 +141,10 @@ const Users = () => {
             console.error('Erreur lors du chargement des utilisateurs:', error);
         }
     };
+
+    useEffect(() => {
+        loadProfiles();
+    }, []);
 
     useEffect(() => {
         loadUsers();
@@ -534,13 +562,53 @@ const Users = () => {
         }
     };
 
+    // Fonction pour formater la date d'embauche
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(2, 2)}`;
+    };
+
+    // Fonction pour générer des initiales à partir du nom
+    const getInitials = (firstName, lastName) => {
+        return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+    };
+
+    // Fonction pour générer une couleur aléatoire mais cohérente pour un utilisateur
+    const getAvatarColor = (userId) => {
+        const colors = [
+            '#3498db', '#e74c3c', '#2ecc71', '#f39c12', 
+            '#9b59b6', '#1abc9c', '#d35400', '#34495e'
+        ];
+        const index = userId?.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+        return colors[index] || colors[0];
+    };
+
+    // Toggle view mode
+    const handleViewModeChange = (event, newViewMode) => {
+        if (newViewMode !== null) {
+            setViewMode(newViewMode);
+        }
+    };
+
+    // Ouvrir le menu contextuel pour un utilisateur
+    const handleMenuOpen = (event, user) => {
+        setAnchorEl(event.currentTarget);
+        setMenuUser(user);
+    };
+
+    // Fermer le menu contextuel
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setMenuUser(null);
+    };
+
     return (
         <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
             <Box sx={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                border: '1px solid white',
                 backgroundColor: isDarkMode ? '#2d3748' : 'white',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 padding: '10px 20px',
@@ -548,8 +616,8 @@ const Users = () => {
                 mb: 3,
                 gap: 2
             }}>
-                <Typography variant="h4" component="h1">
-                    {t('users.title')}
+                <Typography variant="h4" component="h1" sx={{ color: isDarkMode ? '#e2e8f0' : '#f97316' }}>
+                    {filteredUsers.length} {t('users.title')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <TextField
@@ -566,6 +634,22 @@ const Users = () => {
                         }}
                         sx={{ width: 200 }}
                     />
+                    
+                    <ToggleButtonGroup
+                        value={viewMode}
+                        exclusive
+                        onChange={handleViewModeChange}
+                        aria-label="view mode"
+                        size="small"
+                    >
+                        <ToggleButton value="grid" aria-label="grid view">
+                            <GridViewIcon />
+                        </ToggleButton>
+                        <ToggleButton value="list" aria-label="list view">
+                            <ListViewIcon />
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                    
                     <IconButton onClick={() => setShowFilters(!showFilters)}>
                         <FilterListIcon />
                     </IconButton>
@@ -576,48 +660,6 @@ const Users = () => {
                     >
                         {t('users.export')}
                     </Button>
-                    {selectedUsers.length > 0 && (
-                        <>
-                            <Button
-                                variant="contained"
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={() => {
-                                    if (window.confirm(t('users.confirmDeleteMultiple'))) {
-                                        selectedUsers.forEach(id => deleteUser(id));
-                                        loadUsers();
-                                        setSelectedUsers([]);
-                                    }
-                                }}
-                                sx={{
-                                    backgroundColor: '#dc3545',
-                                    '&:hover': {
-                                        backgroundColor: '#c82333',
-                                    },
-                                    minWidth: '200px',
-                                    height: '40px'
-                                }}
-                            >
-                                {t('users.deleteSelected')} ({selectedUsers.length})
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                startIcon={<CancelIcon />}
-                                onClick={() => setSelectedUsers([])}
-                                sx={{
-                                    borderColor: '#6c757d',
-                                    color: '#6c757d',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(108, 117, 125, 0.08)',
-                                        borderColor: '#5a6268',
-                                    },
-                                    height: '40px'
-                                }}
-                            >
-                                {t('users.cancelSelection')}
-                            </Button>
-                        </>
-                    )}
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
@@ -627,9 +669,9 @@ const Users = () => {
                             setOpenDialog(true);
                         }}
                         sx={{
-                            backgroundColor: '#4299e1',
+                            backgroundColor: '#f97316',
                             '&:hover': {
-                                backgroundColor: '#3182ce',
+                                backgroundColor: '#ea580c',
                             },
                             height: '40px'
                         }}
@@ -675,86 +717,241 @@ const Users = () => {
                 </Paper>
             </Collapse>
 
-            <Paper sx={{ 
-                height: 600, 
-                width: '100%',
-                overflow: 'hidden',
-                '& .MuiDataGrid-root': {
-                    border: 'none',
-                    width: '100% !important',
-                },
-                '& .MuiDataGrid-cell': {
-                    borderBottom: '1px solid #e2e8f0',
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: isDarkMode ? '#2d3748' : '#f7fafc',
-                    borderBottom: '2px solid #e2e8f0',
-                    width: '100% !important',
-                },
-                '& .MuiDataGrid-footerContainer': {
-                    borderTop: '2px solid #e2e8f0',
-                    width: '100% !important',
-                },
-                '& .MuiCheckbox-root': {
-                    color: isDarkMode ? '#4299e1' : '#3182ce',
-                },
-                '& .MuiCheckbox-root.Mui-checked': {
-                    color: '#4299e1',
-                },
-                '& .MuiDataGrid-row:hover': {
-                    backgroundColor: isDarkMode ? 'rgba(74, 85, 104, 0.08)' : 'rgba(66, 153, 225, 0.08)',
-                },
-                '& .MuiDataGrid-main': {
-                    width: '100% !important',
-                    overflow: 'hidden !important',
-                },
-                '& .MuiDataGrid-virtualScroller': {
-                    width: '100% !important',
-                    overflow: 'hidden !important',
-                },
-                '& .MuiDataGrid-virtualScrollerContent': {
-                    width: '100% !important',
-                },
-                '& .MuiDataGrid-virtualScrollerRenderZone': {
-                    width: '100% !important',
-                },
-                '& .MuiDataGrid-columnHeadersInner': {
-                    width: '100% !important',
-                }
-            }}>
-                <DataGrid
-                    rows={filteredUsers}
-                    columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10, 25, 50]}
-                    getRowId={(row) => row.id || row.email || `${row.first_name}-${row.last_name}-${Math.random().toString(36).substr(2, 9)}`}
-                    checkboxSelection={false}
-                    disableSelectionOnClick
-                    disableColumnMenu
-                    disableColumnResize
-                    autoWidth
-                    components={{
-                        Toolbar: GridToolbar,
-                    }}
-                    componentsProps={{
-                        toolbar: {
-                            sx: {
-                                '& .MuiButton-root': {
-                                    color: isDarkMode ? '#e2e8f0' : '#2d3748',
-                                },
-                            },
-                        },
-                    }}
+            {viewMode === 'grid' ? (
+                <Grid container spacing={3}>
+                    {filteredUsers.map(user => (
+                        <Grid item xs={12} sm={6} md={4} lg={4} key={user.id}>
+                            <Card sx={{ 
+                                position: 'relative',
+                                borderRadius: '16px',
+                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                transition: 'transform 0.3s, box-shadow 0.3s',
+                                '&:hover': {
+                                    transform: 'translateY(-4px)',
+                                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
+                                }
+                            }}>
+                                <IconButton
+                                    aria-label="more"
+                                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                                    onClick={(e) => handleMenuOpen(e, user)}
+                                >
+                                    <MoreVertIcon />
+                                </IconButton>
+                                <CardContent sx={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center',
+                                    p: 3
+                                }}>
+                                    <Avatar
+                                        sx={{
+                                            width: 80,
+                                            height: 80,
+                                            mb: 2,
+                                            bgcolor: getAvatarColor(user.id),
+                                            fontSize: '1.5rem',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {getInitials(user.firstName, user.lastName)}
+                                    </Avatar>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                        {user.fullName}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                        {user.profile ? user.profile.name : 'No Profile'}
+                                    </Typography>
+                                    
+                                    <Chip
+                                        label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
+                                        sx={{
+                                            mb: 2,
+                                            bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
+                                            color: '#fff',
+                                            fontWeight: 'bold',
+                                            px: 1,
+                                            '&::before': {
+                                                content: '""',
+                                                display: 'inline-block',
+                                                width: 8,
+                                                height: 8,
+                                                borderRadius: '50%',
+                                                marginRight: 1,
+                                                backgroundColor: user.status === 'active' ? 'success.main' : 'error.main',
+                                                boxShadow: user.status === 'active' 
+                                                    ? '0 0 0 2px rgba(46, 204, 113, 0.3)' 
+                                                    : '0 0 0 2px rgba(231, 76, 60, 0.3)'
+                                            }
+                                        }}
+                                    />
+                                    
+                                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                                            <EmailIcon sx={{ fontSize: 16, mr: 1 }} />
+                                            <Typography variant="body2">{user.email}</Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                                            <PhoneIcon sx={{ fontSize: 16, mr: 1 }} />
+                                            <Typography variant="body2">{user.phone || '(555) 555-0109'}</Typography>
+                                        </Box>
+                                    </Box>
+                                    
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, width: '100%' }}>
+                                        <Button 
+                                            className="custom-edit-button"
+                                            startIcon={<EditIcon />}
+                                            onClick={() => handleEdit(user.id)}
+                                            size="small"
+                                        >
+                                            {t('users.edit')}
+                                        </Button>
+                                        <Button 
+                                            className="custom-delete-button"
+                                            startIcon={<DeleteIcon />}
+                                            onClick={() => handleDelete(user.id)}
+                                            size="small"
+                                        >
+                                            {t('users.delete')}
+                                        </Button>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))}
+                </Grid>
+            ) : (
+                <Paper sx={{ borderRadius: '16px', overflow: 'hidden' }}>
+                    <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                        {filteredUsers.map((user, index) => (
+                            <React.Fragment key={user.id}>
+                                <ListItem 
+                                    alignItems="center" 
                     sx={{
-                        '& .MuiDataGrid-cell': {
-                            cursor: 'pointer',
-                        },
-                        '& .MuiCheckbox-root': {
-                            padding: '8px',
+                                        py: 2, 
+                                        px: 3,
+                                        transition: 'background-color 0.3s',
+                                        '&:hover': {
+                                            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                                        }
+                                    }}
+                                >
+                                    <ListItemAvatar>
+                                        <Avatar 
+                                            sx={{ 
+                                                bgcolor: getAvatarColor(user.id),
+                                                width: 50,
+                                                height: 50
+                                            }}
+                                        >
+                                            {getInitials(user.firstName, user.lastName)}
+                                        </Avatar>
+                                    </ListItemAvatar>
+                                    <ListItemText
+                                        primary={
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mr: 2 }}>
+                                                    {user.fullName}
+                                                </Typography>
+                                                <Chip
+                                                    size="small"
+                                                    label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
+                                                    sx={{
+                                                        height: 24,
+                                                        bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
+                                                        color: '#fff',
+                                                        fontWeight: 'bold',
+                                                        px: 1,
+                                                        '&::before': {
+                                                            content: '""',
+                                                            display: 'inline-block',
+                                                            width: 6,
+                                                            height: 6,
+                                                            borderRadius: '50%',
+                                                            marginRight: 0.5,
+                                                            backgroundColor: user.status === 'active' ? 'success.main' : 'error.main',
+                                                            boxShadow: user.status === 'active' 
+                                                                ? '0 0 0 2px rgba(46, 204, 113, 0.3)' 
+                                                                : '0 0 0 2px rgba(231, 76, 60, 0.3)'
                         }
                     }}
                 />
+                                            </Box>
+                                        }
+                                        secondary={
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', mt: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                                                    {user.profile ? user.profile.name : 'No Profile'}
+                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, gap: 3 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <EmailIcon fontSize="small" sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {user.email}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <PhoneIcon fontSize="small" sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {user.phone || '(555) 555-0109'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+                                        }
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <Button 
+                                                className="custom-edit-button"
+                                                startIcon={<EditIcon />}
+                                                onClick={() => handleEdit(user.id)}
+                                                size="small"
+                                            >
+                                                {t('users.edit')}
+                                            </Button>
+                                            <Button 
+                                                className="custom-delete-button"
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => handleDelete(user.id)}
+                                                size="small"
+                                            >
+                                                {t('users.delete')}
+                                            </Button>
+                                        </Box>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                                {index < filteredUsers.length - 1 && <Divider variant="inset" component="li" />}
+                            </React.Fragment>
+                        ))}
+                    </List>
             </Paper>
+            )}
+
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    elevation: 3,
+                    sx: { borderRadius: 2, minWidth: 150 }
+                }}
+            >
+                <MenuItem onClick={() => {
+                    handleEdit(menuUser?.id);
+                    handleMenuClose();
+                }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                    {t('users.edit')}
+                </MenuItem>
+                <MenuItem onClick={() => {
+                    handleDelete(menuUser?.id);
+                    handleMenuClose();
+                }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                    {t('users.delete')}
+                </MenuItem>
+            </Menu>
 
             <Dialog open={openDialog} onClose={handleCancel} maxWidth="md" fullWidth>
                 <DialogTitle>
@@ -933,6 +1130,7 @@ const Users = () => {
                         onClick={handleSubmit} 
                         variant="contained" 
                         startIcon={<SaveIcon />}
+                        sx={{ backgroundColor: '#f97316', '&:hover': { backgroundColor: '#ea580c' } }}
                     >
                         {editingUser !== null ? t('users.save') : t('users.create')}
                     </Button>

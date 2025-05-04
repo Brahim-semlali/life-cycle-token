@@ -30,12 +30,12 @@ const api = {
 
             // Log de la réponse pour le débogage
             console.log(`API Response status: ${response.status}`);
-            
+
             // Gestion des erreurs HTTP
             if (!response.ok) {
                 try {
-                    const errorData = await response.json();
-                    console.error('Error details:', errorData);
+                const errorData = await response.json();
+                console.error('Error details:', errorData); 
                     throw new Error(errorData.detail || errorData.message || `Request failed with status ${response.status}`);
                 } catch (jsonError) {
                     // Si la réponse n'est pas du JSON, utiliser le statut HTTP

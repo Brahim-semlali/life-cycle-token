@@ -205,7 +205,7 @@ export const createProfile = async (profile) => {
 
         if (response) {
             // Adapter le format de réponse de l'API à notre modèle interne
-            const newProfile = {
+        const newProfile = {
                 id: response.id,
                 name: response.title,
                 title: response.title,
@@ -214,10 +214,10 @@ export const createProfile = async (profile) => {
                 status: response.status || "active",
                 modules: response.modules || [],
                 menus: response.menus || [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
             profiles.push(newProfile);
             return newProfile;
         }
