@@ -1,23 +1,50 @@
+/* Enhanced base styles */
 .profils-body {
     background: var(--bg-primary);
     min-height: 100vh;
 }
 
 .profiles-container {
-    background: var(--bg-primary);
+    background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
     min-height: 100vh;
     width: 100%;
     box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .profiles-container.dark-mode {
-    background-color: #1a1a1a;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #e2e8f0;
 }
 
 .profiles-container.minimized {
     margin-left: 5rem;
     width: calc(100% - 5rem);
+}
+
+/* Enhanced header styles */
+.profiles-header {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(229, 231, 235, 0.7);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .profiles-header {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(51, 65, 85, 0.7);
+}
+
+.profiles-header:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.09);
+    transform: translateY(-2px);
 }
 
 .profiles-container h2 {
@@ -398,552 +425,574 @@ input[type="checkbox"]:checked::after {
     margin-right: 30px;
 }
 
-.profiles-header {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(229, 231, 235, 0.8);
-    transition: all 0.3s ease;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.profiles-header:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-}
-
-.profiles-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.search-container {
-    border-radius: 20px !important;
-    overflow: visible !important;
-    background-color: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
-}
-
-.search-container:hover {
-    border-color: #d1d5db !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-.search-icon {
-    color: #9ca3af !important;
-    padding: 0 12px 0 15px !important;
-    background-color: transparent !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.profiles-table-container {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    height: calc(100vh - 240px);
-    animation: fadeIn 0.5s ease-in-out;
-    border: 1px solid #e3e8f7;
-    transition: all 0.3s ease;
-}
-
-.profiles-table-container:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-}
-
-.profiles-grid {
-    border: none !important;
-}
-
-/* Grid Cells Styling */
-.name-cell {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 12px 0 !important;
-    transition: all 0.2s ease;
-}
-
-.name-cell:hover {
-    transform: translateX(5px);
-}
-
-.name-cell .MuiTypography-root {
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 0.95rem;
-    transition: color 0.2s ease;
-}
-
-.dark-mode .name-cell .MuiTypography-root {
-    color: #e2e8f0;
-}
-
-.description-cell {
-    color: #4a5568;
-    font-size: 0.875rem;
-}
-
-.dark-mode .description-cell {
-    color: #a0aec0;
-}
-
-/* Status Cell Styling */
-.status-cell {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-}
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: capitalize;
-    min-width: 100px;
+/* Improved grid & card styles */
+.profile-card {
     position: relative;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: white;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transform-origin: center !important;
+    border: 1px solid rgba(226, 232, 240, 0.6) !important;
 }
 
-.status-badge::before {
+.dark-mode .profile-card {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+.profile-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+    border-color: rgba(79, 70, 229, 0.2) !important;
+}
+
+.dark-mode .profile-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Improved avatar styles */
+.profile-card .MuiAvatar-root {
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    z-index: 10;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+    border: 3px solid white !important;
+}
+
+.dark-mode .profile-card .MuiAvatar-root {
+    border-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+.profile-card:hover .MuiAvatar-root {
+    transform: scale(1.12) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Enhanced status badge styles */
+.status-badge, .MuiChip-root[data-status] {
+    padding: 5px 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.status-badge.active, .MuiChip-root[data-status="active"] {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+    color: #059669 !important;
+    border: 1px solid rgba(110, 231, 183, 0.6) !important;
+}
+
+.status-badge.inactive, .MuiChip-root[data-status="inactive"] {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+    color: #dc2626 !important;
+    border: 1px solid rgba(252, 165, 165, 0.6) !important;
+}
+
+.profile-card:hover .MuiChip-root[data-status] {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Enhanced module chip styles */
+.profile-card .MuiChip-root:not([data-status]) {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%) !important;
+    color: #4f46e5 !important;
+    border: 1px solid rgba(129, 140, 248, 0.3) !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.profile-card .MuiChip-root:not([data-status]):hover {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2) !important;
+}
+
+.dark-mode .profile-card .MuiChip-root:not([data-status]) {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border-color: rgba(129, 140, 248, 0.3) !important;
+}
+
+/* Enhanced buttons */
+.create-button {
+    background: linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%) !important;
+    border-radius: 12px !important;
+    padding: 10px 20px !important;
+    height: 42px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.create-button::after {
     content: '';
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.status-badge.active {
-    background: #e6f7ee;
-    color: #0e9f6e;
-    border: 1px solid #8eedc7;
+.create-button:hover {
+    background: linear-gradient(45deg, #6d28d9 0%, #7c3aed 100%) !important;
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4) !important;
+    transform: translateY(-2px) !important;
 }
 
-.status-badge.active::before {
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+.create-button:hover::after {
+    opacity: 1;
 }
 
-.status-badge.inactive {
-    background: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+/* Enhanced profile card actions */
+.action-buttons-container {
+    background: linear-gradient(to top, white 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+    border-top: 1px solid rgba(229, 231, 235, 0.7) !important;
+    padding: 12px !important;
 }
 
-.status-badge.inactive::before {
-    background: #ef4444;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+.dark-mode .action-buttons-container {
+    background: linear-gradient(to top, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%) !important;
+    border-color: rgba(51, 65, 85, 0.7) !important;
 }
 
-.status-badge.suspended {
-    background: #fef3c7;
-    color: #d97706;
-    border: 1px solid #fde68a;
+/* Enhanced action buttons */
+.action-buttons-container .MuiIconButton-root {
+    background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(147, 51, 234, 0.25) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.status-badge.pending {
-    background: #e0f2fe;
-    color: #0284c7;
-    border: 1px solid #bae6fd;
+.action-buttons-container .MuiIconButton-root:hover {
+    background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%) !important;
+    box-shadow: 0 6px 15px rgba(147, 51, 234, 0.35) !important;
+    transform: translateY(-3px) !important;
 }
 
-/* Animation au survol */
-.status-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+.action-buttons-container .MuiIconButton-root:nth-child(2) {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25) !important;
 }
 
-.status-badge.active:hover {
-    background: rgba(72, 187, 120, 0.15);
+.action-buttons-container .MuiIconButton-root:nth-child(2):hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35) !important;
 }
 
-.status-badge.inactive:hover {
-    background: rgba(245, 101, 101, 0.15);
+/* Enhanced search field */
+.search-container {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: white !important;
+    border: 1px solid rgba(229, 231, 235, 0.8) !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Animation du point */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(72, 187, 120, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
-    }
+.dark-mode .search-container {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.7) !important;
 }
 
-.status-badge.active::before {
-    animation: pulse 2s infinite;
+.search-container:hover, .search-container:focus-within {
+    border-color: rgba(99, 102, 241, 0.5) !important;
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.15) !important;
+    transform: translateY(-2px) !important;
 }
 
-@keyframes pulseRed {
-    0% {
-        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(245, 101, 101, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0);
-    }
-}
-
-.status-badge.inactive::before {
-    animation: pulseRed 2s infinite;
-}
-
-/* Dark mode styles */
-.dark-mode .status-badge.active {
-    background: rgba(72, 187, 120, 0.15);
-    color: #9ae6b4;
-    border-color: rgba(72, 187, 120, 0.3);
-}
-
-.dark-mode .status-badge.inactive {
-    background: rgba(245, 101, 101, 0.15);
-    color: #feb2b2;
-    border-color: rgba(245, 101, 101, 0.3);
-}
-
-/* Action Buttons Styling */
-.grid-action-item {
-    padding: 8px !important;
-    margin: 0 4px !important;
+/* Enhanced filter styles */
+.MuiFormControl-root .MuiOutlinedInput-root {
+    background-color: white !important;
     border-radius: 12px !important;
     transition: all 0.3s ease !important;
-    background-color: transparent !important;
 }
 
-.grid-action-item:hover {
-    transform: translateY(-2px);
-    background-color: rgba(66, 153, 225, 0.08) !important;
+.dark-mode .MuiFormControl-root .MuiOutlinedInput-root {
+    background-color: rgba(30, 41, 59, 0.8) !important;
 }
 
-.action-icon {
-    font-size: 1.25rem !important;
-    transition: all 0.2s ease !important;
+.MuiFormControl-root:hover .MuiOutlinedInput-root {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07) !important;
+    transform: translateY(-2px) !important;
 }
 
-.edit-icon {
-    color: #4299e1 !important;
+.dark-mode .MuiFormControl-root:hover .MuiOutlinedInput-root {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-.delete-icon {
-    color: #f56565 !important;
+/* Enhanced view mode buttons */
+.view-selector {
+    background: rgba(244, 244, 248, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+    border: 1px solid rgba(229, 231, 235, 0.7) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+    padding: 4px !important;
 }
 
-/* Tooltip Styling */
-.MuiTooltip-tooltip {
-    background-color: rgba(45, 55, 72, 0.95) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 8px !important;
-    padding: 8px 16px !important;
-    font-size: 0.75rem !important;
-    font-weight: 500 !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+.dark-mode .view-selector {
+    background: rgba(30, 41, 59, 0.5) !important;
+    border-color: rgba(51, 65, 85, 0.7) !important;
 }
 
-.dark-mode .MuiTooltip-tooltip {
-    background-color: rgba(237, 242, 247, 0.95) !important;
-    color: #2d3748 !important;
+.view-button {
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-.MuiTooltip-arrow {
-    color: rgba(45, 55, 72, 0.9) !important;
+.view-button.active {
+    background: white !important;
+    color: #7c3aed !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
-.dark-mode .MuiTooltip-arrow {
-    color: rgba(237, 242, 247, 0.9) !important;
+.dark-mode .view-button.active {
+    background: rgba(51, 65, 85, 0.9) !important;
+    color: #8b5cf6 !important;
 }
 
-/* DataGrid Cell Improvements */
-.MuiDataGrid-cell {
-    padding: 16px !important;
-    font-size: 0.95rem !important;
+.view-button.active::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 15px !important;
+    height: 2px !important;
+    background: currentColor !important;
+    border-radius: 2px !important;
 }
 
-.dark-mode .MuiDataGrid-cell {
-    border-color: #4a5568 !important;
-    color: #e2e8f0 !important;
+/* Improved list view */
+.MuiListItem-root {
+    transition: all 0.3s ease !important;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5) !important;
 }
 
-.MuiDataGrid-row:hover {
-    background-color: rgba(66, 153, 225, 0.04) !important;
+.MuiListItem-root:hover {
+    background-color: rgba(241, 245, 249, 0.7) !important;
+    transform: translateX(4px) !important;
 }
 
-.dark-mode .MuiDataGrid-row:hover {
-    background-color: rgba(66, 153, 225, 0.08) !important;
+.dark-mode .MuiListItem-root:hover {
+    background-color: rgba(30, 41, 59, 0.7) !important;
 }
 
-/* Dialog Styling */
-.profile-dialog .MuiDialog-paper {
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    animation: dialogSlideIn 0.3s ease-out;
+/* Enhanced animations */
+@keyframes shine {
+    0% {
+        background-position: -100px;
+    }
+    40%, 100% {
+        background-position: 140px;
+    }
 }
 
-@keyframes dialogSlideIn {
-    from {
-        transform: translateY(-20px) scale(0.95);
+.profile-card:hover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shine 3s infinite linear;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.dark-mode .profile-card:hover::before {
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(241, 245, 249, 0.8);
+    border-radius: 8px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.7);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.7);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.9);
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.8);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .profiles-container {
+        padding: 1.25rem !important;
+    }
+    
+    .profiles-header {
+        padding: 14px 18px !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+    
+    .search-container, .MuiFormControl-root {
+        width: 100% !important;
+    }
+    
+    .create-button {
+        width: 100% !important;
+    }
+}
+
+/* No results container */
+.no-results-container {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    padding: 40px 20px !important;
+    text-align: center !important;
+    border: 1px solid rgba(229, 231, 235, 0.7) !important;
+    animation: fadeIn 0.5s ease-out !important;
+}
+
+.dark-mode .no-results-container {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%) !important;
+    border-color: rgba(51, 65, 85, 0.7) !important;
+}
+
+.no-results-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 80px !important;
+    height: 80px !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07) !important;
+    margin-bottom: 24px !important;
+    color: #9ca3af !important;
+}
+
+.dark-mode .no-results-icon {
+    background: rgba(51, 65, 85, 0.8) !important;
+    color: #cbd5e1 !important;
+}
+
+/* Profile modal improvements */
+.profile-modal-paper {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2) !important;
+    background: white !important;
+}
+
+.dark-mode .profile-modal-paper {
+    background: rgba(30, 41, 59, 0.95) !important;
+}
+
+.profile-header-gradient {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    padding: 40px 20px 80px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.profile-header-gradient::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E") !important;
+    background-size: 40px 40px !important;
+    opacity: 0.5 !important;
+    z-index: 0 !important;
+}
+
+/* Dark mode improvements */
+.dark-mode .status-badge.active, .dark-mode .MuiChip-root[data-status="active"] {
+    background: linear-gradient(135deg, rgba(6, 95, 70, 0.2) 0%, rgba(6, 95, 70, 0.1) 100%) !important;
+    border-color: rgba(5, 150, 105, 0.4) !important;
+    color: #34d399 !important;
+}
+
+.dark-mode .status-badge.inactive, .dark-mode .MuiChip-root[data-status="inactive"] {
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.2) 0%, rgba(185, 28, 28, 0.1) 100%) !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+    color: #f87171 !important;
+}
+
+/* Profile name styling */
+.profile-card h6 {
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: inline-block;
+    font-weight: 600 !important;
+}
+
+.dark-mode .profile-card h6 {
+    background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Loading states */
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.loading-skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite linear;
+    border-radius: 4px;
+    height: 20px;
+    margin-bottom: 8px;
+}
+
+.dark-mode .loading-skeleton {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200px 100%;
+}
+
+/* Top floating message */
+.floating-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 16px 24px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.5s ease-out forwards;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 90%;
+}
+
+.dark-mode .floating-message {
+    background: #1e293b;
+}
+
+@keyframes slideDown {
+    0% {
+        transform: translate(-50%, -100%);
         opacity: 0;
     }
-    to {
-        transform: translateY(0) scale(1);
+    100% {
+        transform: translate(-50%, 0);
         opacity: 1;
     }
 }
 
-.dialog-title {
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    border-bottom: 1px solid #e2e8f0;
-    padding: 1.5rem 2rem !important;
+/* Success message */
+.floating-message.success {
+    border-left: 4px solid #10b981;
 }
 
-.dialog-content {
-    padding: 2rem !important;
+/* Error message */
+.floating-message.error {
+    border-left: 4px solid #ef4444;
 }
 
-.profile-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+/* Warning message */
+.floating-message.warning {
+    border-left: 4px solid #f59e0b;
 }
 
-.form-field {
-    margin-bottom: 0 !important;
+/* Info message */
+.floating-message.info {
+    border-left: 4px solid #3b82f6;
 }
 
-.form-field .MuiOutlinedInput-root {
-    border-radius: 12px;
-    transition: all 0.3s ease;
+/* Animations for cards */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.form-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-    border-color: #4299e1;
-    box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
+/* Apply staggered animation to cards */
+.profile-card {
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
-.description-field textarea {
-    min-height: 100px;
+@media (prefers-reduced-motion: no-preference) {
+    .profile-card:nth-child(1) { animation-delay: 0.05s; }
+    .profile-card:nth-child(2) { animation-delay: 0.1s; }
+    .profile-card:nth-child(3) { animation-delay: 0.15s; }
+    .profile-card:nth-child(4) { animation-delay: 0.2s; }
+    .profile-card:nth-child(5) { animation-delay: 0.25s; }
+    .profile-card:nth-child(6) { animation-delay: 0.3s; }
+    .profile-card:nth-child(7) { animation-delay: 0.35s; }
+    .profile-card:nth-child(8) { animation-delay: 0.4s; }
 }
 
-.modules-title {
-    margin: 1rem 0 !important;
-    color: #2d3748;
-    font-weight: 600 !important;
+/* Improved form inputs */
+.MuiInputBase-root {
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
 }
 
-.dark-mode .modules-title {
-    color: #e2e8f0;
+.MuiInputBase-root:hover, .MuiInputBase-root.Mui-focused {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-2px) !important;
 }
 
-.error-message {
-    margin-bottom: 1rem;
-}
-
-.modules-group {
-    background: #fff;
-    border-radius: 16px;
-    padding: 1rem;
-    border: 1px solid #e3e8f7;
-    transition: all 0.3s ease;
-    gap: 0.5rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.modules-group:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
-.module-section {
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e3e8f7;
-}
-
-.dark-mode .module-section {
-    border-bottom: 1px solid #4a5568;
-}
-
-.module-section:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-.module-control {
-    margin-left: 0 !important;
-}
-
-.module-label {
-    font-weight: 600 !important;
-    color: #2d3748;
-}
-
-.dark-mode .module-label {
-    color: #e2e8f0;
-}
-
-.submodules-section {
-    margin-left: 2rem;
-    margin-top: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.submodule-control {
-    margin-left: 0 !important;
-}
-
-.submodule-label {
-    color: #4a5568;
-}
-
-.dark-mode .submodule-label {
-    color: #a0aec0;
-}
-
-.dialog-actions {
-    padding: 1.5rem 2rem !important;
-    background: #f7fafc;
-    border-top: 1px solid #e2e8f0;
-}
-
-.dark-mode .dialog-actions {
-    background: #2d3748;
-    border-top: 1px solid #4a5568;
-}
-
-.submit-button {
-    background-color: #7c3aed !important;
-    color: #fff !important;
-    padding: 0.5rem 2rem !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-}
-
-.submit-button:hover {
-    background-color: #a78bfa !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2) !important;
-}
-
-.cancel-button {
-    color: #4a5568 !important;
-    margin-right: 1rem !important;
-}
-
-.dark-mode .cancel-button {
-    color: #a0aec0 !important;
-}
-
-.cancel-button:hover {
-    background-color: #edf2f7 !important;
-}
-
-.dark-mode .cancel-button:hover {
-    background-color: #4a5568 !important;
-}
-
-/* Create Button Styling */
-.create-button {
-    background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%) !important;
-    border-radius: 24px !important;
-    padding: 8px 16px !important;
-    height: 38px !important;
-    color: white !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2) !important;
-    transition: all 0.2s ease !important;
-    text-transform: none !important;
-}
-
-.create-button:hover {
-    background: linear-gradient(90deg, #6d28d9 0%, #5b21b6 100%) !important;
-    box-shadow: 0 3px 8px rgba(124, 58, 237, 0.3) !important;
-    transform: translateY(-1px) !important;
-}
-
-/* DataGrid Customization */
-.MuiDataGrid-root {
-    border: none !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-}
-
-.MuiDataGrid-main {
-    width: 100% !important;
-}
-
-.MuiDataGrid-virtualScroller {
-    width: 100% !important;
-}
-
-.MuiDataGrid-virtualScrollerContent {
-    width: 100% !important;
-}
-
-.MuiDataGrid-virtualScrollerRenderZone {
-    width: 100% !important;
-}
-
-.MuiDataGrid-columnHeaders {
-    background-color: #f8fafc !important;
-    border-bottom: 2px solid #e2e8f0 !important;
-    min-height: 56px !important;
-}
-
-.dark-mode .MuiDataGrid-columnHeaders {
-    background-color: #2d3748 !important;
-    border-bottom: 2px solid #4a5568 !important;
-}
-
-.MuiDataGrid-columnHeaderTitle {
-    font-weight: 600 !important;
-    color: #2d3748 !important;
-    font-size: 0.95rem !important;
-}
-
-.dark-mode .MuiDataGrid-columnHeaderTitle {
-    color: #e2e8f0 !important;
-}
-
-.MuiDataGrid-cell {
-    border-bottom: 1px solid #e2e8f0 !important;
-    padding: 16px !important;
-    font-size: 0.95rem !important;
-    color: #4a5568 !important;
-}
-
-.dark-mode .MuiDataGrid-cell {
-    border-color: #4a5568 !important;
-    color: #e2e8f0 !important;
+.dark-mode .MuiInputBase-root:hover, .dark-mode .MuiInputBase-root.Mui-focused {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Style des cellules de nom */

@@ -121,25 +121,46 @@ const Users = () => {
     const loadUsers = async () => {
         try {
             const allUsers = await userService.getAllUsers();
-            console.log(allUsers);
-            const sortedUsers = allUsers.map(user => ({
-                ...user,
-                id: user.id || user.email,
-                fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
-                firstName: user.first_name,
-                lastName: user.last_name,
-                profileId: user.profile_id,
-                profile: user.profile,
-                status: user.status || 'active'
-            })).sort((a, b) => {
+            console.log('Raw users from API:', allUsers);
+            const sortedUsers = allUsers.map(user => {
+                // Identifier et normaliser profileId
+                let profileId = null;
+                if (user.profile_id) {
+                    profileId = typeof user.profile_id === 'string' 
+                        ? parseInt(user.profile_id, 10) 
+                        : user.profile_id;
+                } else if (user.profile && typeof user.profile === 'number') {
+                    profileId = user.profile;
+                } else if (user.profile && typeof user.profile === 'object' && user.profile.id) {
+                    profileId = user.profile.id;
+                }
+                
+                console.log(`User ${user.id || user.email} processed profile_id:`, profileId);
+                
+                // Déterminer le profil correspondant
+                const userProfile = profileId 
+                    ? profiles.find(p => p.id === profileId) 
+                    : null;
+                    
+                return {
+                    ...user,
+                    id: user.id || user.email,
+                    fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    profileId: profileId,
+                    profile: userProfile || null,
+                    status: user.status || 'active'
+                };
+            }).sort((a, b) => {
                 return (a.firstName || '').localeCompare(b.firstName || '');
             });
 
-            console.log("Sorted Users:", sortedUsers);
+            console.log("Sorted Users with processed profiles:", sortedUsers);
 
             setUsers(sortedUsers);
         } catch (error) {
-            console.error('Erreur lors du chargement des utilisateurs:', error);
+            console.error('Erreur lors du chargement des utilisateurs:', error.message);
         }
     };
 
@@ -199,6 +220,9 @@ const Users = () => {
         if (!user.lastName?.trim()) errors.lastName = t('users.lastNameRequired');
         if (!user.email?.trim()) errors.email = t('users.emailRequired');
         
+        // Validation optionnelle du profil - décommenter pour la rendre obligatoire
+        // if (!user.profileId) errors.profileId = t('users.profileRequired');
+        
         // Vérifier le mot de passe uniquement lors de la création ou s'il est fourni lors de la mise à jour
         if (!editingUser) {
             if (!user.password?.trim()) errors.password = t('users.passwordRequired');
@@ -228,13 +252,25 @@ const Users = () => {
 
     const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;
-        setNewUser(prev => ({
-            ...prev,
-            [name]: value,
-            ...(name === 'profileId' && {
-                profile: profiles.find(p => p.id === value) || null
-            })
-        }));
+        
+        // Spécial handling for profileId
+        if (name === 'profileId') {
+            console.log('Profile ID changed to:', value);
+            const selectedProfile = profiles.find(p => p.id.toString() === value);
+            console.log('Selected profile:', selectedProfile);
+            
+            setNewUser(prev => ({
+                ...prev,
+                [name]: value,
+                profile: selectedProfile || null
+            }));
+        } else {
+            setNewUser(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+        
         if (formErrors[name]) {
             setFormErrors(prev => ({
                 ...prev,
@@ -253,12 +289,19 @@ const Users = () => {
         }
 
         try {
+            // Préparer les données utilisateur à envoyer
+            const profileId = newUser.profileId ? parseInt(newUser.profileId, 10) : null;
+            
+            console.log('Profile ID for submission:', profileId);
+            console.log('Selected profile from list:', 
+                profileId ? profiles.find(p => p.id === profileId) : null);
+            
             const userToSave = {
                 email: newUser.email,
                 password: newUser.password,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
-                profileId: newUser.profileId || null,
+                profileId: profileId,
                 status: newUser.status || 'ACTIVE',
                 phone: newUser.phone
             };
@@ -273,25 +316,21 @@ const Users = () => {
             }
             
             if (savedUser) {
-                setUsers(prevUsers => {
-                    if (editingUser !== null) {
-                        return prevUsers.map((user, index) => 
-                            index === editingUser ? {
-                                ...savedUser,
-                                fullName: `${savedUser.first_name || ''} ${savedUser.last_name || ''}`.trim()
-                            } : user
-                        );
-                    }
-                    return [...prevUsers, {
-                        ...savedUser,
-                        fullName: `${savedUser.first_name || ''} ${savedUser.last_name || ''}`.trim()
-                    }];
-                });
+                // Pour être sûr que nous avons le profile correctement chargé
+                const userProfile = profileId 
+                    ? profiles.find(p => p.id === profileId) 
+                    : null;
+                    
+                console.log('User saved with profile:', userProfile);
+                console.log('Saved user data from API:', savedUser);
+                
+                // Recharger les utilisateurs pour avoir les données à jour
+                await loadUsers();
+                
                 setNewUser(emptyUser);
                 setEditingUser(null);
                 setFormErrors({});
                 setOpenDialog(false);
-                loadUsers();
             }
         } catch (error) {
             console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
@@ -302,10 +341,36 @@ const Users = () => {
     const handleEdit = (id) => {
         const user = users.find(u => u.id === id);
         if (user) {
+            console.log('Editing user:', user);
+            console.log('User profile:', user.profile);
+            console.log('User profile_id:', user.profileId);
+            
+            // Extraire et normaliser l'ID du profil à partir de toutes les sources possibles
+            let profileId = null;
+            if (user.profileId) {
+                profileId = user.profileId;
+            } else if (user.profile_id) {
+                profileId = user.profile_id;
+            } else if (user.profile && typeof user.profile === 'number') {
+                profileId = user.profile;
+            } else if (user.profile && typeof user.profile === 'object' && user.profile.id) {
+                profileId = user.profile.id;
+            }
+            
+            console.log('Extracted profile ID for editing:', profileId);
+            
+            // Vérifier si le profil existe
+            const userProfile = profileId ? profiles.find(p => p.id === profileId) : null;
+            console.log('Corresponding profile object:', userProfile);
+            
             setEditingUser(users.findIndex(u => u.id === id));
             setNewUser({
                 ...user,
-                profileId: user.profile?.id || ''
+                firstName: user.firstName || user.first_name || '',
+                lastName: user.lastName || user.last_name || '',
+                profileId: profileId ? profileId.toString() : '', // Convertir en chaîne pour le composant Select
+                password: '',
+                confirmPassword: ''
             });
             setOpenDialog(true);
         }
@@ -1155,7 +1220,7 @@ const Users = () => {
                                 <InputLabel>{t('users.profile')}</InputLabel>
                                 <Select
                                     name="profileId"
-                                    value={newUser.profileId}
+                                    value={newUser.profileId || ''}
                                     onChange={handleInputChange}
                                     label={t('users.profile')}
                                     startAdornment={
@@ -1166,7 +1231,7 @@ const Users = () => {
                                 >
                                     <MenuItem value="">{t('users.selectProfile')}</MenuItem>
                                     {profiles.map((profile) => (
-                                        <MenuItem key={profile.id} value={profile.id}>
+                                        <MenuItem key={profile.id} value={profile.id.toString()}>
                                             {profile.name}
                                         </MenuItem>
                                     ))}

@@ -17,6 +17,7 @@
     "browserify-zlib": "^0.2.0",
     "cors": "^2.8.5",
     "crypto-browserify": "^3.12.1",
+    "http-proxy-middleware": "^3.0.5",
     "https-browserify": "^1.0.0",
     "i18next": "^25.0.1",
     "i18next-browser-languagedetector": "^8.0.5",

@@ -73,6 +73,7 @@ export const en = {
   'common.logout': 'Logout',
   'users.fullName': 'Full Name',
   'users.actionss': 'Actions',
+  'profiles.clickToView': 'Click to view',
   
   // Modules
   'modules.administration.title': 'Administration',
@@ -138,7 +139,6 @@ export const en = {
 'users.invalidEmail': 'Invalid email',
 'users.emailExists': 'This email already exists',
 'users.passwordRequired': 'Password is required',
-'users.confirmPasswordRequired': 'Password confirmation is required',
 'users.export': 'Export',
 'users.search': 'Search',
 'users.actions': 'Actions',

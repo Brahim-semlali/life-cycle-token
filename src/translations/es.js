@@ -55,6 +55,7 @@ export const es = {
   'profiles.actions': 'Acciones',
   'profiles.status.active': 'Activo',
   'profiles.status.inactive': 'Inactivo',
+  'profiles.clickToView': 'Haga clic para ver',
   
   // Users
   'users.title': 'Usuarios',

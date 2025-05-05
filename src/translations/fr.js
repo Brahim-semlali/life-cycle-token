@@ -60,6 +60,7 @@ export const fr = {
   'common.logout': 'Deconnexion',
   'users.fullName': 'Nom complet',
   'users.actionss': 'Actions',
+  'profiles.clickToView': 'Cliquez pour voir',
 
 
   // Users
@@ -104,7 +105,6 @@ export const fr = {
   'users.errorUpdate': 'Erreur lors de la mise à jour de l\'utilisateur',
   'users.errorDelete': 'Erreur lors de la suppression de l\'utilisateur',
   'users.confirmPassword': 'Confirmer le mot de passe',
-  'users.confirmPasswordRequired': 'La confirmation du mot de passe est requise',
   'users.passwordsDoNotMatch': 'Les mots de passe ne correspondent pas',
   
   // Security

@@ -121,6 +121,27 @@ export const getProfileById = (id) => {
     return profiles.find(profile => profile.id === id);
 };
 
+// Récupérer les utilisateurs associés à un profil
+export const getUsersByProfileId = async (profileId) => {
+    try {
+        // Import dynamique pour éviter les problèmes de dépendance circulaire
+        const userServiceModule = await import('./UserService');
+        const userService = userServiceModule.default;
+        
+        const allUsers = await userService.getAllUsers();
+        return allUsers.filter(user => {
+            // Considérer plusieurs façons dont le profile_id peut être présent
+            if (user.profileId === profileId) return true;
+            if (user.profile_id === profileId) return true;
+            if (user.profile && typeof user.profile === 'object' && user.profile.id === profileId) return true;
+            return false;
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des utilisateurs par profil:', error);
+        return [];
+    }
+};
+
 // Charger tous les modules et menus
 export const loadModulesAndMenus = async () => {
     try {
@@ -358,5 +379,6 @@ export default {
     ensureProfileExists,
     loadModulesAndMenus,
     loadMenus,
-    convertModulesToApiFormat
+    convertModulesToApiFormat,
+    getUsersByProfileId
 };

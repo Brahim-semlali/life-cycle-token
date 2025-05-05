@@ -10,7 +10,8 @@ import {
   deleteProfile,
   initializeProfiles,
   loadModulesAndMenus,
-  convertModulesToApiFormat
+  convertModulesToApiFormat,
+  getUsersByProfileId
 } from "../../../services/ProfileService";
 import { 
   DataGrid, 
@@ -80,7 +81,8 @@ import {
   CreditCard as BillingIcon,
   FilterList as FilterListIcon,
   Check as CheckIcon,
-  IndeterminateCheckBox as IndeterminateCheckBoxIcon
+  IndeterminateCheckBox as IndeterminateCheckBoxIcon,
+  People
 } from '@mui/icons-material';
 import "./Profiles.css";
 
@@ -175,6 +177,10 @@ const Profiles = () => {
     // Ajouter un nouvel état pour la boîte de dialogue de confirmation de suppression
     const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
     const [profileToDelete, setProfileToDelete] = useState(null);
+
+    // État pour stocker les utilisateurs associés au profil sélectionné
+    const [profileUsers, setProfileUsers] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
 
     // Déclaration des gestionnaires d'événements avant leur utilisation
     const handleRowClick = useCallback((params) => {
@@ -981,7 +987,7 @@ const Profiles = () => {
     }, [profiles, searchQuery, statusFilter, moduleFilter]);
 
     // Fonction pour ouvrir le modal avec les détails du profil
-    const handleProfileClick = (profile, event) => {
+    const handleProfileClick = async (profile, event) => {
         // Don't open the modal if the click is on a button or inside a button element
         if (event) {
             const targetElement = event.target;
@@ -1003,11 +1009,26 @@ const Profiles = () => {
         
         setSelectedProfileDetails(profile);
         setProfileModal(true);
+        
+        // Récupérer les utilisateurs associés à ce profil
+        setLoadingUsers(true);
+        try {
+            const users = await getUsersByProfileId(profile.id);
+            setProfileUsers(users);
+        } catch (error) {
+            console.error('Erreur lors de la récupération des utilisateurs du profil:', error);
+            setProfileUsers([]);
+        } finally {
+            setLoadingUsers(false);
+        }
     };
 
     // Fonction pour fermer le modal
     const handleCloseProfileModal = () => {
         setProfileModal(false);
+        setSelectedProfileDetails(null);
+        setProfileUsers([]);
+        setLoadingUsers(false);
     };
 
     // Modification du code où les icônes sont utilisées directement sans leurs alias
@@ -1059,19 +1080,31 @@ const Profiles = () => {
             }}
         >
             <Box className="profiles-header" sx={{
-                backgroundColor: 'white', 
-                borderRadius: '12px',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
-                padding: '16px 20px',
-                marginBottom: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                backdropFilter: 'blur(10px)',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                padding: '20px 24px',
+                marginBottom: '24px',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                border: '1px solid rgba(229, 231, 235, 0.7)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.09)',
+                    transform: 'translateY(-2px)'
+                }
             }}>
                 <Typography variant="h4" component="h1" sx={{
-                    color: '#3968d0',
-                    fontSize: '22px',
-                    fontWeight: 600
+                    background: selectedProfiles.length > 0 
+                        ? 'linear-gradient(90deg, #ef4444 0%, #f97316 100%)' 
+                        : 'linear-gradient(90deg, #3968d0 0%, #4f46e5 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: 700,
+                    fontSize: '24px'
                 }}>
                     {selectedProfiles.length > 0 
                         ? `${selectedProfiles.length} ${t('profiles.selected')}` 
@@ -1091,19 +1124,28 @@ const Profiles = () => {
                                 <Box sx={{ 
                                     display: 'flex',
                                     alignItems: 'center',
-                                    borderRadius: '50px',
-                                    border: '1px solid #e5e7eb',
-                                    backgroundColor: '#f9fafb',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(229, 231, 235, 0.8)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                    backdropFilter: 'blur(8px)',
                                     padding: '0',
-                                    height: '40px',
-                                    width: '100%'
+                                    height: '42px',
+                                    width: '100%',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                                        transform: 'translateY(-2px)',
+                                        borderColor: 'rgba(99, 102, 241, 0.3)'
+                                    }
                                 }}>
                                     <Box sx={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 
-                                        padding: '0 12px' 
+                                        padding: '0 12px',
+                                        color: '#9ca3af'
                                     }}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                         </svg>
@@ -1135,17 +1177,24 @@ const Profiles = () => {
                                     label="Status"
                                     sx={{ 
                                         fontSize: '0.875rem',
-                                        height: '40px',
-                                        borderRadius: '8px',
-                                        backgroundColor: '#f9fafb',
+                                        height: '42px',
+                                        borderRadius: '12px',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                        backdropFilter: 'blur(8px)',
                                         '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#e5e7eb'
+                                            borderColor: 'rgba(229, 231, 235, 0.8)'
                                         },
                                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#d1d5db'
+                                            borderColor: 'rgba(99, 102, 241, 0.3)'
                                         },
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                             borderColor: '#6366f1'
+                                        },
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                                            transform: 'translateY(-2px)'
                                         }
                                     }}
                                     startAdornment={
@@ -1197,17 +1246,24 @@ const Profiles = () => {
                                     label="Module"
                                     sx={{ 
                                         fontSize: '0.875rem',
-                                        height: '40px',
-                                        borderRadius: '8px',
-                                        backgroundColor: '#f9fafb',
+                                        height: '42px',
+                                        borderRadius: '12px',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                                        backdropFilter: 'blur(8px)',
                                         '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#e5e7eb'
+                                            borderColor: 'rgba(229, 231, 235, 0.8)'
                                         },
                                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#d1d5db'
+                                            borderColor: 'rgba(99, 102, 241, 0.3)'
                                         },
                                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                                             borderColor: '#6366f1'
+                                        },
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                                            transform: 'translateY(-2px)'
                                         }
                                     }}
                                     startAdornment={
@@ -1239,11 +1295,13 @@ const Profiles = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                backgroundColor: '#f4f4f8',
-                                borderRadius: '30px',
+                                backgroundColor: 'rgba(244, 244, 248, 0.7)',
+                                backdropFilter: 'blur(5px)',
+                                borderRadius: '12px',
                                 padding: '4px',
                                 boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-                                position: 'relative'
+                                position: 'relative',
+                                border: '1px solid rgba(229, 231, 235, 0.7)'
                             }}
                         >
                         <Button
@@ -1266,11 +1324,26 @@ const Profiles = () => {
                                     },
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '4px'
+                                    gap: '4px',
+                                    position: 'relative'
                             }}
                         >
                                 <GridViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
                                 <span>Grid</span>
+                                {viewMode === 'grid' && (
+                                    <Box 
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: '5px',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: '15px',
+                                            height: '2px',
+                                            backgroundColor: 'currentColor',
+                                            borderRadius: '2px'
+                                        }}
+                                    />
+                                )}
                         </Button>
                         <Button
                                 className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
@@ -1292,11 +1365,26 @@ const Profiles = () => {
                                     },
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '4px'
+                                    gap: '4px',
+                                    position: 'relative'
                             }}
                         >
                                 <ListViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
                                 <span>List</span>
+                                {viewMode === 'list' && (
+                                    <Box 
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: '5px',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: '15px',
+                                            height: '2px',
+                                            backgroundColor: 'currentColor',
+                                            borderRadius: '2px'
+                                        }}
+                                    />
+                                )}
                         </Button>
                     </Box>
                     )}
@@ -1316,19 +1404,20 @@ const Profiles = () => {
                                 sx={{
                                     background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
                                     color: 'white',
-                                    borderRadius: '8px',
+                                    borderRadius: '12px',
                                     textTransform: 'none',
-                                    fontWeight: 500,
+                                    fontWeight: 600,
                                     py: 1,
                                     px: 2.5,
                                     fontSize: '0.875rem',
-                                    minHeight: '38px',
-                                    boxShadow: '0 3px 6px rgba(239, 68, 68, 0.3)',
+                                    minHeight: '42px',
+                                    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.25)',
                                     '&:hover': {
                                         background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
-                                        boxShadow: '0 4px 10px rgba(239, 68, 68, 0.4)',
-                                        transform: 'translateY(-1px)'
-                                    }
+                                        boxShadow: '0 6px 15px rgba(239, 68, 68, 0.35)',
+                                        transform: 'translateY(-2px)'
+                                    },
+                                    transition: 'all 0.3s ease'
                                 }}
                         >
                             {t('profiles.deleteSelected')} ({selectedProfiles.length})
@@ -1338,18 +1427,22 @@ const Profiles = () => {
                                 onClick={() => setSelectedProfiles([])}
                                 startIcon={<CancelIcon sx={{ fontSize: '1rem' }} />}
                                 sx={{
-                                    borderColor: '#e2e8f0',
+                                    borderColor: 'rgba(226, 232, 240, 0.8)',
                                     color: '#4a5568',
-                                    '&:hover': {
-                                        borderColor: '#cbd5e0',
-                                        backgroundColor: 'rgba(74, 85, 104, 0.04)',
-                                    },
-                                    height: '38px',
+                                    borderRadius: '12px',
+                                    height: '42px',
                                     px: 2,
                                     fontSize: '0.85rem',
                                     fontWeight: 500,
-                                    borderRadius: '6px',
-                                    textTransform: 'none'
+                                    textTransform: 'none',
+                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                                    '&:hover': {
+                                        borderColor: '#cbd5e0',
+                                        backgroundColor: 'rgba(74, 85, 104, 0.04)',
+                                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                        transform: 'translateY(-2px)'
+                                    },
+                                    transition: 'all 0.3s ease'
                                 }}
                             >
                                 {t('profiles.cancelSelection')}
@@ -1370,15 +1463,34 @@ const Profiles = () => {
                         }}
                         className="create-button"
                         sx={{
-                            background: 'linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)',
-                            borderRadius: '24px',
-                            padding: '8px 20px',
-                            minHeight: '38px',
-                            boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                            background: 'linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%)',
+                            borderRadius: '12px',
+                            padding: '10px 20px',
+                            minHeight: '42px',
+                            boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
                             textTransform: 'none',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease'
+                            },
                             '&:hover': {
-                                background: 'linear-gradient(90deg, #6d28d9 0%, #5b21b6 100%)',
-                                boxShadow: '0 3px 8px rgba(124, 58, 237, 0.3)',
+                                background: 'linear-gradient(45deg, #6d28d9 0%, #7c3aed 100%)',
+                                boxShadow: '0 6px 20px rgba(124, 58, 237, 0.4)',
+                                transform: 'translateY(-2px)'
+                            },
+                            '&:hover::after': {
+                                opacity: 1
                             }
                         }}
                     >
@@ -1433,29 +1545,112 @@ const Profiles = () => {
                     flexDirection: 'column',
                     justifyContent: 'center', 
                     alignItems: 'center', 
-                    height: '200px',
-                    padding: '20px',
-                    backgroundColor: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    margin: '20px 0'
+                    height: '300px',
+                    padding: '40px 20px',
+                    background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+                    borderRadius: '16px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                    margin: '20px 0',
+                    border: '1px solid rgba(229, 231, 235, 0.7)',
+                    transition: 'all 0.3s ease',
+                    animation: 'fadeIn 0.5s ease-out'
                 }}
                 className="no-results-container"
                 >
-                    <Box className="no-results-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <Box 
+                        className="no-results-icon"
+                        sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '80px',
+                            height: '80px',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(8px)',
+                            borderRadius: '50%',
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.07)',
+                            marginBottom: '24px',
+                            color: '#9ca3af',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            border: '1px solid rgba(229, 231, 235, 0.7)',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: '-50%',
+                                left: '-50%',
+                                width: '200%',
+                                height: '200%',
+                                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%)',
+                                transform: 'rotate(45deg)',
+                                animation: 'shine 3s infinite linear',
+                                pointerEvents: 'none'
+                            }
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             <line x1="11" y1="8" x2="11" y2="14"></line>
                             <line x1="8" y1="11" x2="14" y2="11"></line>
                         </svg>
                     </Box>
-                    <Typography variant="h6" gutterBottom sx={{ color: '#6b7280' }}>
-                        Aucun profil trouvé
+                    <Typography variant="h6" gutterBottom sx={{ 
+                        fontWeight: 600,
+                        color: '#4f46e5',
+                        background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                        mb: 1.5,
+                        letterSpacing: '0.3px'
+                    }}>
+                        No profiles found
                     </Typography>
-                    <Typography variant="body2" sx={{ textAlign: 'center', color: '#9ca3af' }}>
-                        {searchQuery ? 'Aucun profil ne correspond à votre recherche.' : 'Aucun profil disponible.'}
+                    <Typography variant="body2" sx={{ 
+                        textAlign: 'center', 
+                        color: '#6b7280',
+                        maxWidth: '350px',
+                        mb: 3
+                    }}>
+                        {searchQuery 
+                            ? 'No profiles match your search criteria. Try adjusting your filters or search term.' 
+                            : 'There are no profiles available. Create a new profile to get started.'}
                     </Typography>
+
+                    {!searchQuery && (
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                setEditingProfile(null);
+                                setNewProfile({
+                                    name: "",
+                                    description: "",
+                                    status: "active",
+                                    modules: initialModuleState
+                                });
+                                setOpenDialog(true);
+                            }}
+                            sx={{
+                                background: 'linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%)',
+                                borderRadius: '12px',
+                                padding: '10px 20px',
+                                minHeight: '42px',
+                                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+                                textTransform: 'none',
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #6d28d9 0%, #7c3aed 100%)',
+                                    boxShadow: '0 6px 20px rgba(124, 58, 237, 0.4)',
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                            startIcon={<AddIcon />}
+                        >
+                            Create your first profile
+                        </Button>
+                    )}
                 </Box>
             ) : (
                 viewMode === 'grid' ? (
@@ -1494,7 +1689,7 @@ const Profiles = () => {
                                             }}
                                             sx={{
                                                 backgroundColor: selectedProfiles.includes(profile.id) 
-                                                    ? '#4f46e5' 
+                                                    ? '#ff0303'
                                                     : 'white',
                                                 border: selectedProfiles.includes(profile.id) 
                                                     ? '2px solid #4f46e5' 
@@ -1524,23 +1719,41 @@ const Profiles = () => {
                                     <Card 
                                         sx={{ 
                                             position: 'relative',
-                                            borderRadius: '12px',
-                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                                            transition: 'transform 0.3s, box-shadow 0.3s',
+                                            borderRadius: '16px',
+                                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
+                                            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                                             overflow: 'hidden',
                                             cursor: 'pointer',
                                             height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
+                                            display: 'flex',
+                                            flexDirection: 'column',
                                             border: selectedProfiles.includes(profile.id) 
                                                 ? '2px solid #4f46e5' 
-                                                : '1px solid rgba(226, 232, 240, 0.7)',
+                                                : '1px solid rgba(226, 232, 240, 0.6)',
                                             backgroundColor: selectedProfiles.includes(profile.id) 
                                                 ? 'rgba(79, 70, 229, 0.03)' 
                                                 : 'white',
+                                            '&::before': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                top: '-50%',
+                                                left: '-50%',
+                                                width: '200%',
+                                                height: '200%',
+                                                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%)',
+                                                transform: 'rotate(30deg)',
+                                                opacity: 0,
+                                                transition: 'opacity 0.5s ease',
+                                                zIndex: 1,
+                                                pointerEvents: 'none'
+                                            },
                                             '&:hover': {
-                                                transform: 'translateY(-5px)',
-                                                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
+                                                transform: 'translateY(-8px)',
+                                                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.1)'
+                                            },
+                                            '&:hover::before': {
+                                                opacity: 1,
+                                                animation: 'shine 3s infinite linear'
                                             }
                                         }}
                                         className="profile-card"
@@ -1550,28 +1763,41 @@ const Profiles = () => {
                                         display: 'flex', 
                                         flexDirection: 'column', 
                                         alignItems: 'center',
-                                            p: 3,
-                                            flex: 1
+                                        p: 3,
+                                        flex: 1,
+                                        position: 'relative',
+                                        zIndex: 2
                                     }}>
                                         <Avatar
                                             sx={{
-                                                    width: 80,
-                                                    height: 80,
-                                                    mb: 2,
+                                                width: 80,
+                                                height: 80,
+                                                mb: 2,
                                                 bgcolor: getAvatarColor(profile.id),
-                                                    fontSize: '1.8rem',
-                                                    fontWeight: 'bold'
+                                                fontSize: '1.8rem',
+                                                fontWeight: 'bold',
+                                                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.12)',
+                                                border: '3px solid white',
+                                                transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                                '&:hover': {
+                                                    transform: 'scale(1.12)',
+                                                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.18)'
+                                                }
                                             }}
                                         >
                                             {getInitials(profile.name)}
                                         </Avatar>
                                             
                                         <Typography variant="h6" sx={{ 
-                                                fontWeight: '600', 
-                                                mb: 0.5, 
+                                            fontWeight: '600', 
+                                            mb: 0.5, 
                                             textAlign: 'center',
-                                                fontSize: '1.1rem',
-                                                color: '#333'
+                                            fontSize: '1.1rem',
+                                            background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent',
+                                            backgroundClip: 'text',
+                                            display: 'inline-block'
                                         }}>
                                             {profile.name}
                                         </Typography>
@@ -1592,176 +1818,199 @@ const Profiles = () => {
                                         </Typography>
                                     
                                     <Box sx={{ 
-                                            width: '100%',
+                                        width: '100%',
                                         display: 'flex', 
                                         justifyContent: 'center', 
-                                            mb: 2
-            }}>
+                                        mb: 2
+                                    }}>
                                         <Chip
                                             label={profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
-                                                data-status={profile.status?.toLowerCase()}
+                                            data-status={profile.status?.toLowerCase()}
                                             sx={{
-                                                    bgcolor: profile.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
-                                                    color: profile.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
-                                                    fontWeight: '600',
-                                                    py: 0.5,
-                                                    px: 1.5,
-                                                    height: '24px',
-                                                    fontSize: '0.75rem',
-                                                    borderRadius: '4px',
-                                                    border: profile.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
+                                                bgcolor: profile.status?.toLowerCase() === 'active' 
+                                                    ? 'rgba(16, 185, 129, 0.1)' 
+                                                    : 'rgba(239, 68, 68, 0.1)',
+                                                color: profile.status?.toLowerCase() === 'active' ? '#059669' : '#dc2626',
+                                                fontWeight: '600',
+                                                py: 0.5,
+                                                px: 1.5,
+                                                height: '24px',
+                                                fontSize: '0.75rem',
+                                                borderRadius: '12px',
+                                                border: profile.status?.toLowerCase() === 'active' 
+                                                    ? '1px solid rgba(110, 231, 183, 0.6)' 
+                                                    : '1px solid rgba(252, 165, 165, 0.6)',
+                                                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                                                transition: 'all 0.3s ease',
+                                                '&:hover': {
+                                                    transform: 'translateY(-3px)',
+                                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+                                                }
                                             }}
                                         />
                                     </Box>
                                     
-                                            <Box sx={{ width: '100%', mb: 3 }}>
-                                                <Typography variant="subtitle2" sx={{ 
-                                                    fontWeight: '600', 
-                                                    mb: 1, 
-                                                    fontSize: '0.8rem',
-                                                    color: '#666',
-                                                    textTransform: 'uppercase',
-                                                    letterSpacing: '0.5px'
+                                    <Box sx={{ width: '100%', mb: 3 }}>
+                                        <Typography variant="subtitle2" sx={{ 
+                                            fontWeight: '600', 
+                                            mb: 1, 
+                                            fontSize: '0.8rem',
+                                            color: '#666',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
                                         }}>
-                                                    Modules
+                                            Modules
                                         </Typography>
                                                 
                                         <Box sx={{ 
                                             display: 'flex', 
                                             flexWrap: 'wrap', 
-                                                gap: 0.75
+                                            gap: 0.75
                                         }}>
                                             {profile.modules && Array.isArray(profile.modules) && profile.modules.length > 0 ? (
                                                 profile.modules.map((moduleId, index) => {
-                                                        if (index > 2 && profile.modules.length > 3) return null;
+                                                    if (index > 2 && profile.modules.length > 3) return null;
                                                     const module = modules.find(m => m.id === moduleId);
                                                     return (
                                                         <Chip
                                                             key={index}
                                                             label={module ? module.title : `Module ${moduleId}`}
                                                             size="small"
-                    sx={{
-                                                                    bgcolor: '#f5f7fa',
-                                                                    color: '#4b5563',
-                                                                    fontSize: '0.7rem',
-                                                                    height: '22px',
-                                                                borderRadius: '4px',
-                                                                    my: 0.5,
-                                                                    fontWeight: 500,
-                                                                    transition: 'all 0.2s ease'
+                                                            sx={{
+                                                                bgcolor: 'rgba(79, 70, 229, 0.08)',
+                                                                color: '#4f46e5',
+                                                                fontSize: '0.7rem',
+                                                                height: '22px',
+                                                                borderRadius: '6px',
+                                                                my: 0.5,
+                                                                fontWeight: 500,
+                                                                transition: 'all 0.3s ease',
+                                                                border: '1px solid rgba(129, 140, 248, 0.2)',
+                                                                '&:hover': {
+                                                                    bgcolor: 'rgba(79, 70, 229, 0.12)',
+                                                                    transform: 'translateY(-2px)',
+                                                                    boxShadow: '0 4px 8px rgba(79, 70, 229, 0.15)'
+                                                                }
                                                             }}
                                                         />
                                                     );
                                                 })
                                             ) : (
-                                                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                                                     {t('profiles.noModules')}
                                                 </Typography>
                                             )}
-                                                {profile.modules && profile.modules.length > 3 && (
+                                            {profile.modules && profile.modules.length > 3 && (
                                                 <Chip
-                                                        label={`+${profile.modules.length - 3}`}
+                                                    label={`+${profile.modules.length - 3}`}
                                                     size="small"
                                                     sx={{ 
-                                                        backgroundColor: '#f1f5f9', 
+                                                        backgroundColor: 'rgba(148, 163, 184, 0.15)', 
                                                         color: '#64748b',
-                                                            fontSize: '0.7rem',
-                                                            height: '22px',
-                                                        borderRadius: '4px',
-                                                            my: 0.5,
-                                                            fontWeight: 500
+                                                        fontSize: '0.7rem',
+                                                        height: '22px',
+                                                        borderRadius: '6px',
+                                                        my: 0.5,
+                                                        fontWeight: 500,
+                                                        transition: 'all 0.3s ease',
+                                                        '&:hover': {
+                                                            backgroundColor: 'rgba(148, 163, 184, 0.25)',
+                                                            transform: 'translateY(-2px)'
+                                                        }
                                                     }}
                                                 />
                                             )}
-                                                </Box>
                                         </Box>
+                                    </Box>
                                         
-                                            <Box sx={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between', 
-                                                gap: 2, 
-                                                width: '100%', 
-                                                mt: 'auto',
-                                                position: 'relative',
-                                                padding: '12px 16px',
-                                                marginTop: '8px',
-                                                borderTop: '1px solid rgba(229, 231, 235, 0.5)'
-                                            }}>
-                                                <Box sx={{ 
-                                                    position: 'absolute',
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    display: 'flex',
-                                                    justifyContent: 'center',
-                                                    gap: 2,
-                                                    padding: '10px',
-                                                    opacity: 0,
-                                                    transform: 'translateY(10px)',
-                                                    transition: 'all 0.3s ease',
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                                    borderTop: '1px solid rgba(229, 231, 235, 0.8)',
-                                                    zIndex: 2,
-                                                    '.card-container:hover &': {
-                                                        opacity: 1,
-                                                        transform: 'translateY(0)'
-                                                    }
-                                                }} className="action-buttons-container">
-                                                    <IconButton
-                                                        aria-label="Edit Profile"
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        gap: 2, 
+                                        width: '100%', 
+                                        mt: 'auto',
+                                        position: 'relative',
+                                        padding: '12px 16px',
+                                        marginTop: '8px',
+                                        borderTop: '1px solid rgba(229, 231, 235, 0.5)'
+                                    }}>
+                                        <Box sx={{ 
+                                            position: 'absolute',
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            gap: 2,
+                                            padding: '10px',
+                                            opacity: 0,
+                                            transform: 'translateY(10px)',
+                                            transition: 'all 0.3s ease',
+                                            background: 'linear-gradient(to top, white 0%, rgba(255, 255, 255, 0.9) 100%)',
+                                            borderTop: '1px solid rgba(229, 231, 235, 0.7)',
+                                            zIndex: 2,
+                                            '.card-container:hover &': {
+                                                opacity: 1,
+                                                transform: 'translateY(0)'
+                                            }
+                                        }} className="action-buttons-container">
+                                            <IconButton
+                                                aria-label="Edit Profile"
                                                 onClick={(e) => {
-                                                            e.preventDefault();
+                                                    e.preventDefault();
                                                     e.stopPropagation();
                                                     handleEdit(profile.id);
                                                 }}
                                                 sx={{
-                                                            backgroundColor: '#9333ea',
+                                                    background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
                                                     color: 'white',
                                                     borderRadius: '8px',
-                                                            padding: '8px',
+                                                    padding: '8px',
+                                                    boxShadow: '0 4px 10px rgba(147, 51, 234, 0.25)',
                                                     '&:hover': {
-                                                                backgroundColor: '#7e22ce',
-                                                                boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)',
-                                                                transform: 'translateY(-3px)'
-                                                            },
-                                                            transition: 'all 0.2s ease'
+                                                        background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
+                                                        boxShadow: '0 6px 15px rgba(147, 51, 234, 0.35)',
+                                                        transform: 'translateY(-3px)'
+                                                    },
+                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                                                 }}
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton
-                                                        aria-label="Delete Profile"
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton
+                                                aria-label="Delete Profile"
                                                 onClick={(e) => {
-                                                            e.preventDefault();
+                                                    e.preventDefault();
                                                     e.stopPropagation();
                                                     handleDelete(profile.id);
                                                 }}
                                                 sx={{
-                                                            backgroundColor: '#ef4444',
+                                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                                                     color: 'white',
                                                     borderRadius: '8px',
-                                                            padding: '8px',
+                                                    padding: '8px',
+                                                    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.25)',
                                                     '&:hover': {
-                                                                backgroundColor: '#dc2626',
-                                                                boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)',
-                                                                transform: 'translateY(-3px)'
-                                                            },
-                                                            transition: 'all 0.2s ease'
-                                                        }}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                                <Typography variant="body2" color="text.secondary" sx={{ 
-                                                    fontSize: '0.75rem',
-                                                    color: '#6b7280',
-                                                    textAlign: 'center',
-                                                    width: '100%',
-                                                    zIndex: 1
-                                                }}>
-                                                    {t('profiles.clickToView')}
-                                                </Typography>
+                                                        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                                                        boxShadow: '0 6px 15px rgba(239, 68, 68, 0.35)',
+                                                        transform: 'translateY(-3px)'
+                                                    },
+                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
                                         </Box>
+                                        <Typography variant="body2" color="text.secondary" sx={{ 
+                                            fontSize: '0.75rem',
+                                            color: '#6b7280',
+                                            textAlign: 'center',
+                                            width: '100%',
+                                            zIndex: 1
+                                        }}>
+                                            {t('profiles.clickToView')}
+                                        </Typography>
+                                    </Box>
                                     </Box>
                                 </Card>
                                 </Box>
@@ -1959,7 +2208,7 @@ const Profiles = () => {
                                                                 display: 'none' 
                                                             } 
                                                         }}>
-                                                            Edit
+                                                        Edit
                                                         </Box>
                                                     </Button>
                                                     <Button 
@@ -2470,52 +2719,52 @@ const Profiles = () => {
                             {/* Header coloré */}
                             <Box 
                                 className="profile-header-gradient"
-                    sx={{ 
-                                    height: '120px', 
-                                    background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
-                                    position: 'relative',
-                                    borderRadius: '20px 20px 0 0'
-                                }} 
-                            />
-                            
-                            {/* Bouton de fermeture */}
-                            <IconButton 
-                                onClick={handleCloseProfileModal}
-                                className="profile-close-button"
-                                sx={{
-                                    position: 'absolute',
-                                    top: 16,
-                                    right: 16,
-                                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                    color: 'white',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.3)'
-                                    }
-                    }}
-                >
-                                <CancelIcon />
-                            </IconButton>
-                            
-                            {/* Avatar */}
-                            <Avatar
-                                className="profile-avatar"
-                                sx={{
-                                    width: 100,
-                                    height: 100,
-                                    bgcolor: getAvatarColor(selectedProfileDetails.id),
-                                    fontSize: '2.5rem',
-                                    fontWeight: 'bold',
-                                    position: 'absolute',
-                                    top: 70,
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    border: '6px solid white',
-                                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-                                }}
-                            >
-                                {getInitials(selectedProfileDetails.name)}
-                            </Avatar>
-                    </Box>
+                sx={{ 
+                                height: '120px', 
+                                background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+                                position: 'relative',
+                                borderRadius: '20px 20px 0 0'
+                            }} 
+                        />
+                        
+                        {/* Bouton de fermeture */}
+                        <IconButton 
+                            onClick={handleCloseProfileModal}
+                            className="profile-close-button"
+                            sx={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.3)'
+                                }
+                }}
+            >
+                            <CancelIcon />
+                        </IconButton>
+                        
+                        {/* Avatar */}
+                        <Avatar
+                            className="profile-avatar"
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                bgcolor: getAvatarColor(selectedProfileDetails.id),
+                                fontSize: '2.5rem',
+                                fontWeight: 'bold',
+                                position: 'absolute',
+                                top: 70,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                border: '6px solid white',
+                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+                            }}
+                        >
+                            {getInitials(selectedProfileDetails.name)}
+                        </Avatar>
+                </Box>
                         
                         {/* Zone principale défilable */}
                         <Box 
@@ -2585,7 +2834,7 @@ const Profiles = () => {
                                     gap: 1
                                 }}>
                                     <span>Modules et Permissions</span>
-                                                    </Typography>
+                                                </Typography>
                                 
                                 {/* Grid layout pour les modules */}
                                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
@@ -2715,108 +2964,247 @@ const Profiles = () => {
                                                 </Typography>
                                             )}
                         </Box>
-                        </Box>
+
+                        {/* Section des utilisateurs associés au profil */}
+                        <Divider sx={{ my: 3 }} />
                         
-                        {/* Zone des boutons fixes en bas */}
-                        <Box 
-                                        sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'center', 
-                                gap: 2,
-                                py: 3,
-                                px: 4,
-                                borderTop: '1px solid rgba(229, 231, 235, 0.5)',
-                                backgroundColor: 'white',
-                                flexShrink: 0
-                            }}
-                            className="profile-action-buttons-container"
-                        >
-                    <Button 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Close the modal first
-                                    setProfileModal(false);
-                                    // Then handle the edit action with a slight delay to ensure modal is closed
-                                    setTimeout(() => {
-                                        handleEdit(selectedProfileDetails.id);
-                                    }, 50);
-                                }}
-                                startIcon={<EditIcon />}
-                                className="profile-action-button edit-button"
-                                            sx={{ 
-                                    backgroundColor: '#7c3aed',
-                                    color: 'white',
-                                    borderRadius: '10px',
-                                    padding: '10px 24px',
-                                                    fontWeight: 600,
-                                    fontSize: '0.9rem',
-                                    textTransform: 'none',
-                                    boxShadow: '0 4px 6px rgba(124, 58, 237, 0.2)',
-                                    minWidth: '140px',
-                                    '&:hover': {
-                                        backgroundColor: '#6d28d9',
-                                        boxShadow: '0 6px 10px rgba(124, 58, 237, 0.3)'
-                                    }
-                                }}
-                            >
-                                Edit Profile
-                    </Button>
-                    <Button 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Close the modal first
-                                    setProfileModal(false);
-                                    // Then handle the delete action with a slight delay to ensure modal is closed
-                                    setTimeout(() => {
-                                        handleDelete(selectedProfileDetails.id);
-                                    }, 50);
-                                }}
-                                startIcon={<DeleteIcon />}
-                                className="profile-action-button delete-button"
-                                                                        sx={{ 
-                                    backgroundColor: '#ef4444',
-                                    color: 'white',
-                                    borderRadius: '10px',
-                                    padding: '10px 24px',
-                                    fontWeight: 600,
-                                    fontSize: '0.9rem',
-                                    textTransform: 'none',
-                                    boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)',
-                                    minWidth: '140px',
-                                    '&:hover': {
-                                        backgroundColor: '#dc2626',
-                                        boxShadow: '0 6px 10px rgba(239, 68, 68, 0.3)'
-                                    }
-                                }}
-                            >
-                                Delete Profile
-                    </Button>
-                    <Button 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCloseProfileModal();
-                                }}
-                                className="profile-action-button close-button"
-                                sx={{ 
-                                    borderRadius: '10px',
-                                    padding: '10px 24px',
-                                    fontWeight: 600,
-                                    fontSize: '0.9rem',
-                                    textTransform: 'none',
-                                    color: '#4b5563',
-                                    backgroundColor: '#f3f4f6',
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600, 
+                                mb: 3,
+                                color: '#4b5563',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1
+                            }}>
+                                <span>Utilisateurs associés</span>
+                                <Chip 
+                                    label={profileUsers.length} 
+                                    size="small" 
+                                    color="primary"
+                                    sx={{ 
+                                        bgcolor: '#eef2ff',
+                                        color: '#4f46e5',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        height: '20px',
+                                        minWidth: '28px',
+                                        borderRadius: '10px'
+                                    }}
+                                />
+                            </Typography>
+                            
+                            {loadingUsers ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                                    <Typography variant="body2" sx={{ color: '#6b7280', fontStyle: 'italic' }}>
+                                        Chargement des utilisateurs...
+                                    </Typography>
+                                </Box>
+                            ) : profileUsers.length > 0 ? (
+                                <Box sx={{ 
+                                    maxHeight: '250px', 
+                                    overflowY: 'auto',
+                                    borderRadius: '12px',
                                     border: '1px solid #e5e7eb',
-                                    minWidth: '140px',
-                                    '&:hover': {
-                                        backgroundColor: '#e5e7eb'
-                                    }
-                                }}
-                            >
-                                Close
-                    </Button>
-                                                                </Box>
+                                    backgroundColor: '#f9fafb',
+                                    mb: 2
+                                }}>
+                                    <List sx={{ p: 1 }}>
+                                        {profileUsers.map((user, index) => (
+                                            <React.Fragment key={user.id || index}>
+                                                <ListItem 
+                                                    sx={{ 
+                                                        borderRadius: '8px',
+                                                        mb: index < profileUsers.length - 1 ? 0.5 : 0,
+                                                        p: 1,
+                                                        '&:hover': {
+                                                            backgroundColor: '#f3f4f6'
+                                                        }
+                                                    }}
+                                                >
+                                                    <ListItemAvatar>
+                                                        <Avatar 
+                                                            sx={{ 
+                                                                width: 36, 
+                                                                height: 36,
+                                                                bgcolor: `${getAvatarColor(user.id || index)}80`,
+                                                                fontSize: '0.85rem',
+                                                                fontWeight: 600
+                                                            }}
+                                                        >
+                                                            {getInitials(`${user.firstName || ''} ${user.lastName || ''}` || user.email || '')}
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText 
+                                                        primary={
+                                                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#4b5563' }}>
+                                                                {user.firstName ? `${user.firstName} ${user.lastName || ''}` : (user.email || 'Utilisateur sans nom')}
+                                                            </Typography>
+                                                        }
+                                                        secondary={
+                                                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                                                                {user.email || ''}
+                                                            </Typography>
+                                                        }
+                                                    />
+                                                    <ListItemSecondaryAction>
+                                                        <Chip
+                                                            label={user.status === 'active' ? 'Actif' : 'Inactif'}
+                                                            size="small"
+                                                            sx={{ 
+                                                                height: '20px',
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: 500,
+                                                                bgcolor: user.status === 'active' ? '#ecfdf5' : '#fef2f2',
+                                                                color: user.status === 'active' ? '#10b981' : '#ef4444',
+                                                                border: user.status === 'active' ? '1px solid #a7f3d0' : '1px solid #fecaca'
+                                                            }}
+                                                        />
+                                                    </ListItemSecondaryAction>
+                                                </ListItem>
+                                                {index < profileUsers.length - 1 && <Divider component="li" variant="middle" />}
+                                            </React.Fragment>
+                                        ))}
+                                    </List>
+                                </Box>
+                            ) : (
+                                <Box 
+                                    sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        py: 4,
+                                        px: 2,
+                                        backgroundColor: '#f9fafb',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e5e7eb'
+                                    }}
+                                >
+                                    <Box sx={{ 
+                                        width: 48, 
+                                        height: 48, 
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: '#f3f4f6',
+                                        mb: 2
+                                    }}>
+                                        <People sx={{ fontSize: '1.5rem', color: '#9ca3af' }} />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500, mb: 1 }}>
+                                        Aucun utilisateur associé
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: '#9ca3af', textAlign: 'center' }}>
+                                        Ce profil n'est attribué à aucun utilisateur pour le moment.
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Box>
+                    </Box>
+                    
+                    {/* Zone des boutons fixes en bas */}
+                    <Box 
+                                    sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            gap: 2,
+                            py: 3,
+                            px: 4,
+                            borderTop: '1px solid rgba(229, 231, 235, 0.5)',
+                            backgroundColor: 'white',
+                            flexShrink: 0
+                        }}
+                        className="profile-action-buttons-container"
+                    >
+                <Button 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Close the modal first
+                                setProfileModal(false);
+                                // Then handle the edit action with a slight delay to ensure modal is closed
+                                setTimeout(() => {
+                                    handleEdit(selectedProfileDetails.id);
+                                }, 50);
+                            }}
+                            startIcon={<EditIcon />}
+                            className="profile-action-button edit-button"
+                                        sx={{ 
+                                backgroundColor: '#7c3aed',
+                                color: 'white',
+                                borderRadius: '10px',
+                                padding: '10px 24px',
+                                                fontWeight: 600,
+                                fontSize: '0.9rem',
+                                textTransform: 'none',
+                                boxShadow: '0 4px 6px rgba(124, 58, 237, 0.2)',
+                                minWidth: '140px',
+                                '&:hover': {
+                                    backgroundColor: '#6d28d9',
+                                    boxShadow: '0 6px 10px rgba(124, 58, 237, 0.3)'
+                                }
+                            }}
+                        >
+                            Edit Profile
+                </Button>
+                <Button 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Close the modal first
+                                setProfileModal(false);
+                                // Then handle the delete action with a slight delay to ensure modal is closed
+                                setTimeout(() => {
+                                    handleDelete(selectedProfileDetails.id);
+                                }, 50);
+                            }}
+                            startIcon={<DeleteIcon />}
+                            className="profile-action-button delete-button"
+                                                                    sx={{ 
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                borderRadius: '10px',
+                                padding: '10px 24px',
+                                fontWeight: 600,
+                                fontSize: '0.9rem',
+                                textTransform: 'none',
+                                boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)',
+                                minWidth: '140px',
+                                '&:hover': {
+                                    backgroundColor: '#dc2626',
+                                    boxShadow: '0 6px 10px rgba(239, 68, 68, 0.3)'
+                                }
+                            }}
+                        >
+                            Delete Profile
+                </Button>
+                <Button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCloseProfileModal();
+                            }}
+                            className="profile-action-button close-button"
+                            sx={{ 
+                                borderRadius: '10px',
+                                padding: '10px 24px',
+                                fontWeight: 600,
+                                fontSize: '0.9rem',
+                                textTransform: 'none',
+                                color: '#4b5563',
+                                backgroundColor: '#f3f4f6',
+                                border: '1px solid #e5e7eb',
+                                minWidth: '140px',
+                                '&:hover': {
+                                    backgroundColor: '#e5e7eb'
+                                }
+                            }}
+                        >
+                            Close
+                </Button>
+                                                            </Box>
                     </>
                 )}
             </Dialog>
