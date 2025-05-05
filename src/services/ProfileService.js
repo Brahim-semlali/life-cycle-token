@@ -27,83 +27,13 @@ export const initializeProfiles = async () => {
             console.log('Profils chargés avec succès:', profiles.length);
         } else {
             console.warn('Aucun profil trouvé dans la base de données');
-            
-            // Si aucun profil n'est trouvé, créer des profils factices basés sur la capture d'écran
-            profiles = [
-                {
-                    id: 1,
-                    name: "Super Administrateur",
-                    title: "Super Administrateur",
-                    description: "Profil avec tous les droits d'accès",
-                    code: "SUPER_ADMIN",
-                    status: "active"
-                },
-                {
-                    id: 2,
-                    name: "jhkjhfkf",
-                    title: "jhkjhfkf",
-                    description: "hytre6re6",
-                    code: "hkjhfkj",
-                    status: "active"
-                },
-                {
-                    id: 3,
-                    name: "hgashgfdajf",
-                    title: "hgashgfdajf",
-                    description: "afdaf",
-                    code: "lksafhlsdahj",
-                    status: "active"
-                },
-                {
-                    id: 4,
-                    name: "brahim",
-                    title: "brahim",
-                    description: "dgfdhg",
-                    code: "PROF_1746239492411",
-                    status: "active"
-                }
-            ];
+            profiles = [];
         }
         
         return profiles;
     } catch (error) {
         console.error('Erreur lors du chargement des profils:', error);
-        
-        // En cas d'erreur, retourner des profils factices
-        profiles = [
-            {
-                id: 1,
-                name: "Super Administrateur",
-                title: "Super Administrateur",
-                description: "Profil avec tous les droits d'accès",
-                code: "SUPER_ADMIN",
-                status: "active"
-            },
-            {
-                id: 2,
-                name: "jhkjhfkf",
-                title: "jhkjhfkf",
-                description: "hytre6re6",
-                code: "hkjhfkj",
-                status: "active"
-            },
-            {
-                id: 3,
-                name: "hgashgfdajf",
-                title: "hgashgfdajf",
-                description: "afdaf",
-                code: "lksafhlsdahj",
-                status: "active"
-            },
-            {
-                id: 4,
-                name: "brahim",
-                title: "brahim",
-                description: "dgfdhg",
-                code: "PROF_1746239492411",
-                status: "active"
-            }
-        ];
+        profiles = [];
         return profiles;
     }
 };
@@ -149,32 +79,14 @@ export const loadModulesAndMenus = async () => {
         modules = await api.getModules();
         menus = await api.getMenus();
         
+        console.log('Modules et menus chargés avec succès:', { modules: modules.length, menus: menus.length });
         return { modules, menus };
     } catch (error) {
         console.error('Erreur lors du chargement des modules et menus:', error);
         
-        // Créer des modules et menus factices en cas d'erreur
-        modules = [
-            { id: 1, code: "ADMINISTRATION", title: "Administration" },
-            { id: 2, code: "ISSUERTSP", title: "Issuer TSP" },
-            { id: 3, code: "TOKENMANAGER", title: "Token Manager" },
-            { id: 4, code: "CLIENTS", title: "Clients" }
-        ];
-        
-        menus = [
-            { id: 1, code: "PROFILES", title: "Profiles", module: 1 },
-            { id: 2, code: "USERS", title: "Users", module: 1 },
-            { id: 3, code: "SECURITY", title: "Security", module: 1 },
-            { id: 4, code: "CERTIFICATES", title: "Certificates", module: 2 },
-            { id: 5, code: "VALIDATION", title: "Validation", module: 2 },
-            { id: 6, code: "SETTINGS", title: "Settings", module: 2 },
-            { id: 7, code: "TOKENS", title: "Tokens", module: 3 },
-            { id: 8, code: "DISTRIBUTION", title: "Distribution", module: 3 },
-            { id: 9, code: "MONITORING", title: "Monitoring", module: 3 },
-            { id: 10, code: "MANAGEMENT", title: "Management", module: 4 },
-            { id: 11, code: "CONTRACTS", title: "Contracts", module: 4 },
-            { id: 12, code: "BILLING", title: "Billing", module: 4 }
-        ];
+        // Renvoyer des tableaux vides en cas d'erreur
+        modules = [];
+        menus = [];
         
         return { modules, menus };
     }
@@ -184,25 +96,13 @@ export const loadModulesAndMenus = async () => {
 export const loadMenus = async () => {
     try {
         menus = await api.getMenus();
+        console.log('Menus chargés avec succès:', menus.length);
         return menus;
     } catch (error) {
         console.error('Erreur lors du chargement des menus:', error);
         
-        // Créer des menus factices en cas d'erreur
-        menus = [
-            { id: 1, code: "PROFILES", title: "Profiles", module: 1 },
-            { id: 2, code: "USERS", title: "Users", module: 1 },
-            { id: 3, code: "SECURITY", title: "Security", module: 1 },
-            { id: 4, code: "CERTIFICATES", title: "Certificates", module: 2 },
-            { id: 5, code: "VALIDATION", title: "Validation", module: 2 },
-            { id: 6, code: "SETTINGS", title: "Settings", module: 2 },
-            { id: 7, code: "TOKENS", title: "Tokens", module: 3 },
-            { id: 8, code: "DISTRIBUTION", title: "Distribution", module: 3 },
-            { id: 9, code: "MONITORING", title: "Monitoring", module: 3 },
-            { id: 10, code: "MANAGEMENT", title: "Management", module: 4 },
-            { id: 11, code: "CONTRACTS", title: "Contracts", module: 4 },
-            { id: 12, code: "BILLING", title: "Billing", module: 4 }
-        ];
+        // Renvoyer un tableau vide en cas d'erreur
+        menus = [];
         
         return menus;
     }
