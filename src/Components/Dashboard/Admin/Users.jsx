@@ -60,7 +60,8 @@ import {
   Person as PersonIcon,
   Email as EmailIcon,
   AccountCircle as AccountCircleIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  Check as CheckIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { getAllProfiles } from '../../../services/ProfileService';
@@ -725,25 +726,68 @@ const Users = () => {
                                 position: 'relative',
                                 borderRadius: '16px',
                                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                transition: 'transform 0.3s, box-shadow 0.3s',
+                                transition: 'transform 0.3s, box-shadow 0.3s, border 0.2s ease',
                                 '&:hover': {
                                     transform: 'translateY(-4px)',
                                     boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
-                                }
-                            }}>
-                                <IconButton
-                                    aria-label="more"
-                                    sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
-                                    onClick={(e) => handleMenuOpen(e, user)}
+                                },
+                                border: selectedUsers.includes(user.id) ? '2px solid #4f46e5' : '2px solid transparent',
+                                backgroundColor: selectedUsers.includes(user.id) ? 'rgba(79, 70, 229, 0.03)' : 'white',
+                                cursor: 'pointer'
+                            }} 
+                            className={`card-container ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                            onClick={() => {
+                                setSelectedUsers(prev => 
+                                    prev.includes(user.id)
+                                        ? prev.filter(id => id !== user.id)
+                                        : [...prev, user.id]
+                                );
+                            }}
+                            >
+                                <Checkbox
+                                    checked={selectedUsers.includes(user.id)}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedUsers(prev => 
+                                            prev.includes(user.id)
+                                                ? prev.filter(id => id !== user.id)
+                                                : [...prev, user.id]
+                                        );
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                                    icon={<AddIcon />}
+                                    checkedIcon={<CheckIcon />}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 10,
+                                        right: 10,
+                                        zIndex: 10,
+                                        bgcolor: 'background.paper',
+                                        borderRadius: '50%',
+                                        width: 40,
+                                        height: 40,
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                        transform: 'scale(0.9)',
+                                        '& .MuiSvgIcon-root': {
+                                            fontSize: '1.3rem',
+                                        },
+                                        '&.Mui-checked': {
+                                            bgcolor: '#4f46e5',
+                                            color: 'white',
+                                        }
+                                    }}
+                                />
+                                
+                                <CardContent 
+                                    sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        alignItems: 'center',
+                                        p: 3
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
                                 >
-                                    <MoreVertIcon />
-                                </IconButton>
-                                <CardContent sx={{ 
-                                    display: 'flex', 
-                                    flexDirection: 'column', 
-                                    alignItems: 'center',
-                                    p: 3
-                                }}>
                                     <Avatar
                                         sx={{
                                             width: 80,
@@ -797,23 +841,45 @@ const Users = () => {
                                         </Box>
                                     </Box>
                                     
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, width: '100%' }}>
-                                        <Button 
-                                            className="custom-edit-button"
-                                            startIcon={<EditIcon />}
+                                    <Box className="action-buttons-container" sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'center', 
+                                        gap: 2, 
+                                        mt: 3, 
+                                        width: '100%',
+                                        position: 'absolute',
+                                        bottom: 0,
+                                        left: 0,
+                                        right: 0,
+                                        p: 2,
+                                        background: 'linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.8), rgba(255,255,255,0))'
+                                    }}>
+                                        <IconButton
                                             onClick={() => handleEdit(user.id)}
-                                            size="small"
+                                            sx={{ 
+                                                bgcolor: '#9333ea',
+                                                color: 'white',
+                                                '&:hover': {
+                                                    bgcolor: '#7e22ce',
+                                                    boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)'
+                                                }
+                                            }}
                                         >
-                                            {t('users.edit')}
-                                        </Button>
-                                        <Button 
-                                            className="custom-delete-button"
-                                            startIcon={<DeleteIcon />}
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
                                             onClick={() => handleDelete(user.id)}
-                                            size="small"
+                                            sx={{ 
+                                                bgcolor: '#ef4444',
+                                                color: 'white',
+                                                '&:hover': {
+                                                    bgcolor: '#dc2626',
+                                                    boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
+                                                }
+                                            }}
                                         >
-                                            {t('users.delete')}
-                                        </Button>
+                                            <DeleteIcon />
+                                        </IconButton>
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -827,16 +893,63 @@ const Users = () => {
                             <React.Fragment key={user.id}>
                                 <ListItem 
                                     alignItems="center" 
-                    sx={{
+                                    className={`list-item-container ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                                    sx={{
                                         py: 2, 
                                         px: 3,
-                                        transition: 'background-color 0.3s',
+                                        transition: 'background-color 0.3s, border-color 0.2s',
+                                        position: 'relative',
                                         '&:hover': {
                                             backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                                        }
+                                        },
+                                        borderLeft: selectedUsers.includes(user.id) ? '4px solid #4f46e5' : '4px solid transparent',
+                                        backgroundColor: selectedUsers.includes(user.id) ? 'rgba(79, 70, 229, 0.03)' : 'transparent',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                        setSelectedUsers(prev => 
+                                            prev.includes(user.id)
+                                                ? prev.filter(id => id !== user.id)
+                                                : [...prev, user.id]
+                                        );
                                     }}
                                 >
-                                    <ListItemAvatar>
+                                    <Checkbox
+                                        checked={selectedUsers.includes(user.id)}
+                                        onChange={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedUsers(prev => 
+                                                prev.includes(user.id)
+                                                    ? prev.filter(id => id !== user.id)
+                                                    : [...prev, user.id]
+                                            );
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={`selection-button list-selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                                        icon={<AddIcon />}
+                                        checkedIcon={<CheckIcon />}
+                                        sx={{
+                                            position: 'absolute',
+                                            left: 8,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            zIndex: 10,
+                                            bgcolor: 'background.paper',
+                                            borderRadius: '50%',
+                                            width: 36,
+                                            height: 36,
+                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                            '& .MuiSvgIcon-root': {
+                                                fontSize: '1.2rem',
+                                            },
+                                            '&.Mui-checked': {
+                                                bgcolor: '#4f46e5',
+                                                color: 'white',
+                                            }
+                                        }}
+                                    />
+                                    
+                                    <ListItemAvatar sx={{ ml: 4 }} onClick={(e) => e.stopPropagation()}>
                                         <Avatar 
                                             sx={{ 
                                                 bgcolor: getAvatarColor(user.id),
@@ -848,6 +961,7 @@ const Users = () => {
                                         </Avatar>
                                     </ListItemAvatar>
                                     <ListItemText
+                                        onClick={(e) => e.stopPropagation()}
                                         primary={
                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mr: 2 }}>
@@ -873,9 +987,9 @@ const Users = () => {
                                                             boxShadow: user.status === 'active' 
                                                                 ? '0 0 0 2px rgba(46, 204, 113, 0.3)' 
                                                                 : '0 0 0 2px rgba(231, 76, 60, 0.3)'
-                        }
-                    }}
-                />
+                                                        }
+                                                    }}
+                                                />
                                             </Box>
                                         }
                                         secondary={
@@ -900,24 +1014,34 @@ const Users = () => {
                                             </Box>
                                         }
                                     />
-                                    <ListItemSecondaryAction>
+                                    <ListItemSecondaryAction className="action-buttons-container list-action-buttons" onClick={(e) => e.stopPropagation()}>
                                         <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Button 
-                                                className="custom-edit-button"
-                                                startIcon={<EditIcon />}
+                                            <IconButton
                                                 onClick={() => handleEdit(user.id)}
-                                                size="small"
+                                                sx={{ 
+                                                    bgcolor: '#9333ea',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        bgcolor: '#7e22ce',
+                                                        boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)'
+                                                    }
+                                                }}
                                             >
-                                                {t('users.edit')}
-                                            </Button>
-                                            <Button 
-                                                className="custom-delete-button"
-                                                startIcon={<DeleteIcon />}
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton
                                                 onClick={() => handleDelete(user.id)}
-                                                size="small"
+                                                sx={{ 
+                                                    bgcolor: '#ef4444',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        bgcolor: '#dc2626',
+                                                        boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
+                                                    }
+                                                }}
                                             >
-                                                {t('users.delete')}
-                                            </Button>
+                                                <DeleteIcon />
+                                            </IconButton>
                                         </Box>
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -925,7 +1049,7 @@ const Users = () => {
                             </React.Fragment>
                         ))}
                     </List>
-            </Paper>
+                </Paper>
             )}
 
             <Menu

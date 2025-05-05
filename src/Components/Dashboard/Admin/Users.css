@@ -1582,4 +1582,183 @@
 .dark-mode .custom-delete-button:hover {
     background-color: #dc2626 !important;
     box-shadow: 0 6px 12px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Styles pour les cartes et sélection */
+.card-container {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.2s ease;
+}
+
+.card-container:hover {
+    z-index: 2;
+}
+
+.card-container .MuiCard-root {
+    height: 100%;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card-container .MuiCard-root.selected, 
+.card-container .MuiCard-root[data-selected="true"] {
+    border-color: #4f46e5 !important;
+    background-color: rgba(79, 70, 229, 0.05) !important;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.15) !important;
+}
+
+/* Boutons de sélection */
+.selection-button {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+    z-index: 10;
+}
+
+.selection-button.selected {
+    opacity: 1 !important;
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3) !important;
+}
+
+.card-container:hover .selection-button {
+    opacity: 1;
+    transform: scale(1) !important;
+}
+
+/* Animation pulsation lors de la sélection */
+@keyframes selectionPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+        border-color: rgba(79, 70, 229, 0.8);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+        border-color: rgba(79, 70, 229, 1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+        border-color: rgba(79, 70, 229, 0.8);
+    }
+}
+
+.card-container.just-selected .MuiCard-root {
+    animation: selectionPulse 0.8s 1;
+}
+
+/* Style pour les boutons d'action */
+.action-buttons-container {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-container:hover .action-buttons-container {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animation pour les boutons d'icône */
+.action-buttons-container .MuiIconButton-root {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 42px;
+    height: 42px;
+}
+
+.action-buttons-container .MuiIconButton-root:hover {
+    transform: translateY(-3px) scale(1.05);
+}
+
+.action-buttons-container .MuiIconButton-root svg {
+    transition: transform 0.2s ease;
+    font-size: 20px;
+}
+
+.action-buttons-container .MuiIconButton-root:hover svg {
+    transform: scale(1.15);
+}
+
+/* Animation au clic */
+.action-buttons-container .MuiIconButton-root:active {
+    transform: scale(0.95);
+}
+
+/* Styles pour les éléments de liste */
+.list-item-container {
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+}
+
+.list-item-container.selected,
+.list-item-container[data-selected="true"] {
+    border-left-color: #4f46e5 !important;
+    background-color: rgba(79, 70, 229, 0.05) !important;
+}
+
+/* Styles spécifiques à la vue liste */
+.list-selection-button {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+
+.list-selection-button.selected {
+    opacity: 1 !important;
+}
+
+.list-item-container:hover .list-selection-button {
+    opacity: 1;
+}
+
+.list-action-buttons {
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.list-item-container:hover .list-action-buttons {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Style pour le compteur de sélection */
+.selection-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4f46e5;
+    color: white;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+    margin-right: 10px;
+    box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+}
+
+.selection-count:hover {
+    background-color: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.4);
+}
+
+/* Dark mode adjustments */
+.dark-mode .action-buttons-container {
+    background: linear-gradient(to top, rgba(45, 55, 72, 1), rgba(45, 55, 72, 0.8), rgba(45, 55, 72, 0));
+}
+
+.dark-mode .selection-button {
+    background-color: #2d3748 !important;
+    color: #e2e8f0;
+}
+
+.dark-mode .selection-button.Mui-checked {
+    background-color: #4299e1 !important;
+    color: #e2e8f0;
+}
+
+.dark-mode .selection-button:hover {
+    background-color: #4a5568 !important;
 } 

@@ -46,7 +46,13 @@ import {
   Avatar,
   ListItemAvatar,
   ListItemSecondaryAction,
-  InputBase
+  InputBase,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Stack,
+  Fade
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -57,7 +63,24 @@ import {
   Info as InfoIcon,
   ViewModule as GridViewIcon,
   ViewList as ListViewIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  // Ajout des nouvelles icônes pour les modules
+  Security as SecurityIcon,
+  AdminPanelSettings as AdminIcon,
+  VerifiedUser as CertificateIcon,
+  Token as TokenIcon,
+  People as ClientsIcon,
+  Settings as SettingsIcon,
+  PersonAdd as UsersIcon,
+  Inventory as DistributionIcon,
+  Dns as ServersIcon,
+  MonitorHeart as MonitoringIcon,
+  Business as ManagementIcon,
+  Assignment as ContractsIcon,
+  CreditCard as BillingIcon,
+  FilterList as FilterListIcon,
+  Check as CheckIcon,
+  IndeterminateCheckBox as IndeterminateCheckBoxIcon
 } from '@mui/icons-material';
 import "./Profiles.css";
 
@@ -78,6 +101,9 @@ const Profiles = () => {
     const [menus, setMenus] = useState([]);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
     const [searchQuery, setSearchQuery] = useState('');
+    // Ajout des états pour le filtrage
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [moduleFilter, setModuleFilter] = useState('all');
     
     // État pour afficher les détails d'un profil
     const [detailsDialog, setDetailsDialog] = useState(false);
@@ -146,6 +172,10 @@ const Profiles = () => {
     const [profileModal, setProfileModal] = useState(false);
     const [selectedProfileDetails, setSelectedProfileDetails] = useState(null);
 
+    // Ajouter un nouvel état pour la boîte de dialogue de confirmation de suppression
+    const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+    const [profileToDelete, setProfileToDelete] = useState(null);
+
     // Déclaration des gestionnaires d'événements avant leur utilisation
     const handleRowClick = useCallback((params) => {
         const id = params.id;
@@ -156,11 +186,16 @@ const Profiles = () => {
         );
     }, []);
 
-    const handleHeaderCheckboxClick = useCallback(() => {
-        setSelectedProfiles(prev => 
-            prev.length === profiles.length ? [] : profiles.map(profile => profile.id)
-        );
-    }, [profiles]);
+    // Fonction pour gérer le clic sur le bouton d'en-tête
+    const handleHeaderCheckboxClick = () => {
+        if (selectedProfiles.length === profiles.length) {
+            // Si tous les profils sont sélectionnés, désélectionner tous
+            setSelectedProfiles([]);
+        } else {
+            // Sinon, sélectionner tous les profils
+            setSelectedProfiles(profiles.map(profile => profile.id));
+        }
+    };
 
     // Mémorisation des colonnes
     const columns = useMemo(() => [
@@ -172,29 +207,53 @@ const Profiles = () => {
             filterable: false,
             hideable: false,
             disableColumnMenu: true,
-            renderCell: (params) => (
+            renderCell: (profile) => (
                 <Box sx={{ 
                     display: 'flex', 
                     alignItems: 'center',
                     justifyContent: 'center',
                     width: '100%'
                 }}>
-                    <Checkbox
-                        checked={selectedProfiles.includes(params.row.id)}
-                        onChange={() => handleRowClick(params)}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleRowClick(params);
-                        }}
+                    <IconButton
+                        className={`selection-button ${selectedProfiles.includes(profile.id) ? 'selected' : ''}`}
                         size="small"
-                        width="90px"
-                        sx={{
-                            padding: '4px',
-                            '&:hover': {
-                                backgroundColor: 'transparent'
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (selectedProfiles.includes(profile.id)) {
+                                setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
+                            } else {
+                                setSelectedProfiles(prev => [...prev, profile.id]);
                             }
                         }}
-                    />
+                        sx={{
+                            backgroundColor: selectedProfiles.includes(profile.id) 
+                                ? '#4f46e5' 
+                                : 'white',
+                            border: selectedProfiles.includes(profile.id) 
+                                ? '2px solid #4f46e5' 
+                                : '2px solid #e5e7eb',
+                            color: selectedProfiles.includes(profile.id) 
+                                ? 'white' 
+                                : '#64748b',
+                            '&:hover': {
+                                backgroundColor: selectedProfiles.includes(profile.id) 
+                                    ? '#4338ca' 
+                                    : '#f9fafb',
+                                transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                            width: '28px',
+                            height: '28px'
+                        }}
+                    >
+                        {selectedProfiles.includes(profile.id) ? (
+                            <CheckIcon fontSize="small" />
+                        ) : (
+                            <AddIcon fontSize="small" />
+                        )}
+                    </IconButton>
                 </Box>
             ),
             renderHeader: () => (
@@ -204,22 +263,41 @@ const Profiles = () => {
                     justifyContent: 'center',
                     width: '0%'
                 }}>
-                    <Checkbox
-                        checked={profiles.length > 0 && selectedProfiles.length === profiles.length}
-                        indeterminate={selectedProfiles.length > 0 && selectedProfiles.length < profiles.length}
-                        onChange={handleHeaderCheckboxClick}
+                    <IconButton
+                        size="small"
                         onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             handleHeaderCheckboxClick();
                         }}
-                        size="small"
                         sx={{
+                            backgroundColor: profiles.length > 0 && selectedProfiles.length === profiles.length 
+                                ? 'rgba(79, 70, 229, 0.1)' 
+                                : 'rgba(255, 255, 255, 0.8)',
+                            border: selectedProfiles.length > 0 
+                                ? '1px solid #4f46e5' 
+                                : '1px solid #e5e7eb',
+                            color: selectedProfiles.length > 0 
+                                ? '#4f46e5' 
+                                : '#64748b',
                             padding: '4px',
                             '&:hover': {
-                                backgroundColor: 'transparent'
-                            }
+                                backgroundColor: selectedProfiles.length === profiles.length 
+                                    ? 'rgba(79, 70, 229, 0.2)' 
+                                    : 'rgba(255, 255, 255, 0.9)',
+                                transform: 'scale(1.1)'
+                            },
+                            transition: 'all 0.2s ease'
                         }}
-                    />
+                    >
+                        {profiles.length > 0 && selectedProfiles.length === profiles.length ? (
+                            <CheckIcon fontSize="small" />
+                        ) : selectedProfiles.length > 0 ? (
+                            <IndeterminateCheckBoxIcon fontSize="small" />
+                        ) : (
+                            <AddIcon fontSize="small" />
+                        )}
+                    </IconButton>
                 </Box>
             ),
         },
@@ -363,24 +441,41 @@ const Profiles = () => {
             renderCell: (params) => {
                 if (!params || !params.value) return null;
                 const statusClass = params.value.toLowerCase();
+
+                // Définir des couleurs plus dynamiques selon le statut
+                const colors = {
+                    active: { bg: '#e6f7ee', color: '#0e9f6e', dot: '#10b981', border: '#8eedc7' },
+                    inactive: { bg: '#fee2e2', color: '#dc2626', dot: '#ef4444', border: '#fecaca' },
+                    suspended: { bg: '#fef3c7', color: '#d97706', dot: '#f59e0b', border: '#fde68a' },
+                    pending: { bg: '#e0f2fe', color: '#0284c7', dot: '#38bdf8', border: '#bae6fd' }
+                };
+
+                const statusColor = colors[statusClass] || colors.inactive;
+
                 return (
                     <Box className="status-cell" sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
+                            backgroundColor: statusColor.bg,
+                            borderRadius: '20px',
+                            padding: '4px 12px',
+                            border: `1px solid ${statusColor.border}`,
+                            boxShadow: `0 2px 4px rgba(0, 0, 0, 0.05)`
                         }}>
                             <Box component="span" sx={{
                                 width: '10px',
                                 height: '10px',
                                 borderRadius: '50%',
-                                backgroundColor: statusClass === 'active' ? '#10b981' : '#ef4444',
+                                backgroundColor: statusColor.dot,
                                 display: 'inline-block',
-                                marginRight: '6px'
+                                marginRight: '8px',
+                                boxShadow: `0 0 0 2px ${statusColor.border}`
                             }}/>
                             <Typography 
                                 variant="body2" 
                                 sx={{ 
-                                    color: statusClass === 'active' ? '#10b981' : '#ef4444',
+                                    color: statusColor.color,
                                     fontWeight: 600,
                                     fontSize: '0.8rem'
                                 }}
@@ -726,14 +821,25 @@ const Profiles = () => {
         setOpenDialog(true);
     };
 
+    // Modifier la fonction handleDelete pour ouvrir la boîte de dialogue de confirmation
     const handleDelete = (id) => {
-        if (window.confirm(t('profiles.confirmDelete'))) {
             const index = profiles.findIndex(p => p.id === id);
-            const profileToDelete = profiles[index];
+        if (index !== -1) {
+            setProfileToDelete(profiles[index]);
+            setDeleteConfirmDialog(true);
+        }
+    };
+
+    // Ajouter une nouvelle fonction pour confirmer la suppression
+    const confirmDelete = () => {
+        if (profileToDelete && profileToDelete.id) {
+            // Suppression d'un seul profil
             if (deleteProfile(profileToDelete.id)) {
-                const updatedProfiles = profiles.filter((_, i) => i !== index);
+                const updatedProfiles = profiles.filter(p => p.id !== profileToDelete.id);
                 setProfiles(updatedProfiles);
-                if (editingProfile === index) {
+                
+                // Vérifier si le profil en cours d'édition est celui qui est supprimé
+                if (editingProfile !== null && profiles[editingProfile]?.id === profileToDelete.id) {
                     setEditingProfile(null);
                     setNewProfile({
                         name: "",
@@ -743,7 +849,34 @@ const Profiles = () => {
                     });
                 }
             }
+        } else if (selectedProfiles.length > 0) {
+            // Suppression multiple de profils
+            let deleteSuccessCount = 0;
+            
+            selectedProfiles.forEach(id => {
+                const success = deleteProfile(id);
+                if (success) {
+                    deleteSuccessCount++;
+                }
+            });
+            
+            // Mettre à jour la liste des profils
+            if (deleteSuccessCount > 0) {
+                const updatedProfiles = profiles.filter(p => !selectedProfiles.includes(p.id));
+                setProfiles(updatedProfiles);
+                setSelectedProfiles([]);
+            }
         }
+        
+        // Fermer la boîte de dialogue de confirmation
+        setDeleteConfirmDialog(false);
+        setProfileToDelete(null);
+    };
+
+    // Ajouter un gestionnaire pour annuler la suppression
+    const cancelDelete = () => {
+        setDeleteConfirmDialog(false);
+        setProfileToDelete(null);
     };
 
     const handleCancel = () => {
@@ -812,17 +945,62 @@ const Profiles = () => {
         setSearchQuery(event.target.value);
     };
 
-    // Filter profiles based on search query
+    // Fonction de gestion du changement de filtre de statut
+    const handleStatusFilterChange = (event) => {
+        setStatusFilter(event.target.value);
+    };
+
+    // Fonction de gestion du changement de filtre de module
+    const handleModuleFilterChange = (event) => {
+        setModuleFilter(event.target.value);
+    };
+
+    // Modification du filtrage des profils pour inclure les nouveaux filtres
     const filteredProfiles = useMemo(() => {
-        if (!searchQuery.trim()) return profiles;
-        return profiles.filter(profile => 
-            profile.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            profile.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [profiles, searchQuery]);
+        if (!searchQuery.trim() && statusFilter === 'all' && moduleFilter === 'all') return profiles;
+        
+        return profiles.filter(profile => {
+            // Filtrage par recherche
+            const matchesSearch = searchQuery.trim() === '' || 
+                profile.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                profile.description?.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            // Filtrage par statut
+            const matchesStatus = statusFilter === 'all' || 
+                profile.status?.toLowerCase() === statusFilter.toLowerCase();
+            
+            // Filtrage par module
+            let matchesModule = moduleFilter === 'all';
+            if (moduleFilter !== 'all' && profile.modules && Array.isArray(profile.modules)) {
+                const moduleId = parseInt(moduleFilter, 10);
+                matchesModule = profile.modules.includes(moduleId);
+            }
+            
+            return matchesSearch && matchesStatus && matchesModule;
+        });
+    }, [profiles, searchQuery, statusFilter, moduleFilter]);
 
     // Fonction pour ouvrir le modal avec les détails du profil
-    const handleProfileClick = (profile) => {
+    const handleProfileClick = (profile, event) => {
+        // Don't open the modal if the click is on a button or inside a button element
+        if (event) {
+            const targetElement = event.target;
+            // Check if the click is on a button or inside a button
+            if (
+                targetElement.tagName === 'BUTTON' || 
+                targetElement.closest('button') || 
+                targetElement.closest('.MuiButton-root') ||
+                // Also check for any element with roles that imply interaction
+                targetElement.getAttribute('role') === 'button' ||
+                targetElement.closest('[role="button"]') ||
+                // Check for elements inside buttons
+                targetElement.closest('.MuiButton-startIcon') ||
+                targetElement.closest('.MuiButton-endIcon')
+            ) {
+                return;
+            }
+        }
+        
         setSelectedProfileDetails(profile);
         setProfileModal(true);
     };
@@ -830,6 +1008,33 @@ const Profiles = () => {
     // Fonction pour fermer le modal
     const handleCloseProfileModal = () => {
         setProfileModal(false);
+    };
+
+    // Modification du code où les icônes sont utilisées directement sans leurs alias
+    const moduleIcons = {
+        // Mapping des modules aux icônes
+        administration: <AdminIcon sx={{ color: '#5786c1', fontSize: '1.5rem' }} />,
+        issuerTSP: <CertificateIcon sx={{ color: '#10b981', fontSize: '1.5rem' }} />,
+        tokenManager: <TokenIcon sx={{ color: '#f97316', fontSize: '1.5rem' }} />,
+        clients: <ClientsIcon sx={{ color: '#6366f1', fontSize: '1.5rem' }} />,
+        // Sous-modules
+        profiles: <AdminIcon sx={{ color: '#5786c1', fontSize: '1.2rem' }} />,
+        users: <UsersIcon sx={{ color: '#5786c1', fontSize: '1.2rem' }} />,
+        security: <SecurityIcon sx={{ color: '#5786c1', fontSize: '1.2rem' }} />,
+        certificates: <CertificateIcon sx={{ color: '#10b981', fontSize: '1.2rem' }} />,
+        validation: <CertificateIcon sx={{ color: '#10b981', fontSize: '1.2rem' }} />,
+        settings: <SettingsIcon sx={{ color: '#10b981', fontSize: '1.2rem' }} />,
+        tokens: <TokenIcon sx={{ color: '#f97316', fontSize: '1.2rem' }} />,
+        distribution: <DistributionIcon sx={{ color: '#f97316', fontSize: '1.2rem' }} />,
+        monitoring: <MonitoringIcon sx={{ color: '#f97316', fontSize: '1.2rem' }} />,
+        management: <ManagementIcon sx={{ color: '#6366f1', fontSize: '1.2rem' }} />,
+        contracts: <ContractsIcon sx={{ color: '#6366f1', fontSize: '1.2rem' }} />,
+        billing: <BillingIcon sx={{ color: '#6366f1', fontSize: '1.2rem' }} />,
+    };
+
+    // Fonction pour obtenir l'icône d'un module
+    const getModuleIcon = (moduleKey) => {
+        return moduleIcons[moduleKey.toLowerCase()] || <AdminIcon sx={{ color: '#5786c1', fontSize: '1.5rem' }} />;
     };
 
     return (
@@ -868,152 +1073,262 @@ const Profiles = () => {
                     fontSize: '22px',
                     fontWeight: 600
                 }}>
-                    {t('profiles.title')}
+                    {selectedProfiles.length > 0 
+                        ? `${selectedProfiles.length} ${t('profiles.selected')}` 
+                        : t('profiles.title')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    {/* Barre de recherche simplifiée avec les toggle buttons directement à côté */}
+                    {/* Zone de recherche et filtres */}
+                    {selectedProfiles.length === 0 && (
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                            {/* Barre de recherche existante */}
                     <Box sx={{ 
                         display: 'flex', 
-                        alignItems: 'center',
-                        position: 'relative',
-                        width: 'auto'
-                    }}>
-                        {/* Icône de loupe et champ de recherche */}
-                        <Box sx={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            borderRadius: '50px',
-                            border: '1px solid #e5e7eb',
-                            backgroundColor: '#f9fafb',
-                            padding: '0',
-                            height: '40px',
-                            width: '220px'
-                        }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                padding: '0 12px' 
+                                alignItems: 'center',
+                                position: 'relative',
+                                width: '220px'
                             }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                </svg>
+                                <Box sx={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    borderRadius: '50px',
+                                    border: '1px solid #e5e7eb',
+                                    backgroundColor: '#f9fafb',
+                                    padding: '0',
+                                    height: '40px',
+                                    width: '100%'
+                                }}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        padding: '0 12px' 
+                                    }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </Box>
+                                    <InputBase
+                                        placeholder="Search"
+                                        value={searchQuery}
+                                        onChange={handleSearchChange}
+                                        sx={{
+                                            flex: 1,
+                                            fontSize: '0.875rem',
+                                            color: '#4b5563',
+                                            '& input': {
+                                                padding: '8px 8px 8px 0'
+                                            }
+                                        }}
+                                    />
+                                </Box>
                             </Box>
-                            <InputBase
-                                placeholder="Search"
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                sx={{
-                                    flex: 1,
-                                    fontSize: '0.875rem',
-                                    color: '#4b5563',
-                                    '& input': {
-                                        padding: '8px 8px 8px 0'
+
+                            {/* Filtre par statut */}
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel id="status-filter-label" sx={{ fontSize: '0.875rem' }}>Status</InputLabel>
+                                <Select
+                                    labelId="status-filter-label"
+                                    id="status-filter"
+                                    value={statusFilter}
+                                    onChange={handleStatusFilterChange}
+                                    label="Status"
+                                    sx={{ 
+                                        fontSize: '0.875rem',
+                                        height: '40px',
+                                        borderRadius: '8px',
+                                        backgroundColor: '#f9fafb',
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#e5e7eb'
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#d1d5db'
+                                        },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#6366f1'
+                                        }
+                                    }}
+                                    startAdornment={
+                                        <FilterListIcon sx={{ color: '#9ca3af', mr: 0.5, fontSize: '1.1rem' }} />
                                     }
-                                }}
-                            />
-                        </Box>
-                    </Box>
+                                >
+                                    <MenuItem value="all">All Statuses</MenuItem>
+                                    <MenuItem value="active">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Box 
+                                                component="span" 
+                                                sx={{ 
+                                                    width: 8, 
+                                                    height: 8, 
+                                                    borderRadius: '50%', 
+                                                    bgcolor: '#10b981',
+                                                    display: 'inline-block'
+                                                }}
+                                            />
+                                            Active
+                                        </Box>
+                                    </MenuItem>
+                                    <MenuItem value="inactive">
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Box 
+                                                component="span" 
+                                                sx={{ 
+                                                    width: 8, 
+                                                    height: 8, 
+                                                    borderRadius: '50%', 
+                                                    bgcolor: '#ef4444',
+                                                    display: 'inline-block'
+                                                }}
+                                            />
+                                            Inactive
+                                        </Box>
+                                    </MenuItem>
+                                </Select>
+                            </FormControl>
+                            
+                            {/* Filtre par module */}
+                            <FormControl size="small" sx={{ minWidth: 150 }}>
+                                <InputLabel id="module-filter-label" sx={{ fontSize: '0.875rem' }}>Module</InputLabel>
+                                <Select
+                                    labelId="module-filter-label"
+                                    id="module-filter"
+                                    value={moduleFilter}
+                                    onChange={handleModuleFilterChange}
+                                    label="Module"
+                                    sx={{ 
+                                        fontSize: '0.875rem',
+                                        height: '40px',
+                                        borderRadius: '8px',
+                                        backgroundColor: '#f9fafb',
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#e5e7eb'
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#d1d5db'
+                                        },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#6366f1'
+                                        }
+                                    }}
+                                    startAdornment={
+                                        <FilterListIcon sx={{ color: '#9ca3af', mr: 0.5, fontSize: '1.1rem' }} />
+                                    }
+                                >
+                                    <MenuItem value="all">All Modules</MenuItem>
+                                    <Divider sx={{ my: 0.5 }} />
+                                    {modules.map(module => (
+                                        <MenuItem key={module.id} value={module.id.toString()}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {getModuleIcon(module.code?.toLowerCase() || '')}
+                                                <Typography variant="body2">
+                                                    {module.title}
+                                                </Typography>
+                                            </Box>
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Stack>
+                    )}
 
                     {/* Custom view selector buttons */}
-                    <Box 
-                        className="view-selector"
-                        sx={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: '#f4f4f8',
-                            borderRadius: '30px',
-                            padding: '4px',
-                            boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-                            position: 'relative'
-                        }}
-                    >
+                    {selectedProfiles.length === 0 && (
+                        <Box 
+                            className="view-selector"
+                            sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                backgroundColor: '#f4f4f8',
+                                borderRadius: '30px',
+                                padding: '4px',
+                                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+                                position: 'relative'
+                            }}
+                        >
                         <Button
-                            className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
+                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
                             onClick={() => setViewMode('grid')}
                             sx={{
-                                minWidth: '36px',
-                                height: '32px',
-                                padding: '0 12px',
-                                borderRadius: '20px',
-                                backgroundColor: viewMode === 'grid' ? '#ffffff' : 'transparent',
-                                color: viewMode === 'grid' ? '#7c3aed' : '#64748b',
-                                fontSize: '13px',
-                                fontWeight: viewMode === 'grid' ? 600 : 500,
-                                transition: 'all 0.2s ease',
-                                zIndex: 2,
-                                boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
+                                    minWidth: '36px',
+                                    height: '32px',
+                                    padding: '0 12px',
+                                    borderRadius: '20px',
+                                    backgroundColor: viewMode === 'grid' ? '#ffffff' : 'transparent',
+                                    color: viewMode === 'grid' ? '#7c3aed' : '#64748b',
+                                    fontSize: '13px',
+                                    fontWeight: viewMode === 'grid' ? 600 : 500,
+                                    transition: 'all 0.2s ease',
+                                    zIndex: 2,
+                                    boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
                                 '&:hover': {
-                                    backgroundColor: viewMode === 'grid' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
-                                },
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
+                                        backgroundColor: viewMode === 'grid' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                                    },
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                             }}
                         >
-                            <GridViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
-                            <span>Grid</span>
+                                <GridViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
+                                <span>Grid</span>
                         </Button>
                         <Button
-                            className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                                className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
                             onClick={() => setViewMode('list')}
                             sx={{
-                                minWidth: '36px',
-                                height: '32px',
-                                padding: '0 12px',
-                                borderRadius: '20px',
-                                backgroundColor: viewMode === 'list' ? '#ffffff' : 'transparent',
-                                color: viewMode === 'list' ? '#7c3aed' : '#64748b',
-                                fontSize: '13px',
-                                fontWeight: viewMode === 'list' ? 600 : 500,
-                                transition: 'all 0.2s ease',
-                                zIndex: 2,
-                                boxShadow: viewMode === 'list' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
+                                    minWidth: '36px',
+                                    height: '32px',
+                                    padding: '0 12px',
+                                    borderRadius: '20px',
+                                    backgroundColor: viewMode === 'list' ? '#ffffff' : 'transparent',
+                                    color: viewMode === 'list' ? '#7c3aed' : '#64748b',
+                                    fontSize: '13px',
+                                    fontWeight: viewMode === 'list' ? 600 : 500,
+                                    transition: 'all 0.2s ease',
+                                    zIndex: 2,
+                                    boxShadow: viewMode === 'list' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
                                 '&:hover': {
-                                    backgroundColor: viewMode === 'list' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
-                                },
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
+                                        backgroundColor: viewMode === 'list' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                                    },
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                             }}
                         >
-                            <ListViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
-                            <span>List</span>
+                                <ListViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
+                                <span>List</span>
                         </Button>
                     </Box>
+                    )}
                     
-                    {selectedProfiles.length > 0 && (
+                    {selectedProfiles.length > 0 ? (
                         <>
                             <Button
                                 variant="contained"
                                 color="error"
-                                startIcon={<DeleteIcon sx={{ fontSize: '1rem' }} />}
+                                startIcon={<DeleteIcon />}
                                 onClick={() => {
-                                    if (window.confirm(t('profiles.confirmDeleteMultiple'))) {
-                                        selectedProfiles.forEach(id => {
-                                            const success = deleteProfile(id);
-                                            if (success) {
-                                                const updatedProfiles = profiles.filter(p => p.id !== id);
-                                                setProfiles(updatedProfiles);
-                                            }
-                                        });
-                                        setSelectedProfiles([]);
-                                    }
+                                    setProfileToDelete({
+                                        name: `${selectedProfiles.length} ${t('profiles.profilesText')}`
+                                    });
+                                    setDeleteConfirmDialog(true);
                                 }}
                                 sx={{
-                                    backgroundColor: '#dc3545',
-                                    '&:hover': {
-                                        backgroundColor: '#c82333',
-                                    },
-                                    minWidth: 'unset',
-                                    height: '38px',
-                                    px: 2,
-                                    fontSize: '0.85rem',
-                                    fontWeight: 500,
-                                    borderRadius: '6px',
+                                    background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+                                    color: 'white',
+                                    borderRadius: '8px',
                                     textTransform: 'none',
-                                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                                    fontWeight: 500,
+                                    py: 1,
+                                    px: 2.5,
+                                    fontSize: '0.875rem',
+                                    minHeight: '38px',
+                                    boxShadow: '0 3px 6px rgba(239, 68, 68, 0.3)',
+                                    '&:hover': {
+                                        background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
+                                        boxShadow: '0 4px 10px rgba(239, 68, 68, 0.4)',
+                                        transform: 'translateY(-1px)'
+                                    }
                                 }}
                         >
                             {t('profiles.deleteSelected')} ({selectedProfiles.length})
@@ -1040,7 +1355,7 @@ const Profiles = () => {
                                 {t('profiles.cancelSelection')}
                             </Button>
                         </>
-                    )}
+                    ) : (
                     <Button
                         variant="contained"
                         onClick={() => {
@@ -1076,6 +1391,7 @@ const Profiles = () => {
                             Create Profile
                         </Box>
                     </Button>
+                    )}
                 </Box>
             </Box>
 
@@ -1146,87 +1462,131 @@ const Profiles = () => {
                     <Grid container spacing={2.5} sx={{ width: '100%', margin: 0 }}>
                         {filteredProfiles.map(profile => (
                             <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={profile.id}>
-                                <Card sx={{ 
-                                    position: 'relative',
-                                    borderRadius: '16px',
-                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                    transition: 'transform 0.3s, box-shadow 0.3s',
-                                    overflow: 'hidden',
-                                    cursor: 'pointer',
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                        boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
-                                    }
-                                }}
-                                className="profile-card"
-                                onClick={() => handleProfileClick(profile)}
-                                >
-                                    <Box sx={{
-                                        bgcolor: '#5786c1', 
-                                        height: '70px',
-                                        position: 'relative',
-                                        display: 'flex',
-                                        justifyContent: 'flex-end',
-                                        alignItems: 'center',
-                                        padding: '0 16px'
-                                    }}>
+                                <Box sx={{ position: 'relative' }} className="card-container">
+                                    <Box 
+                                        sx={{
+                                            position: 'absolute', 
+                                            top: '-12px', 
+                                            right: '-12px', 
+                                            zIndex: 5,
+                                            opacity: selectedProfiles.includes(profile.id) ? 1 : 0,
+                                            transition: 'all 0.3s ease',
+                                            transform: selectedProfiles.includes(profile.id) 
+                                                ? 'scale(1)' 
+                                                : 'scale(0.8)',
+                                            '.card-container:hover &': {
+                                                opacity: 1,
+                                                transform: 'scale(1)'
+                                            }
+                                        }}
+                                    >
                                         <IconButton
-                                            aria-label="more"
-                                            sx={{ color: 'white' }}
+                                            className={`selection-button ${selectedProfiles.includes(profile.id) ? 'selected' : ''}`}
+                                            size="small"
                                             onClick={(e) => {
+                                                e.preventDefault();
                                                 e.stopPropagation();
+                                                if (selectedProfiles.includes(profile.id)) {
+                                                    setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
+                                                } else {
+                                                    setSelectedProfiles(prev => [...prev, profile.id]);
+                                                }
                                             }}
-                                >
-                                            <MoreVertIcon />
+                                            sx={{
+                                                backgroundColor: selectedProfiles.includes(profile.id) 
+                                                    ? '#4f46e5' 
+                                                    : 'white',
+                                                border: selectedProfiles.includes(profile.id) 
+                                                    ? '2px solid #4f46e5' 
+                                                    : '2px solid #e5e7eb',
+                                                color: selectedProfiles.includes(profile.id) 
+                                                    ? 'white' 
+                                                    : '#64748b',
+                                    '&:hover': {
+                                                    backgroundColor: selectedProfiles.includes(profile.id) 
+                                                        ? '#4338ca' 
+                                                        : '#f9fafb',
+                                                    transform: 'scale(1.1)'
+                                                },
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                                                width: '28px',
+                                                height: '28px'
+                                            }}
+                                        >
+                                            {selectedProfiles.includes(profile.id) ? (
+                                                <CheckIcon fontSize="small" />
+                                            ) : (
+                                                <AddIcon fontSize="small" />
+                                            )}
                                         </IconButton>
                                     </Box>
-                                    
+                                    <Card 
+                                        sx={{ 
+                                            position: 'relative',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                                            transition: 'transform 0.3s, box-shadow 0.3s',
+                                            overflow: 'hidden',
+                                            cursor: 'pointer',
+                                            height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                            border: selectedProfiles.includes(profile.id) 
+                                                ? '2px solid #4f46e5' 
+                                                : '1px solid rgba(226, 232, 240, 0.7)',
+                                            backgroundColor: selectedProfiles.includes(profile.id) 
+                                                ? 'rgba(79, 70, 229, 0.03)' 
+                                                : 'white',
+                                            '&:hover': {
+                                                transform: 'translateY(-5px)',
+                                                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
+                                            }
+                                        }}
+                                        className="profile-card"
+                                        onClick={(e) => handleProfileClick(profile, e)}
+                                >
                                     <Box sx={{ 
                                         display: 'flex', 
                                         flexDirection: 'column', 
                                         alignItems: 'center',
-                                        mt: '-35px', 
-                                        px: 2.5, 
-                                        pb: 2.5,
-                                        pt: 0 
+                                            p: 3,
+                                            flex: 1
                                     }}>
                                         <Avatar
                                             sx={{
-                                                width: 70,
-                                                height: 70,
-                                                mb: 2,
+                                                    width: 80,
+                                                    height: 80,
+                                                    mb: 2,
                                                 bgcolor: getAvatarColor(profile.id),
-                                                fontSize: '1.6rem',
-                                                fontWeight: 'bold',
-                                                border: '4px solid white'
+                                                    fontSize: '1.8rem',
+                                                    fontWeight: 'bold'
                                             }}
                                         >
                                             {getInitials(profile.name)}
                                         </Avatar>
-                                        
+                                            
                                         <Typography variant="h6" sx={{ 
-                                            fontWeight: 'medium', 
-                                            mb: 0.75, 
+                                                fontWeight: '600', 
+                                                mb: 0.5, 
                                             textAlign: 'center',
-                                            fontSize: '1.1rem'
+                                                fontSize: '1.1rem',
+                                                color: '#333'
                                         }}>
                                             {profile.name}
                                         </Typography>
-                                        
+                                            
                                         <Typography variant="body2" color="text.secondary" sx={{ 
-                                            mb: 2,
+                                                mb: 1.5,
                                             textAlign: 'center',
-                                            fontSize: '0.9rem',
-                                            color: 'grey.600',
-                                            maxHeight: '42px',
+                                                fontSize: '0.875rem',
+                                                color: '#666',
+                                                maxHeight: '42px',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical'
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical'
                                         }}>
                                             {profile.description || t('profiles.noDescription')}
                                         </Typography>
@@ -1239,39 +1599,41 @@ const Profiles = () => {
             }}>
                                         <Chip
                                             label={profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
+                                                data-status={profile.status?.toLowerCase()}
                                             sx={{
-                                                    bgcolor: profile.status?.toLowerCase() === 'active' ? '#4caf50' : '#f44336',
-                                                    color: 'white',
-                                                    fontWeight: 'medium',
-                                                    px: 2,
-                                                    height: '28px',
-                                                    fontSize: '0.8rem',
-                                                    borderRadius: '14px'
+                                                    bgcolor: profile.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
+                                                    color: profile.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
+                                                    fontWeight: '600',
+                                                    py: 0.5,
+                                                    px: 1.5,
+                                                    height: '24px',
+                                                    fontSize: '0.75rem',
+                                                    borderRadius: '4px',
+                                                    border: profile.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
                                             }}
                                         />
                                     </Box>
                                     
-                                        <Box sx={{ width: '100%', mb: 3 }}>
-                                            <Typography variant="subtitle2" sx={{ 
-                                                fontWeight: 'bold', 
-                                                mb: 1.5, 
-                                                borderLeft: '3px solid #f97316',
-                                                pl: 1.5,
-                                                color: '#5786c1',
-                                                fontSize: '0.9rem'
+                                            <Box sx={{ width: '100%', mb: 3 }}>
+                                                <Typography variant="subtitle2" sx={{ 
+                                                    fontWeight: '600', 
+                                                    mb: 1, 
+                                                    fontSize: '0.8rem',
+                                                    color: '#666',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.5px'
                                         }}>
-                                                Modules:
+                                                    Modules
                                         </Typography>
-                                            
+                                                
                                         <Box sx={{ 
                                             display: 'flex', 
                                             flexWrap: 'wrap', 
-                                                gap: 0.75,
-                                                pl: 0.5
+                                                gap: 0.75
                                         }}>
                                             {profile.modules && Array.isArray(profile.modules) && profile.modules.length > 0 ? (
                                                 profile.modules.map((moduleId, index) => {
-                                                        if (index > 1 && profile.modules.length > 2) return null;
+                                                        if (index > 2 && profile.modules.length > 3) return null;
                                                     const module = modules.find(m => m.id === moduleId);
                                                     return (
                                                         <Chip
@@ -1279,94 +1641,130 @@ const Profiles = () => {
                                                             label={module ? module.title : `Module ${moduleId}`}
                                                             size="small"
                     sx={{
-                                                                    bgcolor: '#eef2ff',
-                                                                    color: '#3949ab',
-                                                                    fontSize: '0.75rem',
-                                                                    height: '24px',
+                                                                    bgcolor: '#f5f7fa',
+                                                                    color: '#4b5563',
+                                                                    fontSize: '0.7rem',
+                                                                    height: '22px',
                                                                 borderRadius: '4px',
-                                                                    my: 0.5
+                                                                    my: 0.5,
+                                                                    fontWeight: 500,
+                                                                    transition: 'all 0.2s ease'
                                                             }}
                                                         />
                                                     );
                                                 })
                                             ) : (
-                                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                                                     {t('profiles.noModules')}
                                                 </Typography>
                                             )}
-                                            {profile.modules && profile.modules.length > 2 && (
+                                                {profile.modules && profile.modules.length > 3 && (
                                                 <Chip
-                                                    label={`+${profile.modules.length - 2}`}
+                                                        label={`+${profile.modules.length - 3}`}
                                                     size="small"
                                                     sx={{ 
                                                         backgroundColor: '#f1f5f9', 
                                                         color: '#64748b',
-                                                            fontSize: '0.75rem',
-                                                            height: '24px',
+                                                            fontSize: '0.7rem',
+                                                            height: '22px',
                                                         borderRadius: '4px',
-                                                            my: 0.5
+                                                            my: 0.5,
+                                                            fontWeight: 500
                                                     }}
                                                 />
                                             )}
-                                            </Box>
+                                                </Box>
                                         </Box>
                                         
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            justifyContent: 'space-between', 
-                                            gap: 1.5, 
-                                            width: '100%', 
-                                            mt: 'auto' 
-                                        }}>
-                                            <Button 
-                                                startIcon={<EditIcon />}
-                                                variant="contained"
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                gap: 2, 
+                                                width: '100%', 
+                                                mt: 'auto',
+                                                position: 'relative',
+                                                padding: '12px 16px',
+                                                marginTop: '8px',
+                                                borderTop: '1px solid rgba(229, 231, 235, 0.5)'
+                                            }}>
+                                                <Box sx={{ 
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    right: 0,
+                                                    bottom: 0,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    gap: 2,
+                                                    padding: '10px',
+                                                    opacity: 0,
+                                                    transform: 'translateY(10px)',
+                                                    transition: 'all 0.3s ease',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    borderTop: '1px solid rgba(229, 231, 235, 0.8)',
+                                                    zIndex: 2,
+                                                    '.card-container:hover &': {
+                                                        opacity: 1,
+                                                        transform: 'translateY(0)'
+                                                    }
+                                                }} className="action-buttons-container">
+                                                    <IconButton
+                                                        aria-label="Edit Profile"
                                                 onClick={(e) => {
+                                                            e.preventDefault();
                                                     e.stopPropagation();
                                                     handleEdit(profile.id);
                                                 }}
                                                 sx={{
-                                                    flex: 1,
-                                                    background: 'linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%)',
+                                                            backgroundColor: '#9333ea',
                                                     color: 'white',
-                                                    textTransform: 'none',
-                                                    borderRadius: '24px',
-                                                    fontSize: '0.85rem',
-                                                    py: 0.8,
-                                                    fontWeight: 500,
+                                                    borderRadius: '8px',
+                                                            padding: '8px',
                                                     '&:hover': {
-                                                        background: 'linear-gradient(90deg, #6d28d9 0%, #5b21b6 100%)'
-                                                    }
+                                                                backgroundColor: '#7e22ce',
+                                                                boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)',
+                                                                transform: 'translateY(-3px)'
+                                                            },
+                                                            transition: 'all 0.2s ease'
                                                 }}
-                                            >
-                                                Edit
-                                            </Button>
-                                            <Button 
-                                                startIcon={<DeleteIcon />}
-                                                variant="contained"
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        aria-label="Delete Profile"
                                                 onClick={(e) => {
+                                                            e.preventDefault();
                                                     e.stopPropagation();
                                                     handleDelete(profile.id);
                                                 }}
                                                 sx={{
-                                                    flex: 1,
-                                                    background: 'linear-gradient(90deg, #3f51b5 0%, #5786c1 100%)',
+                                                            backgroundColor: '#ef4444',
                                                     color: 'white',
-                                                    textTransform: 'none',
-                                                    borderRadius: '24px',
-                                                    fontSize: '0.85rem',
-                                                    py: 0.8,
-                                                    fontWeight: 500,
+                                                    borderRadius: '8px',
+                                                            padding: '8px',
                                                     '&:hover': {
-                                                        background: 'linear-gradient(90deg, #3949ab 0%, #4c78b5 100%)'
-                                                    }
-                                                }}
-                                            >
-                                                Delete
-                                            </Button>
+                                                                backgroundColor: '#dc2626',
+                                                                boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)',
+                                                                transform: 'translateY(-3px)'
+                                                            },
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
+                                                <Typography variant="body2" color="text.secondary" sx={{ 
+                                                    fontSize: '0.75rem',
+                                                    color: '#6b7280',
+                                                    textAlign: 'center',
+                                                    width: '100%',
+                                                    zIndex: 1
+                                                }}>
+                                                    {t('profiles.clickToView')}
+                                                </Typography>
                                         </Box>
                                     </Box>
                                 </Card>
+                                </Box>
                             </Grid>
                         ))}
                     </Grid>
@@ -1394,7 +1792,7 @@ const Profiles = () => {
                                             width: '100%',
                                             cursor: 'pointer'
                                         }}
-                                        onClick={() => handleProfileClick(profile)}
+                                        onClick={(e) => handleProfileClick(profile, e)}
                                     >
                                         <Box sx={{ 
                                             display: 'flex', 
@@ -1435,28 +1833,17 @@ const Profiles = () => {
                                                         <Chip
                                                             label={profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
                                                             size="small"
+                                                            data-status={profile.status?.toLowerCase()}
                                                             sx={{
-                                                                bgcolor: profile.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fff1f2',
-                                                                color: profile.status?.toLowerCase() === 'active' ? '#059669' : '#e11d48',
-                                                                fontWeight: 500,
-                                                                height: 20,
-                                                                fontSize: '0.7rem',
-                                                                borderRadius: '10px',
-                                                                border: profile.status?.toLowerCase() === 'active' ? '1px solid #a7f3d0' : '1px solid #fecdd3',
-                                                                pl: 2,
-                                                                position: 'relative',
-                                                                flexShrink: 0,
-                                                                '&::before': {
-                                                                    content: '""',
-                                                                    position: 'absolute',
-                                                                    left: 6,
-                                                                    top: '50%',
-                                                                    transform: 'translateY(-50%)',
-                                                                    width: 6,
-                                                                    height: 6,
-                                                                    borderRadius: '50%',
-                                                                    backgroundColor: profile.status?.toLowerCase() === 'active' ? '#10b981' : '#f43f5e'
-                        }
+                                                                bgcolor: profile.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
+                                                                color: profile.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
+                                                                fontWeight: '600',
+                                                                py: 0.5,
+                                                                px: 1.5,
+                                                                height: '24px',
+                                                                fontSize: '0.75rem',
+                                                                borderRadius: '4px',
+                                                                border: profile.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
                     }}
                 />
                                                     </Box>
@@ -1529,9 +1916,13 @@ const Profiles = () => {
                                                 {/* Action buttons */}
                                                 <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
                                                     <Button 
-                                                        onClick={() => handleEdit(profile.id)}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleEdit(profile.id);
+                                                        }}
                                                         sx={{
-                                                            background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                                                            background: 'linear-gradient(90deg, #9333ea 0%, #7e22ce 100%)',
                                                             color: 'white',
                                                             borderRadius: '6px',
                                                             textTransform: 'none',
@@ -1541,11 +1932,13 @@ const Profiles = () => {
                                                             fontSize: '0.8rem',
                                                             minHeight: '32px',
                                                             minWidth: '90px',
-                                                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                                                            boxShadow: '0 3px 6px rgba(147, 51, 234, 0.3)',
                                                             '&:hover': {
-                                                                background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
-                                                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)'
+                                                                background: 'linear-gradient(90deg, #7e22ce 0%, #6b21a8 100%)',
+                                                                boxShadow: '0 4px 8px rgba(147, 51, 234, 0.4)',
+                                                                transform: 'translateY(-2px)'
                                                             },
+                                                            transition: 'all 0.3s ease',
                                                             '@media (max-width: 600px)': {
                                                                 minWidth: 'unset',
                                                                 width: '36px',
@@ -1566,16 +1959,17 @@ const Profiles = () => {
                                                                 display: 'none' 
                                                             } 
                                                         }}>
-                                                        Edit
+                                                            Edit
                                                         </Box>
                                                     </Button>
                                                     <Button 
                                                         onClick={(e) => {
+                                                            e.preventDefault();
                                                             e.stopPropagation();
                                                             handleDelete(profile.id);
                                                         }}
                                                         sx={{
-                                                            background: 'linear-gradient(90deg, #ef4444 0%, #f43f5e 100%)',
+                                                            background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
                                                             color: 'white',
                                                             borderRadius: '6px',
                                                             textTransform: 'none',
@@ -1585,11 +1979,13 @@ const Profiles = () => {
                                                             fontSize: '0.8rem',
                                                             minHeight: '32px',
                                                             minWidth: '90px',
-                                                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                                                            boxShadow: '0 3px 6px rgba(239, 68, 68, 0.3)',
                                                             '&:hover': {
-                                                                background: 'linear-gradient(90deg, #dc2626 0%, #e11d48 100%)',
-                                                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)'
+                                                                background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
+                                                                boxShadow: '0 4px 8px rgba(239, 68, 68, 0.4)',
+                                                                transform: 'translateY(-2px)'
                                                             },
+                                                            transition: 'all 0.3s ease',
                                                             '@media (max-width: 600px)': {
                                                                 minWidth: 'unset',
                                                                 width: '36px',
@@ -2095,8 +2491,8 @@ const Profiles = () => {
                                     '&:hover': {
                                         backgroundColor: 'rgba(255, 255, 255, 0.3)'
                                     }
-                                }}
-                            >
+                    }}
+                >
                                 <CancelIcon />
                             </IconButton>
                             
@@ -2130,8 +2526,8 @@ const Profiles = () => {
                                 textAlign: 'center',
                                 overflowY: 'auto',
                                 flex: '1 1 auto'
-                            }}
-                        >
+                                        }}
+                                    >
                             <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.75rem', mb: 1 }}>
                                 {selectedProfileDetails.name}
                             </Typography>
@@ -2140,16 +2536,17 @@ const Profiles = () => {
                                 className="profile-status-chip"
                                 label={selectedProfileDetails.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
                                 size="small"
+                                data-status={selectedProfileDetails.status?.toLowerCase()}
                                             sx={{ 
                                     mb: 3,
                                     mt: 1,
-                                    bgcolor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fff1f2',
-                                    color: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#059669' : '#e11d48',
-                                                    fontWeight: 600,
+                                    bgcolor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
+                                    color: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
+                                    fontWeight: '600',
                                     fontSize: '0.75rem',
-                                    borderRadius: '12px',
+                                    borderRadius: '4px',
                                     padding: '4px 12px',
-                                    border: selectedProfileDetails.status?.toLowerCase() === 'active' ? '1px solid #a7f3d0' : '1px solid #fecdd3',
+                                    border: selectedProfileDetails.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
                                     '&::before': {
                                         content: '""',
                                         display: 'inline-block',
@@ -2157,7 +2554,7 @@ const Profiles = () => {
                                         height: 8,
                                         borderRadius: '50%',
                                         marginRight: 6,
-                                        backgroundColor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#10b981' : '#f43f5e'
+                                        backgroundColor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444'
                                                 }
                                             }}
                                         />
@@ -2214,7 +2611,7 @@ const Profiles = () => {
                                                         backgroundColor: '#f9fafb',
                                                         transition: 'all 0.3s ease',
                                                         '&:hover': {
-                                                            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
+                                                            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
                                                             transform: 'translateY(-3px)'
                                                         }
                                                     }}
@@ -2227,9 +2624,11 @@ const Profiles = () => {
                                                             backgroundColor: '#eef2ff',
                                                             borderBottom: '1px solid #e0e7ff',
                                                             display: 'flex',
-                                                            alignItems: 'center'
-                                                        }}
-                                                    >
+                                                            alignItems: 'center',
+                                                            gap: 1
+                                        }}
+                                    >
+                                                        {getModuleIcon(module?.code?.toLowerCase() || '')}
                                                         <Typography 
                                                             className="profile-module-header-title"
                                             sx={{ 
@@ -2284,7 +2683,7 @@ const Profiles = () => {
                                                                     alignItems: 'center', 
                                                                     justifyContent: 'center', 
                                                                     height: '100%' 
-                                        }}
+                                                                    }}
                                     >
                                                                 <Typography 
                                                                     variant="body2" 
@@ -2300,8 +2699,8 @@ const Profiles = () => {
                                                                     )}
                                                                 </Box>
                                                 </Box>
-                                            );
-                                        })
+                                                        );
+                                                    })
                                     }
                                 </Box>
                                 
@@ -2312,15 +2711,15 @@ const Profiles = () => {
                                         color="text.secondary" 
                                         sx={{ textAlign: 'center', mt: 2 }}
                                     >
-                                        {t('profiles.noModules')}
-                                                        </Typography>
-                                                )}
+                                                    {t('profiles.noModules')}
+                                                </Typography>
+                                            )}
                         </Box>
                         </Box>
                         
                         {/* Zone des boutons fixes en bas */}
                         <Box 
-                            sx={{ 
+                                        sx={{ 
                                 display: 'flex', 
                                 justifyContent: 'center', 
                                 gap: 2,
@@ -2333,15 +2732,24 @@ const Profiles = () => {
                             className="profile-action-buttons-container"
                         >
                     <Button 
-                                onClick={() => handleEdit(selectedProfileDetails.id)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Close the modal first
+                                    setProfileModal(false);
+                                    // Then handle the edit action with a slight delay to ensure modal is closed
+                                    setTimeout(() => {
+                                        handleEdit(selectedProfileDetails.id);
+                                    }, 50);
+                                }}
                                 startIcon={<EditIcon />}
                                 className="profile-action-button edit-button"
-                                sx={{
+                                            sx={{ 
                                     backgroundColor: '#7c3aed',
                                     color: 'white',
                                     borderRadius: '10px',
                                     padding: '10px 24px',
-                                    fontWeight: 600,
+                                                    fontWeight: 600,
                                     fontSize: '0.9rem',
                                     textTransform: 'none',
                                     boxShadow: '0 4px 6px rgba(124, 58, 237, 0.2)',
@@ -2355,9 +2763,43 @@ const Profiles = () => {
                                 Edit Profile
                     </Button>
                     <Button 
-                                onClick={handleCloseProfileModal}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    // Close the modal first
+                                    setProfileModal(false);
+                                    // Then handle the delete action with a slight delay to ensure modal is closed
+                                    setTimeout(() => {
+                                        handleDelete(selectedProfileDetails.id);
+                                    }, 50);
+                                }}
+                                startIcon={<DeleteIcon />}
+                                className="profile-action-button delete-button"
+                                                                        sx={{ 
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    borderRadius: '10px',
+                                    padding: '10px 24px',
+                                    fontWeight: 600,
+                                    fontSize: '0.9rem',
+                                    textTransform: 'none',
+                                    boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)',
+                                    minWidth: '140px',
+                                    '&:hover': {
+                                        backgroundColor: '#dc2626',
+                                        boxShadow: '0 6px 10px rgba(239, 68, 68, 0.3)'
+                                    }
+                                }}
+                            >
+                                Delete Profile
+                    </Button>
+                    <Button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCloseProfileModal();
+                                }}
                                 className="profile-action-button close-button"
-                                sx={{
+                                sx={{ 
                                     borderRadius: '10px',
                                     padding: '10px 24px',
                                     fontWeight: 600,
@@ -2374,9 +2816,66 @@ const Profiles = () => {
                             >
                                 Close
                     </Button>
-                        </Box>
+                                                                </Box>
                     </>
                 )}
+            </Dialog>
+
+            {/* Boîte de dialogue de confirmation de suppression */}
+            <Dialog
+                open={deleteConfirmDialog}
+                onClose={cancelDelete}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                PaperProps={{
+                    className: "delete-confirm-dialog",
+                    sx: {
+                        maxWidth: '400px',
+                        width: '100%'
+                    }
+                }}
+            >
+                <Box className="delete-dialog-header">
+                    <IconButton
+                        size="small"
+                        className="delete-dialog-icon"
+                    >
+                        <DeleteIcon />
+                    </IconButton>
+                    <DialogTitle id="delete-dialog-title" className="delete-dialog-title">
+                        {selectedProfiles.length > 0 
+                            ? t('profiles.deleteMultipleTitle', 'Delete Profiles') 
+                            : t('profiles.deleteConfirmTitle', 'Delete Profile')}
+                    </DialogTitle>
+                        </Box>
+                
+                <DialogContent className="delete-dialog-content">
+                    <Typography id="delete-dialog-description" className="delete-dialog-description">
+                        {selectedProfiles.length > 0 
+                            ? `${t('profiles.deleteMultipleMessage', 'Are you sure you want to delete')} ${selectedProfiles.length} ${t('profiles.selectedProfiles', 'selected profiles')}?` 
+                            : `${t('profiles.deleteConfirmMessage', 'Are you sure you want to delete the profile')} ${profileToDelete?.name}?`}
+                    </Typography>
+                    <Typography variant="body2" className="delete-dialog-warning">
+                        {t('profiles.deleteWarning', 'This action cannot be undone. All permissions and settings associated with this profile will be permanently removed.')}
+                    </Typography>
+                </DialogContent>
+                
+                <DialogActions className="delete-dialog-actions">
+                    <Button 
+                        onClick={cancelDelete} 
+                        variant="outlined"
+                        className="delete-dialog-cancel-button"
+                    >
+                        {t('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button 
+                        onClick={confirmDelete} 
+                        variant="contained"
+                        className="delete-dialog-confirm-button"
+                    >
+                        {t('common.delete', 'Delete')}
+                    </Button>
+                </DialogActions>
             </Dialog>
         </Box>
     );

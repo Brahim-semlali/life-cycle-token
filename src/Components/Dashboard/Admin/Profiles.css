@@ -535,30 +535,42 @@ input[type="checkbox"]:checked::after {
 }
 
 .status-badge.active {
-    background: #e3e8f7;
-    color: #7c3aed;
-    border: 1px solid #e3e8f7;
+    background: #e6f7ee;
+    color: #0e9f6e;
+    border: 1px solid #8eedc7;
 }
 
 .status-badge.active::before {
-    background: #48bb78;
-    box-shadow: 0 0 8px #48bb78;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
 .status-badge.inactive {
-    background: #f0eaff;
-    color: #b0b8d1;
-    border: 1px solid #e3e8f7;
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
 }
 
 .status-badge.inactive::before {
-    background: #f56565;
-    box-shadow: 0 0 8px #f56565;
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.status-badge.suspended {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.status-badge.pending {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
 }
 
 /* Animation au survol */
 .status-badge:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
@@ -1397,7 +1409,163 @@ input[type="checkbox"]:checked::after {
 }
 
 .profile-card {
-    animation: fadeIn 0.3s ease-out forwards;
+    position: relative;
+    overflow: hidden;
+    background: white;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    transform-origin: center !important;
+}
+
+.profile-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.profile-card:active {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.2s !important;
+}
+
+/* Animation de l'avatar */
+.profile-card .MuiAvatar-root {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    z-index: 10;
+}
+
+.profile-card:hover .MuiAvatar-root {
+    transform: scale(1.1) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Animation pour les badges de statut */
+.profile-card .MuiChip-root {
+    transition: all 0.3s ease !important;
+}
+
+.profile-card:hover .MuiChip-root {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Effet de gradient pour l'en-tête */
+.profile-card > div:first-of-type {
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-card > div:first-of-type::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-card:hover > div:first-of-type::before {
+    opacity: 1;
+}
+
+.profile-card > div:first-of-type::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-size: 40px 40px;
+    opacity: 0.1;
+    z-index: 0;
+}
+
+/* Animation pour les modules */
+.profile-card .MuiBox-root:nth-of-type(2) .MuiChip-root {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.profile-card:hover .MuiBox-root:nth-of-type(2) .MuiChip-root {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Animation pour les boutons */
+.profile-card .MuiButton-root {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-card .MuiButton-root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    transition: all 0.6s ease;
+}
+
+.profile-card .MuiButton-root:hover::before {
+    transform: translateX(100%);
+}
+
+.profile-card .MuiButton-root:active {
+    transform: scale(0.98) !important;
+}
+
+/* Animation des icônes dans les boutons */
+.profile-card .MuiButton-startIcon {
+    transition: all 0.3s ease !important;
+}
+
+.profile-card .MuiButton-root:hover .MuiButton-startIcon {
+    transform: scale(1.2) !important;
+}
+
+/* Effet visuel pour le nom du profil */
+.profile-card h6 {
+    position: relative;
+    display: inline-block;
+    transition: all 0.3s ease !important;
+}
+
+.profile-card:hover h6 {
+    transform: scale(1.05) !important;
+    color: #3b82f6 !important;
+}
+
+/* Hover effect pour le menu button */
+.profile-card .MuiIconButton-root {
+    transition: all 0.3s ease !important;
+}
+
+.profile-card .MuiIconButton-root:hover {
+    transform: rotate(90deg) !important;
+}
+
+/* Amélioration du rendu des badges de statut */
+.status-badge, .MuiChip-root {
+    backdrop-filter: blur(4px) !important;
+}
+
+/* Animation pour le texte de description */
+.profile-card > div > p:nth-of-type(1) {
+    transition: all 0.3s ease !important;
+}
+
+.profile-card:hover > div > p:nth-of-type(1) {
+    color: #4b5563 !important;
 }
 
 /* Message de recherche sans résultats */
@@ -1449,8 +1617,10 @@ input[type="checkbox"]:checked::after {
     right: 0;
     bottom: 0;
     background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-        opacity: 0.3;
-    }
+    background-size: 40px 40px;
+    opacity: 0.1;
+    z-index: 0;
+}
 
 .profile-avatar {
     border: 6px solid white;
@@ -1513,11 +1683,11 @@ input[type="checkbox"]:checked::after {
 
 @keyframes profileFormModalIn {
     from {
-    opacity: 0;
+        opacity: 0;
         transform: scale(0.95) translateY(10px);
-}
+    }
     to {
-    opacity: 1;
+        opacity: 1;
         transform: scale(1) translateY(0);
     }
 }
@@ -1536,12 +1706,12 @@ input[type="checkbox"]:checked::after {
     right: 0;
     bottom: 0;
     background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.3;
-}
+        opacity: 0.3;
+    }
 
 .profile-form-close-button {
     transition: all 0.3s ease;
-}
+    }
 
 .profile-form-close-button:hover {
     transform: rotate(90deg);
@@ -1563,16 +1733,16 @@ input[type="checkbox"]:checked::after {
 
 .module-card:hover {
     transform: translateY(-3px);
-}
+    }
 
 .profile-form-submit-button, 
 .profile-form-cancel-button {
     transition: all 0.3s ease !important;
-}
+    }
 
 .profile-form-submit-button:hover {
     transform: translateY(-2px);
-}
+    }
 
 .profile-form-cancel-button:hover {
     transform: translateY(-2px);
@@ -1602,7 +1772,7 @@ input[type="checkbox"]:checked::after {
 }
     50% {
         transform: scale(1.2);
-}
+    }
     100% {
         transform: scale(1);
     }
@@ -1670,15 +1840,15 @@ input[type="checkbox"]:checked::after {
     border-color: #d1d5db;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
+    }
 
 .profile-submodule-empty {
     padding: 12px;
-    text-align: center;
+        text-align: center;
     font-style: italic;
     color: #9ca3af;
     font-size: 0.8rem;
-}
+    }
 
 .profile-action-buttons-container {
     display: flex;
@@ -1721,4 +1891,613 @@ input[type="checkbox"]:checked::after {
 .profile-action-button.close-button:hover {
     background-color: #e5e7eb !important;
     transform: translateY(-2px) !important;
+}
+
+/* Amélioration du hover sur les cartes de profil */
+.profile-card {
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(229, 231, 235, 0.8) !important;
+}
+
+.profile-card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+    border-color: rgba(229, 231, 235, 0.4) !important;
+}
+
+/* Animation pour les icônes de module */
+.profile-module-header .MuiSvgIcon-root {
+    transition: all 0.3s ease;
+}
+
+.profile-module-card:hover .MuiSvgIcon-root {
+    transform: scale(1.1);
+}
+
+/* Style des boutons harmonisés */
+.edit-button {
+    background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%) !important;
+    color: white !important;
+    box-shadow: 0 3px 6px rgba(99, 102, 241, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.edit-button:hover:not(:disabled) {
+    background: linear-gradient(90deg, #4f46e5 0%, #4338ca 100%) !important;
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+.delete-button {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%) !important;
+    color: white !important;
+    box-shadow: 0 3px 6px rgba(239, 68, 68, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.delete-button:hover {
+    background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%) !important;
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Animation au clic des boutons */
+.edit-button:active, .delete-button:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Style des modules avec des icônes */
+.profile-module-header-title {
+    font-weight: 600 !important;
+    color: #4f46e5 !important;
+    margin-left: 4px !important;
+}
+
+/* Effet de survol amélioré pour les cartes de modules */
+.profile-module-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.profile-module-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.profile-module-card:hover .profile-module-header {
+    background-color: #dbeafe !important;
+}
+
+/* Animation pour les chips de sous-modules */
+.profile-submodule-chip {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.profile-submodule-chip:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08) !important;
+    z-index: 1 !important;
+}
+
+/* Style minimaliste pour les cartes de profil - nouvelle version */
+.profile-card {
+    background-color: white;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    border-color: rgba(226, 232, 240, 0.5);
+}
+
+/* Avatar style épuré */
+.profile-card .MuiAvatar-root {
+    margin-bottom: 16px;
+    transition: transform 0.25s ease;
+}
+
+.profile-card:hover .MuiAvatar-root {
+    transform: scale(1.05);
+}
+
+/* Typography styles */
+.profile-card h6 {
+    font-weight: 600;
+    color: #333;
+    transition: color 0.2s ease;
+}
+
+.profile-card:hover h6 {
+    color: #4f46e5;
+}
+
+.profile-card .MuiTypography-body2 {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+/* Status badges */
+.profile-card .MuiChip-root {
+    font-size: 0.75rem;
+    height: 24px;
+    font-weight: 500;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+/* Module section styling */
+.profile-card .MuiTypography-subtitle2 {
+    font-size: 0.8rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-card .MuiChip-root {
+    font-size: 0.7rem;
+    border-radius: 4px;
+    height: 22px;
+    background-color: #f5f7fa;
+    color: #4b5563;
+    transition: background-color 0.2s ease;
+}
+
+.profile-card .MuiChip-root:hover {
+    background-color: #e9edf3;
+}
+
+/* Buttons styling */
+.profile-card .MuiButton-root {
+    text-transform: none;
+    font-weight: 500;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 6px 12px;
+    box-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.profile-card .MuiButton-root:hover {
+    transform: translateY(-2px);
+}
+
+.profile-card .MuiButton-startIcon {
+    font-size: 0.9rem;
+    margin-right: 6px;
+}
+
+/* Edit button */
+.profile-card .MuiButton-root:first-of-type {
+    background-color: #6366f1;
+}
+
+.profile-card .MuiButton-root:first-of-type:hover {
+    background-color: #4f46e5;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Delete button */
+.profile-card .MuiButton-root:last-of-type {
+    background-color: #ef4444;
+}
+
+.profile-card .MuiButton-root:last-of-type:hover {
+    background-color: #dc2626;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* Status badges styles améliorés */
+.status-badge.active, .MuiChip-root[color="success"] {
+    background-color: #ecfdf5 !important;
+    color: #10b981 !important;
+    border: 1px solid #6ee7b7 !important;
+}
+
+.status-badge.inactive, .MuiChip-root[color="error"] {
+    background-color: #fef2f2 !important;
+    color: #ef4444 !important;
+    border: 1px solid #fca5a5 !important;
+}
+
+/* Status badges dans les cartes */
+.profile-card .MuiChip-root {
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    border-radius: 4px !important;
+    padding: 0 10px !important;
+}
+
+/* Status badge - état actif */
+.profile-card .MuiChip-root[data-status="active"] {
+    background-color: #ecfdf5 !important;
+    color: #10b981 !important;
+    border: 1px solid #6ee7b7 !important;
+}
+
+/* Status badge - état inactif */
+.profile-card .MuiChip-root[data-status="inactive"] {
+    background-color: #fef2f2 !important;
+    color: #ef4444 !important;
+    border: 1px solid #fca5a5 !important;
+}
+
+/* Animation en hover pour les badges */
+.profile-card .MuiChip-root:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Styles pour les filtres */
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Style des select de filtrage */
+.MuiFormControl-root .MuiInputLabel-root {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.MuiFormControl-root .MuiSelect-select {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+
+.MuiFormControl-root .MuiSelect-icon {
+    color: #9ca3af;
+}
+
+/* Style des options dans le menu de filtrage */
+.MuiMenuItem-root {
+    font-size: 0.85rem;
+    min-height: 32px;
+    padding: 5px 16px;
+}
+
+.MuiMenuItem-root:hover {
+    background-color: #f3f4f6;
+}
+
+.MuiMenuItem-root.Mui-selected {
+    background-color: #f0f9ff;
+}
+
+.MuiMenuItem-root.Mui-selected:hover {
+    background-color: #e0f2fe;
+}
+
+/* Points de couleur pour les statuts */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-dot.active {
+    background-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-dot.inactive {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Responsive pour les filtres */
+@media (max-width: 1024px) {
+    .filter-stack {
+        flex-direction: column;
+        align-items: flex-start;
+}
+
+    .MuiFormControl-root {
+    width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-container {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-container, .MuiFormControl-root {
+        width: 100%;
+    }
+}
+
+/* Style amélioré pour les boutons d'action */
+.profile-card .MuiButton-root {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    letter-spacing: 0.3px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bouton Edit Profile */
+.profile-card .MuiButton-root:first-of-type {
+    background-color: #6366f1;
+    color: white;
+}
+
+.profile-card .MuiButton-root:first-of-type:hover {
+    background-color: #4f46e5;
+    box-shadow: 0 3px 6px rgba(99, 102, 241, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Bouton Delete Profile */
+.profile-card .MuiButton-root:last-of-type {
+    background-color: #ef4444;
+    color: white;
+}
+
+.profile-card .MuiButton-root:last-of-type:hover {
+    background-color: #dc2626;
+    box-shadow: 0 3px 6px rgba(239, 68, 68, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Style des icônes dans les boutons */
+.profile-card .MuiButton-startIcon {
+    margin-right: 6px;
+    transition: transform 0.2s ease;
+}
+
+.profile-card .MuiButton-root:hover .MuiButton-startIcon {
+    transform: scale(1.15);
+}
+
+/* Responsive design pour les boutons */
+@media (max-width: 500px) {
+    .profile-card .MuiButton-root {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Styles pour la boîte de dialogue de confirmation de suppression */
+.MuiDialog-paper.delete-confirm-dialog {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.delete-dialog-header {
+    background-color: #fff5f5;
+    color: #ef4444;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.delete-dialog-icon {
+    background-color: white;
+    color: #ef4444;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.delete-dialog-icon:hover {
+    background-color: #fecaca;
+}
+
+.delete-dialog-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+}
+
+.delete-dialog-content {
+    padding: 24px 24px 16px;
+}
+
+.delete-dialog-description {
+    margin-bottom: 8px;
+}
+
+.delete-dialog-warning {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.delete-dialog-actions {
+    padding: 0 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.delete-dialog-cancel-button {
+    border-color: #d1d5db;
+    color: #6b7280;
+    text-transform: none;
+    font-weight: 500;
+    padding: 6px 16px;
+}
+
+.delete-dialog-cancel-button:hover {
+    border-color: #9ca3af;
+    background-color: #f3f4f6;
+}
+
+.delete-dialog-confirm-button {
+    background-color: #ef4444;
+    color: white;
+    text-transform: none;
+    font-weight: 600;
+    padding: 6px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.delete-dialog-confirm-button:hover {
+    background-color: #dc2626;
+}
+
+/* Amélioration du bouton Delete */
+.profile-card .delete-button {
+    border-color: #ef4444;
+    color: #ef4444;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-card .delete-button:hover {
+    background-color: #fff5f5;
+    border-color: #dc2626;
+    color: #dc2626;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.profile-card .delete-button .MuiButton-startIcon {
+    transition: transform 0.2s ease;
+}
+
+.profile-card .delete-button:hover .MuiButton-startIcon {
+    transform: rotate(90deg);
+    color: #b91c1c;
+}
+
+/* Animation d'avertissement lorsqu'on survole le bouton de suppression */
+.profile-card .delete-button:focus {
+    background-color: #fee2e2;
+    border-color: #b91c1c;
+    color: #b91c1c;
+    animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+}
+} 
+
+/* Style pour le bouton de sélection sur les cartes */
+.profile-card {
+    position: relative;
+}
+
+.profile-card .selection-button {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.profile-card:hover .selection-button,
+.profile-card .selection-button.selected {
+    opacity: 1;
+}
+
+/* Style pour le conteneur de carte et le bouton de sélection */
+.card-container {
+    position: relative;
+    margin-top: 10px;
+}
+
+.selection-button {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+    z-index: 10;
+}
+
+.selection-button.selected {
+    opacity: 1 !important;
+}
+
+.card-container:hover .selection-button {
+    opacity: 1;
+    transform: scale(1) !important;
+}
+
+/* Style pour les boutons d'action */
+.action-buttons-container {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-container:hover .action-buttons-container {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animation pour les boutons */
+.action-buttons-container .MuiButton-root {
+    transition: all 0.2s ease;
+}
+
+.action-buttons-container .MuiButton-root:hover {
+    transform: translateY(-2px);
+}
+
+.action-buttons-container .MuiButton-startIcon {
+    transition: transform 0.2s ease;
+}
+
+.action-buttons-container .MuiButton-root:hover .MuiButton-startIcon {
+    transform: scale(1.2);
+}
+
+/* Style pour les boutons d'action */
+.action-buttons-container {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-container:hover .action-buttons-container {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animation pour les boutons d'icône */
+.action-buttons-container .MuiIconButton-root {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 42px;
+    height: 42px;
+}
+
+.action-buttons-container .MuiIconButton-root:hover {
+    transform: translateY(-3px) scale(1.05);
+}
+
+.action-buttons-container .MuiIconButton-root svg {
+    transition: transform 0.2s ease;
+    font-size: 20px;
+}
+
+.action-buttons-container .MuiIconButton-root:hover svg {
+    transform: scale(1.15);
+}
+
+/* Animation au clic */
+.action-buttons-container .MuiIconButton-root:active {
+    transform: scale(0.95);
 } 
