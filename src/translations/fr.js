@@ -6,6 +6,9 @@ export const fr = {
   'app.loading': 'Chargement...',
   'app.error': 'Une erreur est survenue',
   'app.success': 'Opération réussie',
+  'common.logout': 'Déconnexion',
+  'common.collapse': 'Réduire',
+  'common.expand': 'Développer',
   
   // Admin
   'admin.title': 'Administration',
@@ -57,7 +60,6 @@ export const fr = {
   'profiles.status.inactive': 'Inactif',
   'profiles.cancelSelection': 'Annuler la selection',
   'profiles.deleteSelected' : 'Supprimer la selection',
-  'common.logout': 'Deconnexion',
   'users.fullName': 'Nom complet',
   'users.actionss': 'Actions',
   'profiles.clickToView': 'Cliquez pour voir',

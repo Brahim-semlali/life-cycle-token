@@ -6,6 +6,9 @@ export const es = {
   'app.loading': 'Cargando...',
   'app.error': 'Se produjo un error',
   'app.success': 'Operación exitosa',
+  'common.logout': 'Cerrar sesión',
+  'common.collapse': 'Colapsar',
+  'common.expand': 'Expandir',
   
   // Admin
   'admin.title': 'Administración',

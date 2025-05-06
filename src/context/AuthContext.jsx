@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api';
-import { loadModulesAndMenus } from '../services/ProfileService';
+import ModuleService from '../services/ModuleService';
 
 // Création du contexte d'authentification
 const AuthContext = createContext(null);
@@ -27,33 +27,57 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initModulesAndMenus = async () => {
       try {
-        const { modules, menus } = await loadModulesAndMenus();
-        setAllModules(modules);
-        setAllMenus(menus);
+        console.log("Chargement des modules et menus...");
+        const { modules, menus } = await ModuleService.loadModulesAndMenus();
+        console.log("Modules et menus chargés avec succès:", { 
+          modulesCount: modules?.length, 
+          menusCount: menus?.length 
+        });
+        setAllModules(modules || []);
+        setAllMenus(menus || []);
+        
+        // Pour le développement, si l'utilisateur n'est pas authentifié
+        // on peut lui donner accès à tous les modules/menus
+        if (!isAuthenticated || !user || !user.profile) {
+          console.log("Mode développement: attribution de tous les modules et menus");
+          setUserModules(modules?.map(m => m.id) || []);
+          setUserMenus(menus?.map(m => m.id) || []);
+        }
       } catch (error) {
-        console.error('Error loading modules and menus:', error);
+        console.error("Erreur lors du chargement des modules et menus:", error);
       }
     };
 
-    if (isAuthenticated) {
-      initModulesAndMenus();
-    }
-  }, [isAuthenticated]);
+    // Pour le développement, chargeons les modules même si l'utilisateur n'est pas connecté
+    initModulesAndMenus();
+  }, [isAuthenticated, user]);
 
   // Mettre à jour les modules et menus de l'utilisateur lorsque l'utilisateur change
   useEffect(() => {
+    console.log("Mise à jour des modules utilisateur. Utilisateur connecté:", !!user);
     if (user && user.profile) {
       // Extraire les IDs des modules et menus du profil de l'utilisateur
       const profileModules = user.profile.modules || [];
       const profileMenus = user.profile.menus || [];
       
+      console.log("Modules et menus du profil utilisateur:", { 
+        profileModules, 
+        profileMenus 
+      });
+      
       setUserModules(profileModules);
       setUserMenus(profileMenus);
-    } else {
+    } else if (!isAuthenticated && allModules.length > 0 && allMenus.length > 0) {
+      // Pour le développement, si l'utilisateur n'est pas authentifié,
+      // lui donner accès à tous les modules et menus
+      console.log("Mode développement: attribution de tous les modules et menus");
+      setUserModules(allModules.map(m => m.id));
+      setUserMenus(allMenus.map(m => m.id));
+    } else if (!user) {
       setUserModules([]);
       setUserMenus([]);
     }
-  }, [user]);
+  }, [user, isAuthenticated, allModules, allMenus]);
 
   const login = async (userData) => {
     setIsAuthenticated(true);
@@ -82,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     
     // Trouver le module par son code
     const module = allModules.find(m => 
-      m.code.toLowerCase() === moduleCode.toLowerCase()
+      m.code?.toLowerCase() === moduleCode?.toLowerCase()
     );
     
     // Vérifier si l'utilisateur a accès à ce module
@@ -98,15 +122,15 @@ export const AuthProvider = ({ children }) => {
     
     // Trouver le module par son code
     const module = allModules.find(m => 
-      m.code.toLowerCase() === moduleCode.toLowerCase()
+      m.code?.toLowerCase() === moduleCode?.toLowerCase()
     );
     
     if (!module) return false;
     
     // Trouver le menu par son code et le module associé
     const menu = allMenus.find(m => 
-      m.code.toLowerCase() === subModuleCode.toLowerCase() && 
-      m.module === module.id
+      m.code?.toLowerCase() === subModuleCode?.toLowerCase() && 
+      (m.module === module.id || m.moduleId === module.id)
     );
     
     // Vérifier si l'utilisateur a accès à ce menu
@@ -121,7 +145,9 @@ export const AuthProvider = ({ children }) => {
     checkModuleAccess,
     checkSubModuleAccess,
     userModules,
-    userMenus
+    userMenus,
+    allModules,
+    allMenus
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

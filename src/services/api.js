@@ -353,10 +353,22 @@ const api = {
     async getModules() {
         try {
             // Utiliser l'endpoint qui fonctionne
-            return await this.request('/profile/listmodule/', 'POST');
+            const modules = await this.request('/profile/listmodule/', 'POST');
+            console.log('Modules récupérés de l\'API:', modules);
+            return modules;
         } catch (error) {
             console.error('Failed to fetch modules:', error);
-            return [];
+            
+            // Pour le développement, si l'API échoue, retourner des données fictives
+            console.log('Utilisation de modules fictifs pour le développement');
+            const fakeModules = [
+                { id: 1, code: 'ADMIN', title: 'Administration', description: 'Administration Module', icon: 'admin_panel_settings' },
+                { id: 2, code: 'LCM', title: 'Token Manager', description: 'Life cycle management', icon: 'manage_accounts' },
+                { id: 3, code: 'ITCP', title: 'Issuer TSP', description: 'Issuer TCP', icon: 'token' },
+                { id: 4, code: 'CHARGEBACK', title: 'ChargeBack', description: 'Discharge management', icon: 'payments' },
+                { id: 5, code: 'TRANSACTIONS', title: 'Transactions', description: 'Transaction Management', icon: 'swap_horiz' }
+            ];
+            return fakeModules;
         }
     },
     
@@ -364,7 +376,9 @@ const api = {
     async getMenus() {
         try {
             // Essayer d'abord l'endpoint spécifique pour les menus
-            return await this.request('/profile/listmenu/', 'POST');
+            const menus = await this.request('/profile/listmenu/', 'POST');
+            console.log('Menus récupérés de l\'API:', menus);
+            return menus;
         } catch (error) {
             console.error('Failed to fetch menus:', error);
             // Si ça échoue, extraire les menus des modules
@@ -378,6 +392,23 @@ const api = {
                         }
                     });
                 }
+                
+                // Pour le développement, si aucun menu n'est trouvé, retourner des données fictives
+                if (menus.length === 0) {
+                    console.log('Utilisation de menus fictifs pour le développement');
+                    return [
+                        { id: 1, code: 'PROFILE', title: 'Profil', description: 'Gestion des profils', module: 1 },
+                        { id: 2, code: 'USERS', title: 'Users', description: 'Gestion des utilisateurs', module: 1 },
+                        { id: 3, code: 'SECURITY', title: 'Security', description: 'Paramètres de sécurité', module: 1 },
+                        { id: 4, code: 'CUSTOMER', title: 'Customer', description: 'Gestion des clients', module: 1 },
+                        { id: 5, code: 'RISK_MGMT', title: 'Risk Management', description: 'Gestion des risques', module: 2 },
+                        { id: 6, code: 'STEP_UP', title: 'Step-Up', description: 'Authentification renforcée', module: 2 },
+                        { id: 7, code: 'FRAUD_TEAM', title: 'Fraud Team', description: 'Gestion des fraudes', module: 2 },
+                        { id: 8, code: 'CALL_CENTER', title: 'Call Center', description: 'Support client', module: 2 },
+                        { id: 9, code: 'TOKEN', title: 'Token', description: 'Gestion des tokens', module: 3 }
+                    ];
+                }
+                
                 return menus;
             } catch (moduleError) {
                 console.error('Failed to extract menus from modules:', moduleError);

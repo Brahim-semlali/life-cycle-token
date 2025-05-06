@@ -21,103 +21,81 @@
 }
 
 .sidebar.minimized {
-    width: 68px;
-    border-radius: 20px;
-    background: #e3e8f7;
-    padding: 0;
+    width: 80px;
 }
 
 .sidebar-header {
     display: flex;
     align-items: center;
-    padding: 24px 20px 12px 20px;
-    border-bottom: 1px solid #e3e8f7;
-    min-height: 70px;
-    background: none;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
 }
 
-.sidebar.minimized .sidebar-header {
-    flex-direction: column;
-    padding: 24px 0 12px 0;
-    justify-content: center;
-}
-
-.sidebar-header .avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #ffe0e0;
+.logo {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    margin-right: 16px;
+    font-weight: 600;
 }
 
-.sidebar-header .user-info {
-    flex: 1;
+.logo-full {
     display: flex;
     flex-direction: column;
-    justify-content: center;
 }
 
-.sidebar-header .user-name {
-    font-weight: 600;
-    font-size: 1.05rem;
-    color: #222;
+.logo-full h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #3968d0 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.sidebar-header .user-session {
-    font-size: 0.85rem;
-    color: #888;
+.logo-full span {
+    font-size: 0.7rem;
+    color: #6b7a99;
 }
 
-.sidebar-header .logout-btn {
-    background: #19c37d;
-    border: none;
-    color: #fff;
-    border-radius: 12px;
+.logo-icon {
     width: 36px;
     height: 36px;
+    background: linear-gradient(90deg, #3968d0 0%, #7c3aed 100%);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    margin-left: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
 }
 
-.sidebar-header .logout-btn:hover {
-    background: #0e9e5c;
+.toggle-button {
+    background: transparent;
+    border: none;
+    color: #6b7a99;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.toggle-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-content {
     flex: 1;
     overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0 0 12px 0;
+    padding: 16px 0;
     display: flex;
     flex-direction: column;
-}
-
-.sidebar nav {
-    width: 100%;
-    padding: 0;
-}
-
-.sidebar ul {
-    list-style: none;
-    padding: 12px 0;
-    margin: 0;
-}
-
-.sidebar li {
-    margin: 0 0 8px 0;
-}
-
-.sidebar-section {
-    margin: 16px 0 0 0;
+    justify-content: space-between;
+    height: calc(100% - 80px);
 }
 
 .sidebar-section-title {
@@ -129,126 +107,182 @@
     text-transform: uppercase;
 }
 
-.sidebar-separator {
-    height: 1px;
-    background: #e3e8f7;
-    margin: 10px 0;
-    border: none;
+.sidebar-footer {
+    margin-top: auto;
+    padding: 16px 16px;
+    border-top: 1px solid rgba(229, 231, 235, 0.5);
 }
 
-.sidebar a, .sidebar button, .admin-toggle {
+.settings-link a, .logout-button {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    padding: 10px 24px;
+    padding: 12px 16px;
     color: #6b7a99;
-    text-decoration: none;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    border-radius: 14px;
-    margin: 2px 8px;
-    transition: background 0.18s, color 0.18s;
-    cursor: pointer;
-    position: relative;
     font-weight: 500;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s, color 0.2s;
+    text-decoration: none;
+    cursor: pointer;
 }
 
-.sidebar.minimized a, .sidebar.minimized button, .sidebar.minimized .admin-toggle {
-    justify-content: center;
-    padding: 10px 0;
-    margin: 2px 0;
-}
-
-.sidebar a:hover, .sidebar button:hover, .admin-toggle:hover {
-    background: #f0eaff;
+.settings-link a:hover, .logout-button:hover {
+    background-color: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
 }
 
-.sidebar a.active, .admin-toggle.active {
-    background: #f0eaff;
+.settings-link a.active {
+    background-color: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
     font-weight: 600;
 }
 
-.material-icons {
-    margin-right: 16px;
-    font-size: 1.5rem;
-    color: inherit;
-    min-width: 24px;
+.settings-link a span, .logout-button span {
+    margin-right: 12px;
+}
+
+.module-section {
+    margin-bottom: 8px;
+}
+
+.module-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-}
-
-.sidebar.minimized .material-icons {
-    margin: 0;
-}
-
-.menu-text {
-    white-space: nowrap;
-    overflow: hidden;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.sidebar.minimized .menu-text {
-    display: none;
-    opacity: 0;
-    width: 0;
-}
-
-.badge {
-    background: #e53935;
-    color: #fff;
+    padding: 12px 24px;
+    color: #6b7a99;
+    font-weight: 500;
+    cursor: pointer;
     border-radius: 12px;
-    font-size: 0.8rem;
-    padding: 2px 8px;
-    margin-left: 8px;
-    font-weight: 600;
-    display: inline-block;
+    margin: 4px 10px;
+    transition: background-color 0.2s, color 0.2s;
+    position: relative;
 }
 
-.admin-submenu {
+.module-item:hover {
+    background-color: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+}
+
+.module-item.active {
+    background-color: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.module-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    min-width: 20px;
+}
+
+.module-text {
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.module-toggle {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.module-toggle.open {
+    transform: rotate(180deg);
+}
+
+.module-submenu {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: none;
-    margin: 0;
+    margin: 0 0 0 10px;
     border-radius: 0;
+    border-left: 1px solid rgba(229, 231, 235, 0.5);
+    padding-left: 10px;
 }
 
-.admin-submenu.open {
+.module-submenu.open {
     max-height: 500px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
-.admin-submenu a {
-    padding-left: 48px;
-    font-size: 0.97rem;
+.module-submenu a {
+    padding-left: 36px;
+    font-size: 0.92rem;
     opacity: 0.9;
     border-radius: 10px;
-}
-
-.sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #e3e8f7;
-    border-radius: 10px;
-}
-
-@media (max-width: 900px) {
-    .sidebar {
-        margin: 0;
-        border-radius: 0 0 24px 0;
-}
-}
-
-.sidebar-bottom {
-    margin-top: auto;
+    transition: all 0.2s ease;
+    margin-left: 0;
+    height: 42px;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 12px 0 16px 0;
+    align-items: center;
+    text-decoration: none;
+    color: #6b7a99;
+    padding: 10px 16px;
+    margin: 2px 10px;
+    position: relative;
+}
+
+.module-submenu a:hover {
+    background-color: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+}
+
+.module-submenu a.active {
+    background-color: #f0eaff;
+    color: #7c3aed;
+    font-weight: 600;
+    position: relative;
+}
+
+.module-submenu a.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: linear-gradient(180deg, #7c3aed 0%, #4f46e5 100%);
+    border-radius: 0 4px 4px 0;
+}
+
+.tooltip-text {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.2s linear;
+    z-index: 1000;
+    color: #4b5563;
+    font-weight: 500;
+    margin-left: 12px;
+}
+
+.minimized .module-submenu a:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .sidebar.minimized {
+        width: 0;
+    }
+    
+    .sidebar.open {
+        width: 260px;
+    }
 }

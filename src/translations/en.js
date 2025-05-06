@@ -6,6 +6,9 @@ export const en = {
   'app.loading': 'Loading...',
   'app.error': 'An error occurred',
   'app.success': 'Operation successful',
+  'common.logout': 'Logout',
+  'common.collapse': 'Collapse',
+  'common.expand': 'Expand',
   
   // Admin
   'admin.title': 'Administration',
@@ -70,7 +73,6 @@ export const en = {
   'profiles.createdAt': 'Created At',
   'profiles.updatedAt': 'Updated At',
   'profiles.close': 'Close',
-  'common.logout': 'Logout',
   'users.fullName': 'Full Name',
   'users.actionss': 'Actions',
   'profiles.clickToView': 'Click to view',

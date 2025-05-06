@@ -6,6 +6,9 @@ export const ar = {
   'app.loading': 'جاري التحميل...',
   'app.error': 'حدث خطأ',
   'app.success': 'تمت العملية بنجاح',
+  'common.logout': 'تسجيل الخروج',
+  'common.collapse': 'طي',
+  'common.expand': 'توسيع',
   
   // Admin
   'admin.title': 'الإدارة',
