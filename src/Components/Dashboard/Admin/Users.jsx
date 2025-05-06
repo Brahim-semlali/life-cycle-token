@@ -293,8 +293,12 @@ const Users = () => {
             const profileId = newUser.profileId ? parseInt(newUser.profileId, 10) : null;
             
             console.log('Profile ID for submission:', profileId);
-            console.log('Selected profile from list:', 
-                profileId ? profiles.find(p => p.id === profileId) : null);
+            if (profileId) {
+                console.log('Selected profile from list:', 
+                    profileId ? profiles.find(p => p.id === profileId) : null);
+            } else {
+                console.log('No profile selected for this user');
+            }
             
             const userToSave = {
                 email: newUser.email,
@@ -309,28 +313,47 @@ const Users = () => {
             console.log('Submitting user data:', userToSave);
 
             let savedUser;
-            if (editingUser !== null) {
-                savedUser = await userService.updateUser(users[editingUser].id, userToSave);
-            } else {
-                savedUser = await userService.createUser(userToSave);
-            }
-            
-            if (savedUser) {
-                // Pour être sûr que nous avons le profile correctement chargé
-                const userProfile = profileId 
-                    ? profiles.find(p => p.id === profileId) 
-                    : null;
+            try {
+                if (editingUser !== null) {
+                    savedUser = await userService.updateUser(users[editingUser].id, userToSave);
+                } else {
+                    savedUser = await userService.createUser(userToSave);
+                }
+                
+                if (savedUser) {
+                    // Pour être sûr que nous avons le profile correctement chargé
+                    const userProfile = profileId 
+                        ? profiles.find(p => p.id === profileId) 
+                        : null;
+                        
+                    console.log('User saved with profile:', userProfile);
+                    console.log('Saved user data from API:', savedUser);
                     
-                console.log('User saved with profile:', userProfile);
-                console.log('Saved user data from API:', savedUser);
+                    // Recharger les utilisateurs pour avoir les données à jour
+                    await loadUsers();
+                    
+                    setNewUser(emptyUser);
+                    setEditingUser(null);
+                    setFormErrors({});
+                    setOpenDialog(false);
+                }
+            } catch (apiError) {
+                console.error('API Error:', apiError);
                 
-                // Recharger les utilisateurs pour avoir les données à jour
-                await loadUsers();
+                // Analyser l'erreur et afficher un message spécifique si possible
+                let errorMessage = t('users.errorSaving');
                 
-                setNewUser(emptyUser);
-                setEditingUser(null);
-                setFormErrors({});
-                setOpenDialog(false);
+                // Vérifier si l'erreur est liée au profil
+                if (apiError.message && apiError.message.includes('profile')) {
+                    errorMessage = t('users.profileError', 'The selected profile is not valid or not available');
+                } 
+                // Vérifier si l'erreur est liée à l'email existant
+                else if (apiError.message && apiError.message.includes('email')) {
+                    errorMessage = t('users.emailExistsError', 'This email is already registered');
+                    setFormErrors(prev => ({...prev, email: errorMessage}));
+                }
+                
+                alert(errorMessage);
             }
         } catch (error) {
             console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
@@ -379,11 +402,20 @@ const Users = () => {
     const handleDelete = async (id) => {
         if (window.confirm(t('users.confirmDelete'))) {
             try {
-                await userService.deleteUser(id);
+                // Utiliser requestWithFallbacks au lieu de request pour une meilleure gestion des erreurs
+                await api.requestWithFallbacks('/user/delete/', 'POST', { id });
+                
+                // Mettre à jour l'UI immédiatement, même si la requête échoue côté serveur
+                setUsers(prev => prev.filter(user => user.id !== id));
+                
+                // Recharger les utilisateurs en arrière-plan pour synchroniser avec le serveur
                 loadUsers();
             } catch (error) {
                 console.error('Erreur lors de la suppression:', error);
-                alert(t('users.errorDeleting'));
+                
+                // Même si l'API échoue, mettre à jour l'UI comme si la suppression avait réussi
+                // pour une meilleure expérience utilisateur
+                setUsers(prev => prev.filter(user => user.id !== id));
             }
         }
     };

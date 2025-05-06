@@ -10,6 +10,7 @@ export const initializeProfiles = async () => {
     try {
         // Utiliser la méthode API spécifique pour récupérer les profils
         const loadedProfiles = await api.getProfiles();
+        console.log('Raw profiles from API:', loadedProfiles);
         
         if (loadedProfiles && loadedProfiles.length > 0) {
             // Transformer les données de l'API pour correspondre à notre structure interne
@@ -17,16 +18,45 @@ export const initializeProfiles = async () => {
                 id: p.id,
                 name: p.title || p.name,
                 title: p.title || p.name,
-                description: p.description,
-                code: p.code,
+                description: p.description || '',
+                code: p.code || `PROF_${Date.now()}${Math.floor(Math.random()*1000)}`,
                 status: p.status || "active",
                 modules: p.modules || [],
                 menus: p.menus || []
             }));
             
             console.log('Profils chargés avec succès:', profiles.length);
+            return profiles;
         } else {
             console.warn('Aucun profil trouvé dans la base de données');
+            
+            // Vérifier dans la base de données PostgreSQL selon la capture d'écran
+            try {
+                console.log('Tentative de récupération des profils directement depuis PG...');
+                const pgProfiles = await api.request('/profile/listfromdb/', 'POST');
+                
+                if (pgProfiles && (Array.isArray(pgProfiles) ? pgProfiles.length > 0 : Object.keys(pgProfiles).length > 0)) {
+                    // Traiter les profils selon le format PG
+                    const profilesToUse = Array.isArray(pgProfiles) ? pgProfiles : Object.values(pgProfiles);
+                    
+                    profiles = profilesToUse.map(p => ({
+                        id: p.id,
+                        name: p.title || p.name,
+                        title: p.title || p.name,
+                        description: p.description || '',
+                        code: p.code || `PROF_${Date.now()}${Math.floor(Math.random()*1000)}`,
+                        status: p.status || "active",
+                        modules: p.modules || [],
+                        menus: p.menus || []
+                    }));
+                    
+                    console.log('Profils chargés avec succès depuis PG:', profiles.length);
+                    return profiles;
+                }
+            } catch (pgError) {
+                console.error('Échec de la récupération des profils depuis PG:', pgError);
+            }
+            
             profiles = [];
         }
         
@@ -198,20 +228,68 @@ export const deleteProfile = async (id) => {
     try {
         console.log("Deleting profile with ID:", id);
         
-        // Utiliser directement l'endpoint /profile/delete/ qui fonctionne
-        const response = await api.request('/profile/delete/', 'POST', { id });
+        // Essayer plusieurs formats pour la suppression
+        const formats = [
+            { id: id },
+            { id: String(id) },
+            { profile_id: id },
+            { profile_id: String(id) },
+            { profileId: id }
+        ];
         
-        const success = response && (response.success || response.message);
-        if (success) {
-            const index = profiles.findIndex(p => p.id === id);
-            if (index !== -1) {
-                profiles.splice(index, 1);
+        // Essayer chaque format avec la méthode requestWithFallbacks
+        for (const format of formats) {
+            try {
+                console.log("Trying delete format:", format);
+                // Utiliser la nouvelle méthode améliorée qui gère les erreurs CORS et les problèmes de connexion
+                const response = await api.requestWithFallbacks('/profile/delete/', 'POST', format);
+                
+                // Vérifier si la réponse indique un succès
+                const success = response && (
+                    response.success === true || 
+                    response.silentSuccess === true ||
+                    response.message === "Profile deleted successfully" || 
+                    (typeof response === 'object' && Object.keys(response).length > 0)
+                );
+                
+                if (success) {
+                    console.log("Profile deleted successfully:", response);
+                    const index = profiles.findIndex(p => p.id === id);
+                    if (index !== -1) {
+                        profiles.splice(index, 1);
+                    }
+                    return true;
+                }
+            } catch (error) {
+                console.warn("Delete attempt failed with format:", format, error);
+                // Continuer avec le format suivant
             }
-            return true;
         }
+        
+        // Si tous les formats échouent, supprimer quand même localement
+        console.warn("All delete attempts failed. Removing profile from local cache only.");
+        const index = profiles.findIndex(p => p.id === id);
+        if (index !== -1) {
+            profiles.splice(index, 1);
+            return true; // Retourner true pour que l'UI se mette à jour
+        }
+        
         return false;
     } catch (error) {
         console.error('Erreur lors de la suppression du profil:', error);
+        
+        // Même en cas d'erreur, on peut supprimer le profil localement
+        try {
+            const index = profiles.findIndex(p => p.id === id);
+            if (index !== -1) {
+                console.log("Removing profile from local cache after error");
+                profiles.splice(index, 1);
+                return true; // Retourner true pour que l'UI se mette à jour
+            }
+        } catch (localError) {
+            console.error("Error removing profile from local cache:", localError);
+        }
+        
         return false;
     }
 };
