@@ -75,11 +75,25 @@ export const loadModulesAndMenus = async () => {
  * @returns {Array} Modules complets accessibles à l'utilisateur
  */
 export const getUserModules = (userModuleIds) => {
-    if (!userModuleIds || !Array.isArray(userModuleIds)) {
+    console.log("getUserModules called with:", userModuleIds);
+    console.log("cachedModules available:", cachedModules.length);
+    
+    if (!userModuleIds || !Array.isArray(userModuleIds) || userModuleIds.length === 0) {
+        console.warn("Aucun ID de module fourni");
         return [];
     }
     
-    return cachedModules.filter(module => userModuleIds.includes(module.id));
+    // Vérifier si le cache de modules est vide
+    if (cachedModules.length === 0) {
+        console.warn("Cache de modules vide - impossible de récupérer les modules");
+        return [];
+    }
+    
+    // Filtrer les modules en fonction des IDs fournis
+    const modules = cachedModules.filter(module => userModuleIds.includes(module.id));
+    console.log(`Trouvé ${modules.length} modules correspondant aux IDs`);
+    
+    return modules;
 };
 
 /**
@@ -88,11 +102,25 @@ export const getUserModules = (userModuleIds) => {
  * @returns {Array} Menus complets accessibles à l'utilisateur
  */
 export const getUserMenus = (userMenuIds) => {
-    if (!userMenuIds || !Array.isArray(userMenuIds)) {
+    console.log("getUserMenus called with:", userMenuIds);
+    console.log("cachedMenus available:", cachedMenus.length);
+    
+    if (!userMenuIds || !Array.isArray(userMenuIds) || userMenuIds.length === 0) {
+        console.warn("Aucun ID de menu fourni");
         return [];
     }
     
-    return cachedMenus.filter(menu => userMenuIds.includes(menu.id));
+    // Vérifier si le cache de menus est vide
+    if (cachedMenus.length === 0) {
+        console.warn("Cache de menus vide - impossible de récupérer les menus");
+        return [];
+    }
+    
+    // Filtrer les menus en fonction des IDs fournis
+    const menus = cachedMenus.filter(menu => userMenuIds.includes(menu.id));
+    console.log(`Trouvé ${menus.length} menus correspondant aux IDs`);
+    
+    return menus;
 };
 
 /**
@@ -102,28 +130,99 @@ export const getUserMenus = (userMenuIds) => {
  * @returns {Array} Structure complète pour la sidebar
  */
 export const buildModuleStructure = (userModuleIds, userMenuIds) => {
-    // Récupérer les modules et menus de l'utilisateur
-    const userModules = getUserModules(userModuleIds);
-    const userMenus = getUserMenus(userMenuIds);
+    console.log("buildModuleStructure called with:", { 
+        userModuleIds: JSON.stringify(userModuleIds), 
+        userMenuIds: JSON.stringify(userMenuIds),
+        cachedModules: cachedModules.length,
+        cachedMenus: cachedMenus.length
+    });
+    
+    // Normalisation des IDs (peut être des objets ou des nombres)
+    const normalizedModuleIds = (userModuleIds || []).map(id => {
+        if (typeof id === 'object' && id !== null) {
+            return id.id;
+        }
+        return id;
+    }).filter(id => id !== undefined && id !== null);
+    
+    // Normalisation des menus (peut être des objets avec module ID)
+    const normalizedMenus = (userMenuIds || []).map(menu => {
+        if (typeof menu === 'object' && menu !== null) {
+            return {
+                id: menu.id,
+                code: menu.code,
+                title: menu.title,
+                module: menu.module || menu.moduleId
+            };
+        }
+        return { id: menu };
+    }).filter(menu => menu.id !== undefined && menu.id !== null);
+    
+    console.log("Normalized data:", { 
+        moduleIds: normalizedModuleIds, 
+        menus: normalizedMenus 
+    });
+    
+    // Si aucun module n'est autorisé, ne pas en ajouter automatiquement
+    if (normalizedModuleIds.length === 0) {
+        console.log("Aucun module autorisé pour cet utilisateur");
+        return [];
+    }
+    
+    // Récupérer les modules de l'utilisateur
+    const userModules = getUserModules(normalizedModuleIds);
+    console.log("Modules récupérés:", userModules);
     
     // Construire la structure complète
-    return userModules.map(module => ({
-        id: module.id,
-        code: module.code || `MODULE_${module.id}`,
-        title: module.title || module.name || `Module ${module.id}`,
-        icon: module.icon || 'dashboard',
+    const structure = userModules.map(module => {
         // Filtrer les sous-menus qui appartiennent à ce module
-        submodules: userMenus
-            .filter(menu => menu.moduleId === module.id || menu.module === module.id)
-            .map(menu => ({
+        const moduleMenus = normalizedMenus.filter(menu => 
+            menu.module === module.id
+        );
+        
+        console.log(`Menus pour le module ${module.code}:`, moduleMenus);
+        
+        // Convertir le code du module en chemin URL
+        const getModulePath = (code) => {
+            switch(code?.toLowerCase()) {
+                case 'lcm': return 'token-manager';
+                case 'itcp': return 'issuer-tsp';
+                default: return code?.toLowerCase();
+            }
+        };
+
+        // Convertir le code du menu en chemin URL
+        const getMenuPath = (code) => {
+            switch(code?.toLowerCase()) {
+                case 'risk_mgmt': return 'risk-management';
+                case 'step_up': return 'step-up';
+                case 'fraud_team': return 'fraud-team';
+                case 'call_center': return 'call-center';
+                default: return code?.toLowerCase();
+            }
+        };
+
+        const modulePath = getModulePath(module.code);
+        
+        return {
+            id: module.id,
+            code: module.code || `MODULE_${module.id}`,
+            title: module.title || module.name || `Module ${module.id}`,
+            icon: module.icon || 'dashboard',
+            // Transformer les menus en sous-modules
+            submodules: moduleMenus.map(menu => ({
                 id: menu.id,
                 code: menu.code || `MENU_${menu.id}`,
                 title: menu.title || menu.name || `Menu ${menu.id}`,
-                path: menu.path || `/dashboard/${module.code?.toLowerCase()}/${menu.code?.toLowerCase()}`
+                path: `/dashboard/${modulePath}/${getMenuPath(menu.code)}`
             })),
-        // Chemin direct pour les modules sans sous-menus
-        path: `/dashboard/${module.code?.toLowerCase()}`
-    }));
+            // Chemin direct pour les modules sans sous-menus
+            path: `/dashboard/${modulePath}`
+        };
+    });
+    
+    console.log("Structure finale des modules:", structure);
+    return structure;
 };
 
 export default {

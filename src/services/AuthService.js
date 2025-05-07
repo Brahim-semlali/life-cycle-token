@@ -2,33 +2,32 @@ import api from './api';
 import userService from './UserService';
 
 class AuthService {
-    // Récupérer les informations de l'utilisateur connecté et son profil
-    async getCurrentUser() {
+    // Récupérer un utilisateur par son email
+    async getUserByEmail(email) {
         try {
-            const userData = await api.request('/user/current/', 'GET');
-            if (userData && userData.id) {
-                // Obtenez tous les utilisateurs pour trouver celui correspondant avec son profil complet
-                const users = await userService.getAllUsers();
-                const currentUser = users.find(u => u.id === userData.id);
-                return currentUser || userData;
+            const users = await api.request('/user/getall/', 'POST');
+            if (Array.isArray(users)) {
+                return users.find(u => u.email === email);
             }
             return null;
         } catch (error) {
-            console.error('Erreur lors de la récupération de l\'utilisateur courant:', error);
             return null;
         }
+    }
+
+    // Récupérer les informations de l'utilisateur connecté (par email)
+    async getCurrentUser(email) {
+        return await this.getUserByEmail(email);
     }
     
     // Fonction de connexion
     async login(email, password) {
         try {
             // Envoi des identifiants au serveur
-            // Le serveur définira un cookie de session sécurisé
             await api.request('/user/login/', 'POST', { email, password });
             console.log('Login successful - cookie established');
-            
-            // Récupérer les informations de l'utilisateur après la connexion
-            const currentUser = await this.getCurrentUser();
+            // Récupérer l'utilisateur par email
+            const currentUser = await this.getUserByEmail(email);
             return currentUser || true;
         } catch (error) {
             console.error('Login error:', error.message);
@@ -49,10 +48,9 @@ class AuthService {
     }
 
     // Vérifie si l'utilisateur est authentifié
-    // Le serveur vérifiera automatiquement le cookie de session
-    async isAuthenticated() {
+    async isAuthenticated(email) {
         try {
-            const currentUser = await this.getCurrentUser();
+            const currentUser = await this.getCurrentUser(email);
             return !!currentUser;
         } catch (error) {
             console.error('Erreur lors de la vérification de l\'authentification:', error);

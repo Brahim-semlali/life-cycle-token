@@ -4,6 +4,7 @@ import { useMenu } from "../../context/MenuContext";
 import { useTranslation } from 'react-i18next';
 import { useAuth } from "../../context/AuthContext";
 import ModuleService from "../../services/ModuleService";
+import api from "../../services/api";
 import "./Sidebar.css";
 
 // Correspondance d'icônes par défaut pour les modules
@@ -28,12 +29,66 @@ const Sidebar = () => {
     const [isModuleOpen, setIsModuleOpen] = useState({});
     const { isMinimized, setIsMinimized } = useMenu();
     const { t } = useTranslation();
-    const { allModules, allMenus, userModules, userMenus, logout } = useAuth();
+    const { allModules, allMenus, userModules, userMenus, logout, user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     // Structure des modules et sous-modules accessibles à l'utilisateur
     const [userModuleStructure, setUserModuleStructure] = useState([]);
+    const [userAccessData, setUserAccessData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch user-specific access data
+    useEffect(() => {
+        const fetchUserAccess = async () => {
+            if (!user || !isAuthenticated) {
+                console.log("Utilisateur non connecté - pas de récupération des droits d'accès");
+                setIsLoading(false);
+                return;
+            }
+            
+            console.log("Tentative de récupération des données d'accès pour l'utilisateur:", user);
+            setIsLoading(true);
+            try {
+                // Utiliser la méthode implémentée dans l'API
+                const accessData = await api.getUserProfileAccess(user.id);
+                console.log("User access data:", accessData);
+                
+                // Correction : extraire les menus depuis les modules
+                let modules = [];
+                let menus = [];
+                
+                if (accessData && Array.isArray(accessData.modules)) {
+                    // Extraire les IDs des modules
+                    modules = accessData.modules.map(m => m.id);
+                    
+                    // Extraire tous les menus imbriqués dans les modules
+                    accessData.modules.forEach(module => {
+                        if (module.menus && Array.isArray(module.menus)) {
+                            menus.push(...module.menus.map(menu => ({
+                                ...menu,
+                                module: module.id  // Ajouter l'ID du module parent
+                            })));
+                        }
+                    });
+                }
+                
+                console.log("Données d'accès extraites:", {
+                    modules: modules,
+                    menus: menus.map(m => ({ id: m.id, code: m.code, moduleId: m.module }))
+                });
+                
+                setUserAccessData({ modules, menus });
+            } catch (error) {
+                console.error("Error fetching user access:", error);
+                setUserAccessData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        fetchUserAccess();
+    }, [user, isAuthenticated]);
 
     // Initialisation des états d'ouverture des modules
     useEffect(() => {
@@ -114,51 +169,90 @@ const Sidebar = () => {
     // Charger les données des modules et sous-modules depuis l'API via le service
     useEffect(() => {
         const loadModulesData = async () => {
+            console.log("loadModulesData - État actuel:", {
+                isAuthenticated,
+                user: user ? "présent" : "absent",
+                userAccessData: userAccessData ? "présent" : "absent",
+                userModules: userModules.length,
+                allModules: allModules.length
+            });
+
+            if (user) {
+                console.log("Données utilisateur complètes:", JSON.stringify(user));
+            }
+
             try {
                 // Charger les modules et menus si nécessaire
                 if (allModules.length === 0 || allMenus.length === 0) {
+                    console.log("Chargement des modules et menus de base");
                     await ModuleService.loadModulesAndMenus();
                 }
                 
-                // Construire la structure des modules et sous-menus pour l'utilisateur
-                const moduleStructure = ModuleService.buildModuleStructure(userModules, userMenus);
+                // Si l'utilisateur est connecté - utiliser strictement ses droits d'accès
+                if (isAuthenticated && user) {
+                    console.log("Utilisateur authentifié:", user.id);
+                    
+                    // Utiliser uniquement les données d'accès spécifiques à l'utilisateur
+                    if (userAccessData && (
+                        (Array.isArray(userAccessData.modules) && userAccessData.modules.length > 0) || 
+                        (Array.isArray(userAccessData.menus) && userAccessData.menus.length > 0)
+                    )) {
+                        console.log("Construction de la structure avec les données d'accès:", userAccessData);
+                        
+                        // Construire la structure en utilisant les modules et menus
+                        const moduleStructure = ModuleService.buildModuleStructure(
+                            userAccessData.modules,
+                            userAccessData.menus
+                        );
                 
-                // Ajouter les icônes par défaut si elles ne sont pas définies
-                const structureWithIcons = moduleStructure.map(module => ({
-                    ...module,
-                    icon: module.icon || DEFAULT_ICONS[module.code] || DEFAULT_ICONS.DEFAULT,
-                    // Corriger les sous-modules pour les cas spéciaux
-                    submodules: module.submodules.map(submenu => {
-                        // Pour le sous-module "Profil", s'assurer qu'il pointe vers "profiles" (pluriel)
-                        if (submenu.title === 'Profil' && module.code === 'ADMIN') {
-                            return {
-                                ...submenu,
-                                path: '/dashboard/admin/profiles'
-                            };
-                        }
-                        return submenu;
-                    })
-                }));
-                
-                console.log("Structure des modules pour l'utilisateur:", structureWithIcons);
-                setUserModuleStructure(structureWithIcons);
+                        // Ajouter les icônes par défaut
+                        const structureWithIcons = addIconsToStructure(moduleStructure);
+                        console.log("Structure finale des modules:", structureWithIcons);
+                        setUserModuleStructure(structureWithIcons);
+                    } else if (user.profile && user.profile.modules) {
+                        // Fallback sur le profil de l'utilisateur si pas de données d'accès
+                        console.log("Utilisation du profil utilisateur comme fallback");
+                        const moduleStructure = ModuleService.buildModuleStructure(
+                            user.profile.modules,
+                            user.profile.menus || []
+                        );
+                        
+                        const structureWithIcons = addIconsToStructure(moduleStructure);
+                        setUserModuleStructure(structureWithIcons);
+                    } else {
+                        console.log("Aucune donnée d'accès ni profil disponible");
+                        setUserModuleStructure([]);
+                    }
+                } else if (!isAuthenticated && process.env.REACT_APP_DEV_MODE === 'true') {
+                    console.log("Mode développement - affichage de tous les modules");
+                    const moduleStructure = ModuleService.buildModuleStructure(
+                        allModules.map(m => m.id),
+                        allMenus.map(m => m.id)
+                    );
+                    
+                    const structureWithIcons = addIconsToStructure(moduleStructure);
+                    setUserModuleStructure(structureWithIcons);
+                } else {
+                    console.log("Aucun utilisateur authentifié - aucun module affiché");
+                    setUserModuleStructure([]);
+                }
             } catch (error) {
                 console.error("Erreur lors du chargement des modules et menus:", error);
+                // En cas d'erreur, ne rien afficher plutôt que d'afficher tout
+                setUserModuleStructure([]);
             }
         };
         
-        // Charger les modules uniquement si l'utilisateur a des modules accessibles
-        if (userModules.length > 0) {
+        // Charger les modules uniquement si l'API a terminé de charger les données d'accès
+        // ou si nous avons des modules dans le contexte d'authentification
+        if (!isLoading || userModules.length > 0 || allModules.length > 0) {
             loadModulesData();
-        } else if (allModules.length > 0) {
-            // Si pas de modules utilisateur mais des modules système, construire à partir des données déjà chargées
-            const moduleStructure = ModuleService.buildModuleStructure(
-                allModules.map(m => m.id), // En mode développement, donner accès à tous les modules
-                allMenus.map(m => m.id)    // Et à tous les menus
-            );
-            
-            // Ajouter les icônes par défaut et corriger les chemins
-            const structureWithIcons = moduleStructure.map(module => ({
+        }
+    }, [allModules, allMenus, userModules, userMenus, userAccessData, isLoading, isAuthenticated, user]);
+
+    // Fonction pour ajouter les icônes et corriger les chemins
+    const addIconsToStructure = (moduleStructure) => {
+        return moduleStructure.map(module => ({
                 ...module,
                 icon: module.icon || DEFAULT_ICONS[module.code] || DEFAULT_ICONS.DEFAULT,
                 // Corriger les sous-modules pour les cas spéciaux
@@ -173,22 +267,11 @@ const Sidebar = () => {
                     return submenu;
                 })
             }));
-            
-            console.log("Structure des modules pour le développement:", structureWithIcons);
-            setUserModuleStructure(structureWithIcons);
-        }
-    }, [allModules, allMenus, userModules, userMenus]);
+    };
 
     const handleLogout = () => {
         logout();
         navigate("/");
-    };
-
-    // Fonction pour gérer la navigation vers un sous-module
-    const handleSubmoduleNavigation = (path) => {
-        // Vérifier si le chemin a une correspondance spéciale
-        const targetPath = ROUTE_MAPPING[path] || path;
-        navigate(targetPath);
     };
 
     return (

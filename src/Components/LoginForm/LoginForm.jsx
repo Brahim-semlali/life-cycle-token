@@ -38,8 +38,8 @@ const LoginForm = () => {
         setIsLoading(true);
 
         try {
-            await authService.login(credentials.email, credentials.password);
-            await login();
+            const user = await authService.login(credentials.email, credentials.password);
+            await login(user);
             navigate('/dashboard');
         } catch (error) {
             setError(error.message || 'Authentication failed');

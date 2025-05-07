@@ -80,8 +80,35 @@ export const AuthProvider = ({ children }) => {
   }, [user, isAuthenticated, allModules, allMenus]);
 
   const login = async (userData) => {
-    setIsAuthenticated(true);
-    setUser(userData);
+    try {
+      setIsAuthenticated(true);
+      setUser(userData);
+      
+      // Charger immédiatement les modules et menus après la connexion
+      const { modules, menus } = await ModuleService.loadModulesAndMenus();
+      
+      // Si l'utilisateur a un profil avec des modules/menus spécifiques
+      if (userData.profile) {
+        const profileModules = userData.profile.modules || [];
+        const profileMenus = userData.profile.menus || [];
+        
+        console.log("Modules et menus du profil:", {
+          modules: profileModules,
+          menus: profileMenus
+        });
+        
+        setUserModules(profileModules);
+        setUserMenus(profileMenus);
+      }
+      
+      // Mettre à jour les modules et menus disponibles
+      setAllModules(modules || []);
+      setAllMenus(menus || []);
+      
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {

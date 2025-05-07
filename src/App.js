@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -27,25 +27,25 @@ import Transactions from "./Components/Dashboard/Transactions";
 // Mapping des composants pour les routes dynamiques
 const COMPONENT_MAPPING = {
   // Administration
-  'ADMIN/PROFILES': Profiles,
-  'ADMIN/USERS': Users,
-  'ADMIN/SECURITY': Security,
-  'ADMIN/CUSTOMER': Customer,
+  'admin/profiles': Profiles,
+  'admin/users': Users,
+  'admin/security': Security,
+  'admin/customer': Customer,
   
   // Token Manager
-  'LCM/RISK_MGMT': RiskManagement,
-  'LCM/STEP_UP': StepUp,
-  'LCM/FRAUD_TEAM': FraudTeam,
-  'LCM/CALL_CENTER': CallCenter,
+  'token-manager/risk-management': RiskManagement,
+  'token-manager/step-up': StepUp,
+  'token-manager/fraud-team': FraudTeam,
+  'token-manager/call-center': CallCenter,
   
   // Issuer TSP
-  'ITCP/TOKEN': Token,
-  'ITCP/MDES': MDES,
-  'ITCP/VTS': VTS,
+  'issuer-tsp/token': Token,
+  'issuer-tsp/mdes': MDES,
+  'issuer-tsp/vts': VTS,
   
   // Modules sans sous-menus
-  'CHARGEBACK': ChargeBack,
-  'TRANSACTIONS': Transactions,
+  'chargeback': ChargeBack,
+  'transactions': Transactions,
 };
 
 // Hook qui génère dynamiquement les routes en fonction des modules et sous-menus de l'API
@@ -55,33 +55,62 @@ const useDynamicRoutes = () => {
   
   useEffect(() => {
     const generateRoutes = async () => {
-      // Si nous avons des modules et des menus
       if (allModules.length > 0 && allMenus.length > 0) {
-        // Construire la structure des modules et sous-menus
         const structure = ModuleService.buildModuleStructure(
-          // En mode développement, utiliser tous les modules
           userModules.length > 0 ? userModules : allModules.map(m => m.id),
-          // Et tous les menus
           userMenus.length > 0 ? userMenus : allMenus.map(m => m.id)
         );
         
-        // Générer les routes
         const routes = [];
         
         structure.forEach(module => {
-          // Pour les modules sans sous-menus, ajouter une route directe
+          const moduleCode = module.code?.toLowerCase();
+          let modulePath = moduleCode;
+          
+          // Convertir les codes en chemins URL valides
+          switch(moduleCode) {
+            case 'lcm':
+              modulePath = 'token-manager';
+              break;
+            case 'itcp':
+              modulePath = 'issuer-tsp';
+              break;
+            default:
+              modulePath = moduleCode;
+          }
+
           if (!module.submodules || module.submodules.length === 0) {
-            const path = `/dashboard/${module.code.toLowerCase()}`;
-            const Component = COMPONENT_MAPPING[module.code] || (() => <div>Module {module.title}</div>);
+            const path = `/dashboard/${modulePath}`;
+            const Component = COMPONENT_MAPPING[modulePath] || (() => <div>Module {module.title}</div>);
             
             routes.push(
               <Route key={path} path={path} element={<Component />} />
             );
           } else {
-            // Pour les modules avec sous-menus, ajouter une route pour chaque sous-menu
             module.submodules.forEach(submenu => {
-              const path = submenu.path || `/dashboard/${module.code.toLowerCase()}/${submenu.code.toLowerCase()}`;
-              const mappingKey = `${module.code}/${submenu.code}`;
+              const menuCode = submenu.code?.toLowerCase();
+              let menuPath = menuCode;
+              
+              // Convertir les codes de menu en chemins URL valides
+              switch(menuCode) {
+                case 'risk_mgmt':
+                  menuPath = 'risk-management';
+                  break;
+                case 'step_up':
+                  menuPath = 'step-up';
+                  break;
+                case 'fraud_team':
+                  menuPath = 'fraud-team';
+                  break;
+                case 'call_center':
+                  menuPath = 'call-center';
+                  break;
+                default:
+                  menuPath = menuCode.toLowerCase();
+              }
+
+              const path = `/dashboard/${modulePath}/${menuPath}`;
+              const mappingKey = `${modulePath}/${menuPath}`;
               const Component = COMPONENT_MAPPING[mappingKey] || (() => <div>Sous-menu {submenu.title}</div>);
               
               routes.push(
@@ -99,6 +128,74 @@ const useDynamicRoutes = () => {
   }, [allModules, allMenus, userModules, userMenus]);
   
   return dynamicRoutes;
+};
+
+// Composant pour gérer la redirection intelligente du dashboard
+const DashboardIndex = () => {
+  const { allModules, allMenus, userModules, userMenus, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const redirectToFirstAvailablePage = async () => {
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
+
+      // Attendre un court instant pour s'assurer que les modules sont chargés
+      if (userModules.length === 0 && allModules.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Construire la structure des modules pour l'utilisateur
+      const structure = ModuleService.buildModuleStructure(
+        userModules.length > 0 ? userModules : allModules.map(m => m.id),
+        userMenus.length > 0 ? userMenus : allMenus.map(m => m.id)
+      );
+
+      console.log("Structure disponible pour la redirection:", structure);
+
+      // Trouver le premier module accessible avec ses sous-modules
+      if (structure.length > 0) {
+        const firstModule = structure[0];
+        console.log("Premier module trouvé:", firstModule);
+
+        if (firstModule.submodules && firstModule.submodules.length > 0) {
+          // Rediriger vers le premier sous-module du premier module
+          const firstSubmodule = firstModule.submodules[0];
+          console.log("Redirection vers le premier sous-module:", firstSubmodule.path);
+          navigate(firstSubmodule.path);
+        } else {
+          // Rediriger vers le module lui-même s'il n'a pas de sous-modules
+          console.log("Redirection vers le module:", firstModule.path);
+          navigate(firstModule.path);
+        }
+      } else {
+        // Si toujours aucun module n'est accessible après l'attente
+        console.log("Aucun module accessible trouvé - redirection vers settings");
+        navigate('/dashboard/settings');
+      }
+      setIsLoading(false);
+    };
+
+    redirectToFirstAvailablePage();
+  }, [userModules, userMenus, allModules, allMenus, navigate, isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        Chargement...
+      </div>
+    );
+  }
+
+  return null;
 };
 
 function App() {
@@ -130,7 +227,7 @@ function AppContent() {
         <Route path="/" element={<LoginForm />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="/dashboard/admin/profiles" replace />} />
+          <Route index element={<DashboardIndex />} />
           
           {/* Routes statiques */}
           <Route path="admin/profiles" element={<Profiles />} />
