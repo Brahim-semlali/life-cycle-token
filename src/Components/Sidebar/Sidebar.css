@@ -3,39 +3,46 @@
     left: 0;
     top: 0;
     height: 100vh;
-    width: 260px;
-    background: #f5f7ff;
-    color: #6b7a99;
-    border-radius: 24px;
-    box-shadow: 0 4px 24px rgba(60, 60, 60, 0.06);
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+    width: 280px;
+    background: linear-gradient(145deg, #fcfcff 0%, #f7f9ff 100%);
+    color: #4a5568;
+    border-radius: 0 24px 24px 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 10;
     overflow: visible !important;
     border: none;
-    margin: 12px 0 12px 12px;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     font-weight: 400;
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(229, 231, 235, 0.3);
 }
 
 .sidebar.minimized {
     width: 80px;
+    overflow: visible;
 }
 
 .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    padding: 24px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo {
     display: flex;
     align-items: center;
     font-weight: 600;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo-full {
@@ -47,32 +54,51 @@
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(90deg, #3968d0 0%, #7c3aed 100%);
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    letter-spacing: -0.02em;
+    text-shadow: 0px 2px 4px rgba(124, 58, 237, 0.08);
 }
 
 .logo-full span {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #6b7a99;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
 }
 
 .logo-icon {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(90deg, #3968d0 0%, #7c3aed 100%);
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: 700;
     font-size: 18px;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    filter: blur(5px);
 }
 
 .toggle-button {
-    background: transparent;
+    background: rgba(124, 58, 237, 0.05);
     border: none;
     color: #6b7a99;
     cursor: pointer;
@@ -80,12 +106,31 @@
     align-items: center;
     justify-content: center;
     padding: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
+    border-radius: 10px;
+    transition: all 0.2s;
+    position: relative;
 }
 
 .toggle-button:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+    transform: translateX(2px);
+}
+
+.toggle-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 10px;
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3);
+    transition: box-shadow 0.3s ease;
+}
+
+.toggle-button:active::after {
+    box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.15);
 }
 
 .sidebar-content {
@@ -96,11 +141,26 @@
     flex-direction: column;
     justify-content: space-between;
     height: calc(100% - 80px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 58, 237, 0.2) transparent;
+}
+
+.sidebar-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background-color: rgba(124, 58, 237, 0.2);
+    border-radius: 20px;
 }
 
 .sidebar-section-title {
-    font-size: 0.78rem;
-    color: #b0b8d1;
+    font-size: 0.7rem;
+    color: #a0aec0;
     font-weight: 600;
     padding: 10px 24px 4px 24px;
     letter-spacing: 0.08em;
@@ -109,32 +169,38 @@
 
 .sidebar-footer {
     margin-top: auto;
-    padding: 16px 16px;
-    border-top: 1px solid rgba(229, 231, 235, 0.5);
+    padding: 16px;
+    border-top: 1px solid rgba(229, 231, 235, 0.3);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .settings-link a, .logout-button {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    color: #6b7a99;
+    color: #4a5568;
     font-weight: 500;
-    border-radius: 12px;
+    border-radius: 14px;
     margin-bottom: 8px;
-    transition: background-color 0.2s, color 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     text-decoration: none;
     cursor: pointer;
+    will-change: transform, background-color, color;
 }
 
 .settings-link a:hover, .logout-button:hover {
     background-color: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
+    transform: translateX(4px) scale(1.01);
 }
 
 .settings-link a.active {
-    background-color: rgba(124, 58, 237, 0.08);
+    background-color: rgba(124, 58, 237, 0.12);
     color: #7c3aed;
     font-weight: 600;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.1);
 }
 
 .settings-link a span, .logout-button span {
@@ -142,47 +208,89 @@
 }
 
 .module-section {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease-out forwards;
+    animation-delay: calc(var(--module-index, 0) * 0.05s);
 }
 
 .module-item {
     display: flex;
     align-items: center;
     padding: 12px 24px;
-    color: #6b7a99;
+    color: #4a5568;
     font-weight: 500;
     cursor: pointer;
-    border-radius: 12px;
-    margin: 4px 10px;
-    transition: background-color 0.2s, color 0.2s;
+    border-radius: 14px;
+    margin: 6px 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
+    overflow: hidden;
+    will-change: transform, background-color, color;
+}
+
+.module-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(180deg, #7c3aed 0%, #4f46e5 100%);
+    border-radius: 0 4px 4px 0;
+    transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
 }
 
 .module-item:hover {
     background-color: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
+    transform: translateX(4px) scale(1.01);
+}
+
+.module-item:hover::before {
+    height: 70%;
+    opacity: 1;
+    top: 15%;
 }
 
 .module-item.active {
-    background-color: rgba(124, 58, 237, 0.08);
+    background-color: rgba(124, 58, 237, 0.12);
     color: #7c3aed;
     font-weight: 600;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+}
+
+.module-item.active::before {
+    height: 80%;
+    opacity: 1;
+    top: 10%;
 }
 
 .module-icon {
     font-size: 20px;
-    margin-right: 12px;
+    margin-right: 16px;
     min-width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
 }
 
 .module-text {
     flex: 1;
     font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    position: relative;
+    z-index: 1;
 }
 
 .module-toggle {
     font-size: 18px;
     transition: transform 0.3s ease;
+    opacity: 0.7;
+    position: relative;
+    z-index: 1;
 }
 
 .module-toggle.open {
@@ -192,56 +300,79 @@
 .module-submenu {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     background: none;
-    margin: 0 0 0 10px;
+    margin: 0 0 0 14px;
     border-radius: 0;
-    border-left: 1px solid rgba(229, 231, 235, 0.5);
+    border-left: 1px solid rgba(124, 58, 237, 0.15);
     padding-left: 10px;
 }
 
 .module-submenu.open {
     max-height: 500px;
     padding-top: 5px;
-    padding-bottom: 5px;
+    padding-bottom: 8px;
 }
 
 .module-submenu a {
-    padding-left: 36px;
-    font-size: 0.92rem;
-    opacity: 0.9;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-    margin-left: 0;
-    height: 42px;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
+    color: #4a5568;
+    padding: 10px 16px;
+    margin: 4px 10px;
+    position: relative;
     display: flex;
     align-items: center;
-    text-decoration: none;
-    color: #6b7a99;
-    padding: 10px 16px;
-    margin: 2px 10px;
-    position: relative;
+    overflow: hidden;
+    will-change: transform, background-color, color;
+}
+
+.submenu-icon {
+    font-size: 18px;
+    margin-right: 12px;
+    color: inherit;
+    opacity: 0.85;
+    transition: all 0.25s ease;
+}
+
+.submenu-text {
+    flex: 1;
 }
 
 .module-submenu a:hover {
     background-color: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
+    transform: translateX(4px) scale(1.01);
+}
+
+.module-submenu a:hover .submenu-icon {
+    color: #7c3aed;
+    opacity: 1;
 }
 
 .module-submenu a.active {
-    background-color: #f0eaff;
+    background-color: rgba(124, 58, 237, 0.1);
     color: #7c3aed;
     font-weight: 600;
     position: relative;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.1);
+}
+
+.module-submenu a.active .submenu-icon {
+    color: #7c3aed;
+    opacity: 1;
 }
 
 .module-submenu a.active::before {
     content: '';
     position: absolute;
-    left: 0;
+    left: -11px;
     top: 50%;
     transform: translateY(-50%);
-    width: 4px;
+    width: 3px;
     height: 60%;
     background: linear-gradient(180deg, #7c3aed 0%, #4f46e5 100%);
     border-radius: 0 4px 4px 0;
@@ -250,24 +381,87 @@
 .tooltip-text {
     position: absolute;
     left: 100%;
-    top: 0;
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 8px 12px;
-    border-radius: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
     white-space: nowrap;
     visibility: hidden;
     opacity: 0;
-    transition: visibility 0s, opacity 0.2s linear;
+    transition: all 0.2s ease;
     z-index: 1000;
-    color: #4b5563;
+    color: #4a5568;
     font-weight: 500;
-    margin-left: 12px;
+    margin-left: 15px;
+    pointer-events: none;
 }
 
-.minimized .module-submenu a:hover .tooltip-text {
+.minimized .module-item:hover .tooltip-text,
+.minimized .module-submenu a:hover .tooltip-text,
+.minimized .settings-link a:hover .tooltip-text,
+.minimized .logout-button:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
+    transform: translateY(-50%) translateX(5px);
+}
+
+/* Animation lors de l'ouverture des sous-menus */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.module-submenu.open > a {
+    animation: fadeIn 0.3s ease-out forwards;
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
+}
+
+/* Animation d'entrée pour les éléments au chargement initial */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Effet de lueur autour des icônes actives */
+.module-item.active .module-icon {
+    position: relative;
+}
+
+.module-item.active .module-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0) 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.8;
+    }
 }
 
 /* Responsive */
@@ -283,6 +477,95 @@
     }
     
     .sidebar.open {
-        width: 260px;
+        width: 280px;
     }
+}
+
+/* Ajustements pour le mode minimisé */
+.sidebar.minimized .sidebar-header {
+    padding: 24px 12px;
+    justify-content: center;
+}
+
+.sidebar.minimized .module-item {
+    padding: 12px;
+    justify-content: center;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    margin: 8px auto;
+}
+
+.sidebar.minimized .module-icon {
+    margin-right: 0;
+}
+
+.sidebar.minimized .sidebar-footer {
+    padding: 16px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar.minimized .settings-link a,
+.sidebar.minimized .logout-button {
+    padding: 12px;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin: 4px auto;
+}
+
+/* Style des sous-menus en mode minimisé */
+.sidebar.minimized .module-submenu {
+    position: absolute;
+    left: 70px;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    border-left: none;
+    background: #ffffff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    min-width: 200px;
+    z-index: 100;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    transform: translateY(-50%);
+}
+
+.sidebar.minimized .module-item:hover .module-submenu {
+    max-height: 500px;
+    padding: 10px;
+    opacity: 1;
+    pointer-events: all;
+}
+
+.sidebar.minimized .module-submenu a {
+    margin: 4px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar.minimized .module-submenu a .submenu-icon {
+    margin-right: 12px;
+}
+
+/* Tooltip en mode minimisé */
+.sidebar.minimized .tooltip-text {
+    left: 64px;
+    margin-left: 10px;
+}
+
+/* Éviter la superposition des tooltips avec les sous-menus */
+.sidebar.minimized .module-item:hover .module-submenu + .tooltip-text,
+.sidebar.minimized .module-item:hover .module-submenu ~ .tooltip-text {
+    opacity: 0;
+    visibility: hidden;
 }

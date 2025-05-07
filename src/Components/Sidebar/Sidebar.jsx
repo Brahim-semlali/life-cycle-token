@@ -18,6 +18,30 @@ const DEFAULT_ICONS = {
     'DEFAULT': 'dashboard' // Icône par défaut
 };
 
+// Correspondance d'icônes par défaut pour les sous-menus
+const SUBMENU_ICONS = {
+    // Administration
+    'PROFILE': 'person',
+    'PROFILES': 'people',
+    'USERS': 'group',
+    'SECURITY': 'security',
+    'CUSTOMER': 'business',
+    
+    // Token Manager
+    'RISK_MGMT': 'gpp_maybe',
+    'STEP_UP': 'upgrade',
+    'FRAUD_TEAM': 'gpp_bad',
+    'CALL_CENTER': 'support_agent',
+    
+    // Issuer TSP
+    'TOKEN': 'token',
+    'MDES': 'credit_card',
+    'VTS': 'contactless',
+    
+    // Default
+    'DEFAULT': 'chevron_right'
+};
+
 // Correspondance des routes pour les cas spéciaux
 const ROUTE_MAPPING = {
     // Mappings pour corriger les routes singulier/pluriel
@@ -131,7 +155,14 @@ const Sidebar = () => {
     }, [location.pathname, isModuleOpen, userModuleStructure]);
 
     // Basculer l'état d'ouverture d'un module
-    const toggleModule = (moduleCode) => {
+    const toggleModule = (moduleCode, event) => {
+        // Si nous sommes en mode minimisé, empêcher la propagation pour éviter de naviguer
+        if (isMinimized && event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+        
         // Si le module a un chemin direct (pas de sous-menus), naviguer vers ce chemin
         const module = userModuleStructure.find(m => m.code === moduleCode);
         if (module && (!module.submodules || module.submodules.length === 0) && module.path) {
@@ -255,16 +286,23 @@ const Sidebar = () => {
         return moduleStructure.map(module => ({
                 ...module,
                 icon: module.icon || DEFAULT_ICONS[module.code] || DEFAULT_ICONS.DEFAULT,
-                // Corriger les sous-modules pour les cas spéciaux
+                // Corriger les sous-modules pour les cas spéciaux et ajouter des icônes
                 submodules: module.submodules.map(submenu => {
+                    // Déterminer l'icône du sous-menu
+                    const submenuIcon = SUBMENU_ICONS[submenu.code] || SUBMENU_ICONS.DEFAULT;
+                    
                     // Pour le sous-module "Profil", s'assurer qu'il pointe vers "profiles" (pluriel)
                     if (submenu.title === 'Profil' && module.code === 'ADMIN') {
                         return {
                             ...submenu,
+                            icon: submenuIcon,
                             path: '/dashboard/admin/profiles'
                         };
                     }
-                    return submenu;
+                    return {
+                        ...submenu,
+                        icon: submenuIcon
+                    };
                 })
             }));
     };
@@ -300,14 +338,14 @@ const Sidebar = () => {
                 </button>
             </div>
             <div className="sidebar-content">
-                {userModuleStructure.map((module) => (
-                    <div key={module.id} className="module-section">
+                {userModuleStructure.map((module, moduleIndex) => (
+                    <div key={module.id} className="module-section" style={{"--module-index": moduleIndex}}>
                         {/* Module principal - Cliquer pour ouvrir ou pour accéder directement si pas de sous-menus */}
                         {module.submodules && module.submodules.length > 0 ? (
                             // Module avec sous-menus
                             <div
                                 className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
-                                onClick={() => toggleModule(module.code)}
+                                onClick={(e) => toggleModule(module.code, e)}
                             >
                                 <span className="material-icons module-icon">
                                     {module.icon}
@@ -318,6 +356,28 @@ const Sidebar = () => {
                                         <span className={`material-icons module-toggle ${isModuleOpen[module.code] ? 'open' : ''}`}>
                                             expand_more
                                         </span>
+                                    </>
+                                )}
+                                {isMinimized && (
+                                    <>
+                                        <span className="tooltip-text">{module.title}</span>
+                                        
+                                        {/* Sous-menus immédiats en mode minimisé */}
+                                        <div className="module-submenu">
+                                            {module.submodules.map((submodule, index) => (
+                                                <Link
+                                                    key={submodule.id}
+                                                    to={ROUTE_MAPPING[submodule.path] || submodule.path}
+                                                    className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                                    style={{"--item-index": index}}
+                                                >
+                                                    <span className="material-icons submenu-icon">
+                                                        {submodule.icon}
+                                                    </span>
+                                                    <span className="submenu-text">{submodule.title}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </>
                                 )}
                             </div>
@@ -339,20 +399,20 @@ const Sidebar = () => {
                             </Link>
                         )}
                         
-                        {/* Sous-menus (si présents) */}
-                        {module.submodules && module.submodules.length > 0 && (!isMinimized || (isMinimized && isModuleOpen[module.code])) && (
-                            <div className={`module-submenu ${isModuleOpen[module.code] ? "open" : ""}`}>
-                                {module.submodules.map((submodule) => (
+                        {/* Sous-menus (si présents) - Visible seulement en mode non-minimisé */}
+                        {!isMinimized && module.submodules && module.submodules.length > 0 && isModuleOpen[module.code] && (
+                            <div className="module-submenu open">
+                                {module.submodules.map((submodule, index) => (
                                     <Link
                                         key={submodule.id}
                                         to={ROUTE_MAPPING[submodule.path] || submodule.path}
                                         className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                        style={{"--item-index": index}}
                                     >
-                                        {isMinimized ? (
-                                            <span className="tooltip-text">{submodule.title}</span>
-                                        ) : (
-                                            <>{submodule.title}</>
-                                        )}
+                                        <span className="material-icons submenu-icon">
+                                            {submodule.icon}
+                                        </span>
+                                        <span className="submenu-text">{submodule.title}</span>
                                     </Link>
                                 ))}
                             </div>
@@ -365,11 +425,13 @@ const Sidebar = () => {
                         <Link to="/dashboard/settings" className={location.pathname === "/dashboard/settings" ? "active" : ""}>
                             <span className="material-icons">settings</span>
                             {!isMinimized && <span>Settings</span>}
+                            {isMinimized && <span className="tooltip-text">Settings</span>}
                         </Link>
                     </div>
                     <div className="logout-button" onClick={handleLogout}>
                         <span className="material-icons">logout</span>
                         {!isMinimized && <span>{t('common.logout')}</span>}
+                        {isMinimized && <span className="tooltip-text">{t('common.logout')}</span>}
                     </div>
                 </div>
             </div>
