@@ -3,8 +3,8 @@ import { useMenu } from "../../../context/MenuContext";
 import { useTheme } from "../../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
 import "./Security.css";
-import { Save as SaveIcon } from '@mui/icons-material';
-import { Button } from '@mui/material';
+import { Save as SaveIcon, LockOutlined, ShieldOutlined, VisibilityOutlined, VisibilityOffOutlined } from '@mui/icons-material';
+import { Button, Snackbar, Alert } from '@mui/material';
 import api from '../../../services/api';
 
 const Security = () => {
@@ -29,8 +29,17 @@ const Security = () => {
     const [testPassword, setTestPassword] = useState('');
     const [passwordStrength, setPasswordStrength] = useState({
         score: 0,
+        level: 0,
+        label: '',
         feedback: []
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [saveStatus, setSaveStatus] = useState({
+        open: false,
+        success: false,
+        message: ''
+    });
+    const [isSaving, setIsSaving] = useState(false);
 
     // Charger les règles depuis l'API au démarrage
     useEffect(() => {
@@ -55,17 +64,43 @@ const Security = () => {
     };
 
     const handleSave = async () => {
+        setIsSaving(true);
         try {
             await api.request('/security/password-rules/', 'POST', passwordRules);
-            console.log('Password rules saved successfully');
+            setSaveStatus({
+                open: true,
+                success: true,
+                message: t('security.saveSuccess')
+            });
         } catch (error) {
             console.error('Error saving password rules:', error);
+            setSaveStatus({
+                open: true,
+                success: false,
+                message: t('security.saveError')
+            });
+        } finally {
+            setIsSaving(false);
         }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSaveStatus({
+            ...saveStatus,
+            open: false
+        });
     };
 
     const validatePassword = (password) => {
         const feedback = [];
         let score = 0;
+        let level = 0;
+        let label = t('security.passwordStrength.veryWeak');
+
+        if (!password) {
+            setPasswordStrength({ score: 0, level: 0, label: '', feedback: [] });
+            return;
+        }
 
         // Minimum length
         if (password.length >= passwordRules.minLength) {
@@ -102,13 +137,47 @@ const Security = () => {
             feedback.push(t('security.passwordRules.specialError'));
         }
 
-        setPasswordStrength({ score, feedback });
+        // Additional strength factors
+        if (password.length > passwordRules.minLength + 4) {
+            score += 10;
+        }
+
+        if (password.length > passwordRules.minLength + 8) {
+            score += 10;
+        }
+
+        // Cap at 100
+        score = Math.min(score, 100);
+
+        // Determine level and label based on score
+        if (score >= 0 && score < 20) {
+            level = 1;
+            label = t('security.passwordStrength.veryWeak');
+        } else if (score >= 20 && score < 40) {
+            level = 2;
+            label = t('security.passwordStrength.weak');
+        } else if (score >= 40 && score < 60) {
+            level = 3;
+            label = t('security.passwordStrength.medium');
+        } else if (score >= 60 && score < 80) {
+            level = 4;
+            label = t('security.passwordStrength.strong');
+        } else {
+            level = 5;
+            label = t('security.passwordStrength.veryStrong');
+        }
+
+        setPasswordStrength({ score, level, label, feedback });
     };
 
     const handleTestPasswordChange = (e) => {
         const password = e.target.value;
         setTestPassword(password);
         validatePassword(password);
+    };
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     return (
@@ -119,14 +188,18 @@ const Security = () => {
                     variant="contained"
                     startIcon={<SaveIcon />}
                     onClick={handleSave}
-                    className="save-button"
+                    className={`save-button ${isSaving ? 'loading' : ''}`}
+                    disabled={isSaving}
                 >
-                    {t('security.save')}
+                    {isSaving ? t('security.saving') : t('security.save')}
                 </Button>
             </div>
 
             <div className="security-section">
-                <h3>{t('security.passwordRules')}</h3>
+                <h3>
+                    <LockOutlined style={{ fontSize: 24 }} />
+                    {t('security.passwordRules')}
+                </h3>
                 <div className="rules-grid">
                     <div className="form-group">
                         <label>{t('security.minimumLength')}</label>
@@ -240,26 +313,59 @@ const Security = () => {
             </div>
 
             <div className="security-section">
-                <h3>{t('security.passwordTester')}</h3>
+                <h3>
+                    <ShieldOutlined style={{ fontSize: 24 }} />
+                    {t('security.passwordTester')}
+                </h3>
                 <div className="password-tester">
-                    <input
-                        type="text"
-                        placeholder={t('security.testPassword')}
-                        value={testPassword}
-                        onChange={handleTestPasswordChange}
-                        className="test-password-input"
-                    />
-                    <div className="password-strength">
-                        <div className="strength-bar">
-                            <div 
-                                className="strength-fill"
-                                style={{ width: `${passwordStrength.score}%` }}
-                            ></div>
-                        </div>
-                        <div className="strength-label">
-                            {t('security.passwordStrength')}: {passwordStrength.score}%
-                        </div>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder={t('security.testPassword')}
+                            value={testPassword}
+                            onChange={handleTestPasswordChange}
+                            className="test-password-input"
+                        />
+                        <button 
+                            type="button" 
+                            onClick={togglePasswordVisibility}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: isDarkMode ? '#a0aec0' : '#4a5568',
+                                padding: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {showPassword ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                        </button>
                     </div>
+                    
+                    {testPassword && (
+                        <div className="password-strength">
+                            <div className="strength-bar">
+                                <div 
+                                    className="strength-fill"
+                                    data-strength={passwordStrength.level}
+                                    style={{ width: `${passwordStrength.score}%` }}
+                                ></div>
+                            </div>
+                            <div className="strength-label">
+                                <span>{t('security.passwordStrength.label')}:</span> 
+                                <span className="strength-text" data-strength={passwordStrength.level}>
+                                    {passwordStrength.label}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    
                     {passwordStrength.feedback.length > 0 && (
                         <div className="password-feedback">
                             <ul>
@@ -271,6 +377,21 @@ const Security = () => {
                     )}
                 </div>
             </div>
+
+            <Snackbar 
+                open={saveStatus.open} 
+                autoHideDuration={6000} 
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert 
+                    onClose={handleCloseSnackbar} 
+                    severity={saveStatus.success ? "success" : "error"}
+                    sx={{ width: '100%' }}
+                >
+                    {saveStatus.message}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
