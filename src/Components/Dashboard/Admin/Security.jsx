@@ -13,17 +13,17 @@ const Security = () => {
     const { t } = useTranslation();
     
     const [passwordRules, setPasswordRules] = useState({
-        minLength: 8,
-        requireUppercase: true,
-        requireLowercase: true,
-        requireNumbers: true,
-        requireSpecialChars: true,
-        passwordExpiration: 90, // days
-        preventPasswordReuse: 5, // number of previous passwords
-        maxLoginAttempts: 3,
-        lockoutDuration: 30, // minutes
-        minPasswordAge: 1, // days
-        sessionTimeout: 30 // minutes
+        min_length: 8,
+        require_uppercase: false,
+        require_lowercase: true,
+        require_number: true,
+        require_special_char: true,
+        max_login_attempts: 3,
+        lockout_duration: 30,
+        password_expiration: 90,
+        prevent_password_reuse: 5,
+        min_password_age: 1,
+        session_timeout: 30
     });
 
     const [testPassword, setTestPassword] = useState('');
@@ -41,18 +41,62 @@ const Security = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    // Charger les règles depuis l'API au démarrage
-    useEffect(() => {
-        const loadPasswordRules = async () => {
+    // Déplacer loadPasswordRules en dehors de useEffect
+    const loadPasswordRules = async () => {
+        try {
+            let response = null;
+            
+            // Essayer plusieurs endpoints dans l'ordre
             try {
-                const response = await api.request('/security/password-rules/', 'GET');
-                if (response) {
-                    setPasswordRules(response);
+                response = await api.request('/administration/passwordpolicy/get', 'GET');
+            } catch (e1) {
+                try {
+                    response = await api.request('/user/password-policy/', 'GET');
+                } catch (e2) {
+                    response = await api.request('/api/administration_passwordpolicy/get', 'GET');
                 }
-            } catch (error) {
-                console.error('Error loading password rules:', error);
             }
-        };
+
+            if (response) {
+                // Si la réponse est un tableau, prendre le premier élément
+                const rules = Array.isArray(response) ? response[0] : response;
+                
+                // S'assurer que les valeurs booléennes sont correctement interprétées
+                setPasswordRules({
+                    min_length: parseInt(rules.min_length) || 8,
+                    require_uppercase: Boolean(rules.require_uppercase),
+                    require_lowercase: Boolean(rules.require_lowercase),
+                    require_number: Boolean(rules.require_number),
+                    require_special_char: Boolean(rules.require_special_char),
+                    max_login_attempts: parseInt(rules.max_login_attempts) || 3,
+                    lockout_duration: parseInt(rules.lockout_duration) || 30,
+                    password_expiration: parseInt(rules.password_expiration) || 90,
+                    prevent_password_reuse: parseInt(rules.prevent_password_reuse) || 5,
+                    min_password_age: parseInt(rules.min_password_age) || 1,
+                    session_timeout: parseInt(rules.session_timeout) || 30
+                });
+            }
+        } catch (error) {
+            console.error('Error loading password rules from database:', error);
+            // En cas d'erreur, utiliser les valeurs par défaut
+            setPasswordRules({
+                min_length: 8,
+                require_uppercase: false,
+                require_lowercase: false,
+                require_number: false,
+                require_special_char: false,
+                max_login_attempts: 3,
+                lockout_duration: 30,
+                password_expiration: 90,
+                prevent_password_reuse: 5,
+                min_password_age: 1,
+                session_timeout: 30
+            });
+        }
+    };
+
+    // Charger les règles de mot de passe au démarrage
+    useEffect(() => {
         loadPasswordRules();
     }, []);
 
@@ -66,18 +110,77 @@ const Security = () => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await api.request('/security/password-rules/', 'POST', passwordRules);
-            setSaveStatus({
-                open: true,
-                success: true,
-                message: t('security.saveSuccess')
-            });
+            // S'assurer que les valeurs booléennes sont explicitement converties en true/false
+            const formattedData = {
+                min_length: parseInt(passwordRules.min_length),
+                require_uppercase: Boolean(passwordRules.require_uppercase),
+                require_lowercase: Boolean(passwordRules.require_lowercase),
+                require_number: Boolean(passwordRules.require_number),
+                require_special_char: Boolean(passwordRules.require_special_char),
+                max_login_attempts: parseInt(passwordRules.max_login_attempts),
+                lockout_duration: parseInt(passwordRules.lockout_duration),
+                password_expiration: parseInt(passwordRules.password_expiration),
+                prevent_password_reuse: parseInt(passwordRules.prevent_password_reuse),
+                min_password_age: parseInt(passwordRules.min_password_age),
+                session_timeout: parseInt(passwordRules.session_timeout)
+            };
+
+            console.log('Saving password rules:', formattedData);
+
+            // Essayer plusieurs endpoints possibles
+            let success = false;
+            let error = null;
+
+            try {
+                await api.request('/administration/passwordpolicy/update', 'POST', formattedData);
+                success = true;
+            } catch (e1) {
+                console.log('First endpoint failed, trying alternatives');
+                try {
+                    await api.request('/user/password-policy/', 'POST', formattedData);
+                    success = true;
+                } catch (e2) {
+                    try {
+                        await api.request('/api/administration_passwordpolicy/update', 'POST', formattedData);
+                        success = true;
+                    } catch (e3) {
+                        error = e3;
+                    }
+                }
+            }
+
+            if (success) {
+                setSaveStatus({
+                    open: true,
+                    success: true,
+                    message: t('security.saveSuccess')
+                });
+
+                // Recharger les règles pour vérifier que les changements ont été appliqués
+                loadPasswordRules();
+            } else {
+                throw error || new Error('Failed to save password rules');
+            }
         } catch (error) {
             console.error('Error saving password rules:', error);
+            
+            let errorMessage = t('security.saveError');
+            if (error.response) {
+                if (error.response.status === 400) {
+                    errorMessage = t('security.invalidDataError');
+                } else if (error.response.status === 401) {
+                    errorMessage = t('security.unauthorizedError');
+                } else if (error.response.status === 403) {
+                    errorMessage = t('security.forbiddenError');
+                } else if (error.response.status === 500) {
+                    errorMessage = t('security.serverError');
+                }
+            }
+
             setSaveStatus({
                 open: true,
                 success: false,
-                message: t('security.saveError')
+                message: errorMessage
             });
         } finally {
             setIsSaving(false);
@@ -92,88 +195,45 @@ const Security = () => {
     };
 
     const validatePassword = (password) => {
-        const feedback = [];
-        let score = 0;
-        let level = 0;
-        let label = t('security.passwordStrength.veryWeak');
+        const errors = [];
 
-        if (!password) {
-            setPasswordStrength({ score: 0, level: 0, label: '', feedback: [] });
-            return;
+        if (password.length < passwordRules.min_length) {
+            errors.push(t('security.passwordRules.minLengthError', { length: passwordRules.min_length }));
         }
 
-        // Minimum length
-        if (password.length >= passwordRules.minLength) {
-            score += 20;
-        } else {
-            feedback.push(t('security.passwordRules.minLengthError', { length: passwordRules.minLength }));
+        if (passwordRules.require_uppercase && !/[A-Z]/.test(password)) {
+            errors.push(t('security.passwordRules.uppercaseError'));
         }
 
-        // Uppercase
-        if (passwordRules.requireUppercase && /[A-Z]/.test(password)) {
-            score += 20;
-        } else if (passwordRules.requireUppercase) {
-            feedback.push(t('security.passwordRules.uppercaseError'));
+        if (passwordRules.require_lowercase && !/[a-z]/.test(password)) {
+            errors.push(t('security.passwordRules.lowercaseError'));
         }
 
-        // Lowercase
-        if (passwordRules.requireLowercase && /[a-z]/.test(password)) {
-            score += 20;
-        } else if (passwordRules.requireLowercase) {
-            feedback.push(t('security.passwordRules.lowercaseError'));
+        if (passwordRules.require_number && !/\d/.test(password)) {
+            errors.push(t('security.passwordRules.numberError'));
         }
 
-        // Numbers
-        if (passwordRules.requireNumbers && /\d/.test(password)) {
-            score += 20;
-        } else if (passwordRules.requireNumbers) {
-            feedback.push(t('security.passwordRules.numberError'));
+        if (passwordRules.require_special_char && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            errors.push(t('security.passwordRules.specialError'));
         }
 
-        // Special characters
-        if (passwordRules.requireSpecialChars && /[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            score += 20;
-        } else if (passwordRules.requireSpecialChars) {
-            feedback.push(t('security.passwordRules.specialError'));
-        }
-
-        // Additional strength factors
-        if (password.length > passwordRules.minLength + 4) {
-            score += 10;
-        }
-
-        if (password.length > passwordRules.minLength + 8) {
-            score += 10;
-        }
-
-        // Cap at 100
-        score = Math.min(score, 100);
-
-        // Determine level and label based on score
-        if (score >= 0 && score < 20) {
-            level = 1;
-            label = t('security.passwordStrength.veryWeak');
-        } else if (score >= 20 && score < 40) {
-            level = 2;
-            label = t('security.passwordStrength.weak');
-        } else if (score >= 40 && score < 60) {
-            level = 3;
-            label = t('security.passwordStrength.medium');
-        } else if (score >= 60 && score < 80) {
-            level = 4;
-            label = t('security.passwordStrength.strong');
-        } else {
-            level = 5;
-            label = t('security.passwordStrength.veryStrong');
-        }
-
-        setPasswordStrength({ score, level, label, feedback });
+        return errors;
     };
 
     const handleTestPasswordChange = (e) => {
         const password = e.target.value;
         setTestPassword(password);
-        validatePassword(password);
+        const errors = validatePassword(password);
+        setPasswordStrength({
+            score: 100 - (errors.length * 20),
+            level: 5 - errors.length,
+            label: errors.length === 0 
+                ? t('security.passwordStrength.veryStrong')
+                : errors.length >= 4 
+                    ? t('security.passwordStrength.veryWeak')
+                    : t(`security.passwordStrength.${['strong', 'medium', 'weak'][errors.length - 1]}`),
+            feedback: errors
+        });
     };
 
     const togglePasswordVisibility = () => {
@@ -207,8 +267,8 @@ const Security = () => {
                             type="number"
                             min="6"
                             max="32"
-                            value={passwordRules.minLength}
-                            onChange={(e) => handleRuleChange('minLength', parseInt(e.target.value))}
+                            value={passwordRules.min_length}
+                            onChange={(e) => handleRuleChange('min_length', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -217,8 +277,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="0"
-                            value={passwordRules.passwordExpiration}
-                            onChange={(e) => handleRuleChange('passwordExpiration', parseInt(e.target.value))}
+                            value={passwordRules.password_expiration}
+                            onChange={(e) => handleRuleChange('password_expiration', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -227,8 +287,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="0"
-                            value={passwordRules.preventPasswordReuse}
-                            onChange={(e) => handleRuleChange('preventPasswordReuse', parseInt(e.target.value))}
+                            value={passwordRules.prevent_password_reuse}
+                            onChange={(e) => handleRuleChange('prevent_password_reuse', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -237,8 +297,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="1"
-                            value={passwordRules.maxLoginAttempts}
-                            onChange={(e) => handleRuleChange('maxLoginAttempts', parseInt(e.target.value))}
+                            value={passwordRules.max_login_attempts}
+                            onChange={(e) => handleRuleChange('max_login_attempts', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -247,8 +307,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="1"
-                            value={passwordRules.lockoutDuration}
-                            onChange={(e) => handleRuleChange('lockoutDuration', parseInt(e.target.value))}
+                            value={passwordRules.lockout_duration}
+                            onChange={(e) => handleRuleChange('lockout_duration', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -257,8 +317,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="0"
-                            value={passwordRules.minPasswordAge}
-                            onChange={(e) => handleRuleChange('minPasswordAge', parseInt(e.target.value))}
+                            value={passwordRules.min_password_age}
+                            onChange={(e) => handleRuleChange('min_password_age', parseInt(e.target.value))}
                         />
                     </div>
 
@@ -267,8 +327,8 @@ const Security = () => {
                         <input
                             type="number"
                             min="1"
-                            value={passwordRules.sessionTimeout}
-                            onChange={(e) => handleRuleChange('sessionTimeout', parseInt(e.target.value))}
+                            value={passwordRules.session_timeout}
+                            onChange={(e) => handleRuleChange('session_timeout', parseInt(e.target.value))}
                         />
                     </div>
                 </div>
@@ -277,8 +337,8 @@ const Security = () => {
                     <label>
                         <input
                             type="checkbox"
-                            checked={passwordRules.requireUppercase}
-                            onChange={(e) => handleRuleChange('requireUppercase', e.target.checked)}
+                            checked={passwordRules.require_uppercase}
+                            onChange={(e) => handleRuleChange('require_uppercase', e.target.checked)}
                         />
                         {t('security.requireUppercase')}
                     </label>
@@ -286,8 +346,8 @@ const Security = () => {
                     <label>
                         <input
                             type="checkbox"
-                            checked={passwordRules.requireLowercase}
-                            onChange={(e) => handleRuleChange('requireLowercase', e.target.checked)}
+                            checked={passwordRules.require_lowercase}
+                            onChange={(e) => handleRuleChange('require_lowercase', e.target.checked)}
                         />
                         {t('security.requireLowercase')}
                     </label>
@@ -295,8 +355,8 @@ const Security = () => {
                     <label>
                         <input
                             type="checkbox"
-                            checked={passwordRules.requireNumbers}
-                            onChange={(e) => handleRuleChange('requireNumbers', e.target.checked)}
+                            checked={passwordRules.require_number}
+                            onChange={(e) => handleRuleChange('require_number', e.target.checked)}
                         />
                         {t('security.requireNumbers')}
                     </label>
@@ -304,8 +364,8 @@ const Security = () => {
                     <label>
                         <input
                             type="checkbox"
-                            checked={passwordRules.requireSpecialChars}
-                            onChange={(e) => handleRuleChange('requireSpecialChars', e.target.checked)}
+                            checked={passwordRules.require_special_char}
+                            onChange={(e) => handleRuleChange('require_special_char', e.target.checked)}
                         />
                         {t('security.requireSpecial')}
                     </label>

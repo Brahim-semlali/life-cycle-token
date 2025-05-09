@@ -139,11 +139,13 @@ export const ar = {
   'security.passwordTester': 'اختبار كلمة المرور',
   'security.testPassword': 'اختبار كلمة مرور',
   'security.passwordStrength': 'قوة كلمة المرور',
-  'security.passwordRules.minLengthError': 'يجب أن تحتوي كلمة المرور على {{length}} حرف على الأقل',
-  'security.passwordRules.uppercaseError': 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل',
-  'security.passwordRules.lowercaseError': 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل',
-  'security.passwordRules.numberError': 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل',
-  'security.passwordRules.specialError': 'يجب أن تحتوي كلمة المرور على حرف خاص واحد على الأقل',
+  'security.passwordRules.help': 'يرجى التأكد من أن كلمة المرور تلبي المتطلبات التالية:',
+  'security.passwordRules.minLengthInfo': 'يجب أن يكون طول كلمة المرور على الأقل {{length}} حرف',
+  'security.passwordRules.uppercaseInfo': 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل',
+  'security.passwordRules.lowercaseInfo': 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل',
+  'security.passwordRules.numberInfo': 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل',
+  'security.passwordRules.specialInfo': 'يجب أن تحتوي كلمة المرور على حرف خاص واحد على الأقل',
+
   
   // Settings
   'settings.title': 'الإعدادات',

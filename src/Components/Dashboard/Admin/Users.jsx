@@ -61,7 +61,8 @@ import {
   Email as EmailIcon,
   AccountCircle as AccountCircleIcon,
   MoreVert as MoreVertIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  LockOutlined
 } from '@mui/icons-material';
 import "./Users.css";
 import { getAllProfiles } from '../../../services/ProfileService';
@@ -85,7 +86,13 @@ const Users = () => {
         requireUppercase: true,
         requireLowercase: true,
         requireNumbers: true,
-        requireSpecialChars: true
+        requireSpecialChars: true,
+        maxLoginAttempts: 3,
+        lockoutDuration: 30,
+        passwordExpiration: 90,
+        preventPasswordReuse: 5,
+        minPasswordAge: 1,
+        sessionTimeout: 30
     });
     const [viewMode, setViewMode] = useState('grid');
     const [showFilters, setShowFilters] = useState(false);
@@ -176,18 +183,56 @@ const Users = () => {
     useEffect(() => {
         const loadPasswordRules = async () => {
             try {
-                const response = await api.request('/security/password-rules/', 'GET');
+                let response = null;
+                
+                // Essayer plusieurs endpoints dans l'ordre
+                try {
+                    response = await api.request('/administration/passwordpolicy/get', 'GET');
+                } catch (e1) {
+                    try {
+                        response = await api.request('/user/password-policy/', 'GET');
+                    } catch (e2) {
+                        response = await api.request('/api/administration_passwordpolicy/get', 'GET');
+                    }
+                }
+
                 if (response) {
+                    // Si la réponse est un tableau, prendre le premier élément
+                    const rules = Array.isArray(response) ? response[0] : response;
+                    
+                    // S'assurer que les valeurs booléennes sont correctement interprétées
                     setPasswordRules({
-                        minLength: response.minLength,
-                        requireUppercase: response.requireUppercase,
-                        requireLowercase: response.requireLowercase,
-                        requireNumbers: response.requireNumbers,
-                        requireSpecialChars: response.requireSpecialChars
+                        minLength: parseInt(rules.min_length) || 8,
+                        requireUppercase: Boolean(rules.require_uppercase),
+                        requireLowercase: Boolean(rules.require_lowercase),
+                        requireNumbers: Boolean(rules.require_number),
+                        requireSpecialChars: Boolean(rules.require_special_char),
+                        maxLoginAttempts: parseInt(rules.max_login_attempts) || 3,
+                        lockoutDuration: parseInt(rules.lockout_duration) || 30,
+                        passwordExpiration: parseInt(rules.password_expiration) || 90,
+                        preventPasswordReuse: parseInt(rules.prevent_password_reuse) || 5,
+                        minPasswordAge: parseInt(rules.min_password_age) || 1,
+                        sessionTimeout: parseInt(rules.session_timeout) || 30
                     });
+
+                    console.log('Loaded password rules:', rules);
                 }
             } catch (error) {
                 console.error('Error loading password rules:', error);
+                // En cas d'erreur, utiliser les valeurs par défaut qui correspondent à la BD
+                setPasswordRules({
+                    minLength: 6,
+                    requireUppercase: false,
+                    requireLowercase: true,
+                    requireNumbers: true,
+                    requireSpecialChars: false,
+                    maxLoginAttempts: 3,
+                    lockoutDuration: 30,
+                    passwordExpiration: 90,
+                    preventPasswordReuse: 5,
+                    minPasswordAge: 1,
+                    sessionTimeout: 30
+                });
             }
         };
 
@@ -196,21 +241,29 @@ const Users = () => {
 
     const validatePassword = (password) => {
         const errors = [];
+
+        // Ne vérifier chaque règle que si elle est activée dans la configuration
         if (password.length < passwordRules.minLength) {
             errors.push(t('security.passwordRules.minLengthError', { length: passwordRules.minLength }));
         }
+
         if (passwordRules.requireUppercase && !/[A-Z]/.test(password)) {
             errors.push(t('security.passwordRules.uppercaseError'));
         }
+
         if (passwordRules.requireLowercase && !/[a-z]/.test(password)) {
             errors.push(t('security.passwordRules.lowercaseError'));
         }
+
         if (passwordRules.requireNumbers && !/\d/.test(password)) {
             errors.push(t('security.passwordRules.numberError'));
         }
+
+        // Ne vérifier les caractères spéciaux que si la règle est activée
         if (passwordRules.requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
             errors.push(t('security.passwordRules.specialError'));
         }
+
         return errors;
     };
 
@@ -220,31 +273,21 @@ const Users = () => {
         if (!user.lastName?.trim()) errors.lastName = t('users.lastNameRequired');
         if (!user.email?.trim()) errors.email = t('users.emailRequired');
         
-        // Validation optionnelle du profil - décommenter pour la rendre obligatoire
-        // if (!user.profileId) errors.profileId = t('users.profileRequired');
-        
-        // Vérifier le mot de passe uniquement lors de la création ou s'il est fourni lors de la mise à jour
-        if (!editingUser) {
-            if (!user.password?.trim()) errors.password = t('users.passwordRequired');
-            if (!user.confirmPassword?.trim()) errors.confirmPassword = t('users.confirmPasswordRequired');
-        } else if (user.password || user.confirmPassword) {
-            // Si un mot de passe est fourni lors de la mise à jour, valider la confirmation
-            if (user.password !== user.confirmPassword) {
-                errors.confirmPassword = t('users.passwordsDoNotMatch');
+        // Validation du mot de passe avec les règles de sécurité
+        if (!editingUser || user.password) {
+            const passwordErrors = validatePassword(user.password || '');
+            if (passwordErrors.length > 0) {
+                errors.password = passwordErrors.join('\n');
             }
         }
-        
+
+        if (user.password !== user.confirmPassword) {
+            errors.confirmPassword = t('users.passwordsDoNotMatch');
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (user.email && !emailRegex.test(user.email)) {
             errors.email = t('users.invalidEmail');
-        }
-
-        const existingUser = users.find(u => 
-            u.email === user.email && 
-            (!editingUser || u.email !== users[editingUser].email)
-        );
-        if (existingUser) {
-            errors.email = t('users.emailExists');
         }
 
         return errors;
@@ -1286,16 +1329,18 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.password}
                                 helperText={formErrors.password}
-                                required
+                                required={!editingUser}
                                 InputProps={{
                                     endAdornment: (
-                                        <IconButton
-                                            aria-label="toggle password visibility"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                        </IconButton>
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                aria-label="toggle password visibility"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                edge="end"
+                                            >
+                                                {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                            </IconButton>
+                                        </InputAdornment>
                                     ),
                                 }}
                             />
@@ -1308,23 +1353,91 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.confirmPassword}
                                 helperText={formErrors.confirmPassword}
-                                required
+                                required={!editingUser}
                                 InputProps={{
                                     endAdornment: (
-                                        <IconButton
-                                            aria-label="toggle confirm password visibility"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            edge="end"
-                                        >
-                                            {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                        </IconButton>
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                aria-label="toggle confirm password visibility"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                edge="end"
+                                            >
+                                                {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                            </IconButton>
+                                        </InputAdornment>
                                     ),
                                 }}
                             />
                         </Box>
 
-                        <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                            {t('security.passwordRules.help')}
+                        <Typography 
+                            variant="caption" 
+                            color="text.secondary" 
+                            sx={{ 
+                                mb: 2, 
+                                display: 'block',
+                                backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.9)',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                border: '1px solid',
+                                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 1, 
+                                mb: 1,
+                                color: isDarkMode ? '#e2e8f0' : '#1a202c',
+                                fontWeight: 600
+                            }}>
+                                <LockOutlined sx={{ fontSize: 18 }} />
+                                {t('security.passwordRules.help')}
+                            </Box>
+                            <Box component="ul" sx={{ 
+                                listStyle: 'none', 
+                                p: 0, 
+                                m: 0,
+                                '& li': {
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    mb: 1,
+                                    color: isDarkMode ? '#cbd5e0' : '#4a5568',
+                                    fontSize: '0.875rem',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        transform: 'translateX(5px)',
+                                        color: isDarkMode ? '#7c3aed' : '#6d28d9'
+                                    },
+                                    '&::before': {
+                                        content: '""',
+                                        display: 'block',
+                                        width: '6px',
+                                        height: '6px',
+                                        borderRadius: '50%',
+                                        backgroundColor: isDarkMode ? '#7c3aed' : '#6d28d9',
+                                        flexShrink: 0
+                                    }
+                                }
+                            }}>
+                                {passwordRules.minLength > 0 && (
+                                    <li>{t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength })}</li>
+                                )}
+                                {passwordRules.requireUppercase && (
+                                    <li>{t('security.passwordRules.uppercaseInfo')}</li>
+                                )}
+                                {passwordRules.requireLowercase && (
+                                    <li>{t('security.passwordRules.lowercaseInfo')}</li>
+                                )}
+                                {passwordRules.requireNumbers && (
+                                    <li>{t('security.passwordRules.numberInfo')}</li>
+                                )}
+                                {passwordRules.requireSpecialChars && (
+                                    <li>{t('security.passwordRules.specialInfo')}</li>
+                                )}
+                            </Box>
                         </Typography>
 
                         <FormControl fullWidth>

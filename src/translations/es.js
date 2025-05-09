@@ -157,6 +157,19 @@ export const es = {
   'security.securityAudit': 'Auditoría de seguridad',
   'security.securityLogs': 'Registros de seguridad',
   'security.accessControl': 'Control de acceso',
+  'security.passwordStrength': 'Password Strength',
+  'security.passwordRules.minLengthError': 'La contraseña debe contener al menos {{length}} caracteres',
+  'security.passwordRules.uppercaseError': 'La contraseña debe contener al menos una letra mayúscula',
+  'security.passwordRules.lowercaseError': 'La contraseña debe contener al menos una letra minúscula',
+  'security.passwordRules.numberError': 'La contraseña debe contener al menos un número',
+  'security.passwordRules.specialError': 'La contraseña debe contener al menos un carácter especial',
+  'security.passwordRules.help': 'Por favor, asegúrese de que su contraseña cumpla con los siguientes requisitos:',
+  'security.passwordRules.minLengthInfo': 'La contraseña debe ser al menos {{length}} caracteres de longitud',
+  'security.passwordRules.uppercaseInfo': 'La contraseña debe contener al menos una letra mayúscula',
+  'security.passwordRules.lowercaseInfo': 'La contraseña debe contener al menos una letra minúscula',
+  'security.passwordRules.numberInfo': 'La contraseña debe contener al menos un número',
+  'security.passwordRules.specialInfo': 'La contraseña debe contener al menos un carácter especial',
+
   
   // Settings
   'settings.title': 'Configuración',

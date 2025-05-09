@@ -108,6 +108,13 @@ export const fr = {
   'users.errorDelete': 'Erreur lors de la suppression de l\'utilisateur',
   'users.confirmPassword': 'Confirmer le mot de passe',
   'users.passwordsDoNotMatch': 'Les mots de passe ne correspondent pas',
+  'security.passwordRules.help': 'Veuillez vous assurer que votre mot de passe respecte les exigences suivantes :',
+  'security.passwordRules.minLengthInfo': 'Le mot de passe doit contenir au moins {{length}} caractères',
+  'security.passwordRules.uppercaseInfo': 'Le mot de passe doit contenir au moins une majuscule',
+  'security.passwordRules.lowercaseInfo': 'Le mot de passe doit contenir au moins une minuscule',
+  'security.passwordRules.numberInfo': 'Le mot de passe doit contenir au moins un chiffre',
+  'security.passwordRules.specialInfo': 'Le mot de passe doit contenir au moins un caractère spécial',
+
   
   // Security
   'security.title': 'Sécurité',

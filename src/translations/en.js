@@ -196,7 +196,13 @@ export const en = {
   'security.passwordRules.lowercaseError': 'Password must contain at least one lowercase letter',
   'security.passwordRules.numberError': 'Password must contain at least one number',
   'security.passwordRules.specialError': 'Password must contain at least one special character',
-  
+  'security.passwordRules.help': 'Please ensure your password meets the following requirements:',
+  'security.passwordRules.minLengthInfo': 'Password must be at least {{length}} characters long',
+  'security.passwordRules.uppercaseInfo': 'Password must contain at least one uppercase letter',
+  'security.passwordRules.lowercaseInfo': 'Password must contain at least one lowercase letter',
+  'security.passwordRules.numberInfo': 'Password must contain at least one number',
+  'security.passwordRules.specialInfo': 'Password must contain at least one special character',
+
   // Settings
   'settings.title': 'Settings',
   'settings.theme': 'Theme',
