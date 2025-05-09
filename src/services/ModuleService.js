@@ -187,6 +187,7 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
             switch(code?.toLowerCase()) {
                 case 'lcm': return 'token-manager';
                 case 'itcp': return 'issuer-tsp';
+                case 'semlali': return 'security';
                 default: return code?.toLowerCase();
             }
         };

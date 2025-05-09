@@ -14,6 +14,7 @@ const DEFAULT_ICONS = {
     'ITCP': 'token',
     'CHARGEBACK': 'payments',
     'TRANSACTIONS': 'receipt_long',
+    'SEMLALI': 'security',
     // Ajouter plus d'icônes par défaut si nécessaire
     'DEFAULT': 'dashboard' // Icône par défaut
 };
@@ -229,6 +230,7 @@ const Sidebar = () => {
                         (Array.isArray(userAccessData.menus) && userAccessData.menus.length > 0)
                     )) {
                         console.log("Construction de la structure avec les données d'accès:", userAccessData);
+                        console.log("Modules accessibles:", JSON.stringify(userAccessData.modules));
                         
                         // Construire la structure en utilisant les modules et menus
                         const moduleStructure = ModuleService.buildModuleStructure(
@@ -243,16 +245,30 @@ const Sidebar = () => {
                     } else if (user.profile && user.profile.modules) {
                         // Fallback sur le profil de l'utilisateur si pas de données d'accès
                         console.log("Utilisation du profil utilisateur comme fallback");
+                        console.log("Modules du profil:", JSON.stringify(user.profile.modules));
+                        
                         const moduleStructure = ModuleService.buildModuleStructure(
                             user.profile.modules,
                             user.profile.menus || []
                         );
                         
                         const structureWithIcons = addIconsToStructure(moduleStructure);
+                        console.log("Structure des modules depuis le profil:", structureWithIcons);
                         setUserModuleStructure(structureWithIcons);
                     } else {
-                        console.log("Aucune donnée d'accès ni profil disponible");
-                        setUserModuleStructure([]);
+                        // Dernier recours: afficher tous les modules si on est en dev
+                        console.log("Aucune donnée d'accès ni profil disponible - tentative de charger tous les modules");
+                        if (process.env.REACT_APP_DEV_MODE === 'true') {
+                            const moduleStructure = ModuleService.buildModuleStructure(
+                                allModules.map(m => m.id),
+                                allMenus.map(m => m.id)
+                            );
+                            
+                            const structureWithIcons = addIconsToStructure(moduleStructure);
+                            setUserModuleStructure(structureWithIcons);
+                        } else {
+                            setUserModuleStructure([]);
+                        }
                     }
                 } else if (!isAuthenticated && process.env.REACT_APP_DEV_MODE === 'true') {
                     console.log("Mode développement - affichage de tous les modules");

@@ -356,8 +356,8 @@ const api = {
             const modules = await this.request('/profile/listmodule/', 'POST');
             
             if (modules && Array.isArray(modules)) {
-                console.log(`${modules.length} modules récupérés de l'API`);
-            return modules;
+                console.log(`${modules.length} modules récupérés de l'API:`, modules);
+                return modules;
             }
             
             throw new Error("Format de réponse incorrect");
@@ -371,7 +371,8 @@ const api = {
                 { id: 2, code: 'LCM', title: 'Token Manager', description: 'Life cycle management', icon: 'manage_accounts' },
                 { id: 3, code: 'ITCP', title: 'Issuer TSP', description: 'Issuer TCP', icon: 'token' },
                 { id: 4, code: 'CHARGEBACK', title: 'ChargeBack', description: 'Discharge management', icon: 'payments' },
-                { id: 5, code: 'TRANSACTIONS', title: 'Transactions', description: 'Transaction Management', icon: 'swap_horiz' }
+                { id: 5, code: 'TRANSACTIONS', title: 'Transactions', description: 'Transaction Management', icon: 'swap_horiz' },
+                { id: 6, code: 'SEMLALI', title: 'brahim', description: 'security', icon: 'security' }
             ];
             return fakeModules;
         }
@@ -419,7 +420,7 @@ const api = {
             console.log('Access data from API:', userAccess);
             
             if (userAccess && (userAccess.modules || userAccess.menus)) {
-                // Retourner strictement ce que renvoie l'API
+                console.log('Returning user access data directly from API');
                 return userAccess;
             }
             
@@ -468,16 +469,27 @@ const api = {
             // Essayer d'utiliser les données statiques pour le profil spécifié
             console.log("Fallback: Utilisation des données statiques pour le profil");
             
-            // Le profileId 42 correspond à Security (voir les captures d'écran)
-            if (userId === '3') {
-                return {
-                    modules: [{ id: 1 }],  // Module Administration
+            // Ajouter des profiles de secours pour les tests
+            const fallbackProfileData = {
+                // Profile pour l'admin
+                '1': {
+                    modules: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }],
                     menus: []
-                };
-            }
-            // Autres profils par défaut si besoin
+                },
+                // Autre profile
+                '2': {
+                    modules: [{ id: 1 }, { id: 6 }],
+                    menus: []
+                },
+                // Profile avec accès limité
+                '3': {
+                    modules: [{ id: 1 }, { id: 6 }],
+                    menus: []
+                }
+            };
             
-            return { modules: [], menus: [] };
+            // Retourner les données statiques pour ce profil ou un profil vide
+            return fallbackProfileData[userId] || { modules: [], menus: [] };
         }
     },
     
