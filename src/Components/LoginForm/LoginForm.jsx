@@ -16,6 +16,13 @@ const LoginForm = () => {
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [loginAttempts, setLoginAttempts] = useState({
+        remainingAttempts: null,
+        maxAttempts: null,
+        isLocked: false,
+        remainingTimeMinutes: null,
+        remainingTimeSeconds: null
+    });
 
     useEffect(() => {
         document.body.classList.add('login-body');
@@ -32,6 +39,16 @@ const LoginForm = () => {
         setError('');
     };
 
+    const formatWaitingMessage = (minutes, seconds) => {
+        if (minutes === '0' && seconds) {
+            return `Veuillez patienter ${seconds} secondes avant de réessayer votre mot de passe.`;
+        } else if (minutes === '1') {
+            return `Veuillez patienter 1 minute et ${seconds} secondes avant de réessayer votre mot de passe.`;
+        } else {
+            return `Veuillez patienter ${minutes} minutes et ${seconds} secondes avant de réessayer votre mot de passe.`;
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -42,8 +59,27 @@ const LoginForm = () => {
             await login(user);
             navigate('/dashboard');
         } catch (error) {
-            setError(error.message || 'Authentication failed');
-            console.error('Login error:', error);
+            if (error.response?.data) {
+                const responseData = error.response.data;
+                setLoginAttempts({
+                    isLocked: responseData.detail === "Account locked. Please try again later.",
+                    remainingTimeMinutes: responseData.remaining_time_minutes,
+                    remainingTimeSeconds: responseData.remaining_time_seconds,
+                    maxAttempts: responseData.max_attempts,
+                    remainingAttempts: responseData.remaining_attempts
+                });
+
+                if (responseData.detail === "Account locked. Please try again later.") {
+                    setError(formatWaitingMessage(
+                        responseData.remaining_time_minutes,
+                        responseData.remaining_time_seconds
+                    ));
+                } else {
+                    setError(`Il vous reste ${responseData.remaining_attempts} tentatives sur ${responseData.max_attempts} avant le blocage du compte.`);
+                }
+            } else {
+                setError('Une erreur est survenue. Veuillez réessayer plus tard.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -87,9 +123,17 @@ const LoginForm = () => {
                         <FaEye className="password-toggle" onClick={togglePasswordVisibility} />
                     )}
                 </div>
-                {error && <div className="error-message">{error}</div>}
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Loading...' : 'Login'}
+                {error && (
+                    <div className="error-box">
+                        {error}
+                    </div>
+                )}
+                <button 
+                    type="submit" 
+                    disabled={isLoading || loginAttempts.isLocked}
+                    className={loginAttempts.isLocked ? 'locked' : ''}
+                >
+                    {isLoading ? 'Chargement...' : (loginAttempts.isLocked ? 'COMPTE BLOQUÉ' : 'CONNEXION')}
                 </button>
             </form>
         </div>

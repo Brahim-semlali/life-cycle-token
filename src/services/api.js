@@ -33,45 +33,15 @@ const api = {
 
             // Gestion des erreurs HTTP
             if (!response.ok) {
-                try {
-                    const errorData = await response.json();
-                    console.error('Error details:', errorData);
-                    
-                    // Afficher plus de détails pour le diagnostic des erreurs 400
-                    if (response.status === 400) {
-                        console.error('Bad Request Error Details:');
-                        console.error('- Request URL:', `${this.baseURL}${endpoint}`);
-                        console.error('- Request Method:', method);
-                        console.error('- Request Data:', data);
-                        console.error('- Response:', errorData);
-                        
-                        // Créer un message d'erreur détaillé
-                        let errorMessage = `Bad Request (400): `;
-                        if (errorData.detail) errorMessage += errorData.detail;
-                        else if (errorData.message) errorMessage += errorData.message;
-                        else if (typeof errorData === 'string') errorMessage += errorData;
-                        else if (typeof errorData === 'object') {
-                            // Essayer d'extraire les champs d'erreur pour les formulaires
-                            const fieldErrors = Object.entries(errorData)
-                                .map(([field, error]) => `${field}: ${Array.isArray(error) ? error.join(', ') : error}`)
-                                .join('; ');
-                            errorMessage += fieldErrors || JSON.stringify(errorData);
-                        }
-                        
-                        const error = new Error(errorMessage);
-                        error.response = { data: errorData, status: response.status };
-                        throw error;
-                    }
-                    
-                    const error = new Error(errorData.detail || errorData.message || `Request failed with status ${response.status}`);
-                    error.response = { data: errorData, status: response.status };
-                    throw error;
-                } catch (jsonError) {
-                    // Si la réponse n'est pas du JSON, utiliser le statut HTTP
-                    const error = new Error(`Request failed with status ${response.status}`);
-                    error.response = { status: response.status };
-                    throw error;
-                }
+                const errorData = await response.json();
+                console.error('Error details:', errorData);
+                
+                const error = new Error(errorData.detail || 'Request failed');
+                error.response = {
+                    status: response.status,
+                    data: errorData
+                };
+                throw error;
             }
 
             // Si la réponse est 204 No Content, retourne un objet vide
@@ -81,11 +51,17 @@ const api = {
 
             // Retourne la réponse en JSON
             const jsonData = await response.json();
-            console.log('API Response data:', jsonData);
             return jsonData;
         } catch (error) {
-            console.error('API request error:', error);
-            throw error;
+            if (error.response) {
+                throw error;
+            }
+            const newError = new Error('Network error');
+            newError.response = {
+                status: 500,
+                data: { detail: 'Network error occurred' }
+            };
+            throw newError;
         }
     },
     

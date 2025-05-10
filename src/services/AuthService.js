@@ -30,7 +30,12 @@ class AuthService {
             const currentUser = await this.getUserByEmail(email);
             return currentUser || true;
         } catch (error) {
-            console.error('Login error:', error.message);
+            console.error('Login error:', error);
+            // Si l'erreur contient des données de réponse, les propager telles quelles
+            if (error.response?.data) {
+                throw error; // Propager l'erreur originale avec toutes ses données
+            }
+            // Sinon, créer une nouvelle erreur
             throw new Error(error.message || 'Authentication failed');
         }
     }
