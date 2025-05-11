@@ -9,6 +9,8 @@ export const fr = {
   'common.logout': 'Déconnexion',
   'common.collapse': 'Réduire',
   'common.expand': 'Développer',
+  'common.cancel': 'Annuler',
+  'common.delete': 'Supprimer',
   
   // Admin
   'admin.title': 'Administration',
@@ -89,6 +91,12 @@ export const fr = {
   'users.statusREJECTED': 'Rejeté',
   'users.actions': 'Actions',
   'users.statusSUSPENDED': 'Suspendu',
+  'users.deleteSelected': 'Supprimer sélection',
+  'users.cancelSelection': 'Annuler la sélection',
+  'users.selected': 'utilisateurs sélectionnés',
+  'users.confirmDeleteMultiple': 'Supprimer les utilisateurs sélectionnés',
+  'users.confirmDeleteMultipleDesc': 'Êtes-vous sûr de vouloir supprimer les {{count}} utilisateurs sélectionnés ?',
+  'users.confirmDeleteWarning': 'Cette action est irréversible. Les utilisateurs seront définitivement supprimés du système.',
 
 
   'users.selectProfile': 'Sélectionner un profil',
@@ -203,15 +211,18 @@ export const fr = {
   'modules.clients.contracts': 'Contrats',
   'modules.clients.billing': 'Facturation',
 
+  'translations.importTranslations': 'Importer les traductions',
+  'translations.downloadTemplate': 'Télécharger le modèle',
+  'translations.processing': 'Traitement en cours...',
+  'translations.importSuccess': 'Traductions importées avec succès',
+  'translations.importError': 'Erreur lors de l\'importation des traductions',
+  'translations.invalidFormat': 'Format de fichier invalide',
+
   translations: {
     importTitle: 'Importer des traductions',
-    downloadTemplate: 'Télécharger le modèle',
     templateInfo: 'Utilisez ce modèle pour formater vos traductions correctement',
     dropzoneText: 'Glissez-déposez votre fichier ici ou cliquez pour parcourir',
     browse: 'Parcourir',
-    processing: 'Traitement en cours...',
-    importSuccess: 'Traductions importées avec succès',
-    importError: 'Erreur lors de l\'importation des traductions',
     invalidFileType: 'Type de fichier non supporté. Utilisez .xlsx, .xls ou .cab',
     supportedFormats: 'Formats supportés',
     xlsFormat: 'Fichier Excel avec colonnes : key, fr, en, es, ar',
@@ -223,8 +234,6 @@ export const fr = {
   'users.filterByProfile': 'Filtrer par profil',
   'users.allStatuses': 'Tous les statuts',
   'users.allProfiles': 'Tous les profils',
-  'users.deleteSelected': 'Supprimer la sélection',
-  'users.cancelSelection': 'Annuler la sélection',
   'users.errorSaving': 'Erreur lors de la sauvegarde de l\'utilisateur',
   'users.firstNameRequired': 'Le prénom est requis',
   'users.lastNameRequired': 'Le nom est requis',

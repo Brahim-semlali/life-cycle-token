@@ -44,23 +44,10 @@ const Security = () => {
     // Déplacer loadPasswordRules en dehors de useEffect
     const loadPasswordRules = async () => {
         try {
-            let response = null;
+            // Utiliser la méthode getPasswordPolicy de l'API
+            const rules = await api.getPasswordPolicy();
             
-            // Essayer plusieurs endpoints dans l'ordre
-            try {
-                response = await api.request('/administration/passwordpolicy/get', 'GET');
-            } catch (e1) {
-                try {
-                    response = await api.request('/user/password-policy/', 'GET');
-                } catch (e2) {
-                    response = await api.request('/api/administration_passwordpolicy/get', 'GET');
-                }
-            }
-
-            if (response) {
-                // Si la réponse est un tableau, prendre le premier élément
-                const rules = Array.isArray(response) ? response[0] : response;
-                
+            if (rules) {
                 // S'assurer que les valeurs booléennes sont correctement interprétées
                 setPasswordRules({
                     min_length: parseInt(rules.min_length) || 8,
@@ -127,40 +114,17 @@ const Security = () => {
 
             console.log('Saving password rules:', formattedData);
 
-            // Essayer plusieurs endpoints possibles
-            let success = false;
-            let error = null;
+            // Utiliser la méthode dédiée pour mettre à jour la politique de mot de passe
+            await api.updatePasswordPolicy(formattedData);
+            
+            setSaveStatus({
+                open: true,
+                success: true,
+                message: t('security.saveSuccess')
+            });
 
-            try {
-                await api.request('/administration/passwordpolicy/update', 'POST', formattedData);
-                success = true;
-            } catch (e1) {
-                console.log('First endpoint failed, trying alternatives');
-                try {
-                    await api.request('/user/password-policy/', 'POST', formattedData);
-                    success = true;
-                } catch (e2) {
-                    try {
-                        await api.request('/api/administration_passwordpolicy/update', 'POST', formattedData);
-                        success = true;
-                    } catch (e3) {
-                        error = e3;
-                    }
-                }
-            }
-
-            if (success) {
-                setSaveStatus({
-                    open: true,
-                    success: true,
-                    message: t('security.saveSuccess')
-                });
-
-                // Recharger les règles pour vérifier que les changements ont été appliqués
-                loadPasswordRules();
-            } else {
-                throw error || new Error('Failed to save password rules');
-            }
+            // Recharger les règles pour vérifier que les changements ont été appliqués
+            loadPasswordRules();
         } catch (error) {
             console.error('Error saving password rules:', error);
             

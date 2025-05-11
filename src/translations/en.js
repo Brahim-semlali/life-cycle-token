@@ -154,6 +154,10 @@ export const en = {
 'users.statusSUSPENDED': 'Suspended',
 'users.statusBlocked': 'Blocked',
 'users.statusSuspended': 'Suspended',
+'users.selected': 'users selected',
+'users.confirmDeleteMultiple': 'Delete Selected Users',
+'users.confirmDeleteMultipleDesc': 'Are you sure you want to delete the {{count}} selected users?',
+'users.confirmDeleteWarning': 'This action cannot be undone. The users will be permanently deleted from the system.',
   
   // Security
   'security.title': 'Security',

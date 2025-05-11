@@ -1,9 +1,12 @@
 .users-container {
+    background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+    min-height: 100vh;
+    width: calc(100% - 250px);
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     padding: 2rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-left: 250px;
-    min-height: 100vh;
-    width: calc(100% - 250px);
     position: fixed;
     top: 0;
     right: 0;
@@ -11,8 +14,6 @@
     bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    background: #f5f7ff;
-    color: #6b7a99;
     animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
@@ -30,7 +31,7 @@
 }
 
 .users-container.dark-mode {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #e2e8f0;
 }
 
@@ -141,729 +142,224 @@
 }
 
 .users-header {
-    background: #fff;
-    padding: 1.75rem 2rem;
-    border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
-    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f9faff 0%, #f0f4ff 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    backdrop-filter: blur(10px);
-    border: 1.5px solid #e3e8f7;
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
-}
-
-.users-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.2), 
-        transparent);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(229, 231, 235, 0.7);
+    transition: all 0.3s ease;
 }
 
 .dark-mode .users-header {
-    background: rgba(45, 55, 72, 0.95);
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
+    border-color: rgba(51, 65, 85, 0.7);
 }
 
-.users-header h2 {
-    font-size: 1.875rem;
+.users-header:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.users-header h4 {
+    font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
+    color: #4f46e5;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    letter-spacing: 0.5px;
-}
-
-.dark-mode .users-header h2 {
-    background: linear-gradient(135deg, #90cdf4, #63b3ed);
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
-.user-form {
-    background-color: var(--bg-secondary);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: 0 auto 30px;
-    border: 1px solid var(--border-color);
-}
-
-.dark-mode .user-form {
-    background-color: var(--dark-card-bg);
-    border-color: var(--dark-border-color);
-}
-
-.form-row {
+.users-actions {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.form-group {
-    flex: 1;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.dark-mode .form-group label {
-    color: var(--dark-text);
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.dark-mode .form-group input,
-.dark-mode .form-group select {
-    background-color: var(--dark-input-bg);
-    color: var(--dark-text);
-    border-color: var(--dark-border-color);
-}
-
-.dark-mode .form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.7rem center;
-    background-size: 1em;
-    padding-right: 2.5rem;
-}
-
-.dark-mode .form-group select {
-    background-color: #2d3748;
-    color: #e2e8f0;
-    border-color: #4a5568;
-}
-
-.dark-mode .form-group select option {
-    background-color: #2d3748;
-    color: #e2e8f0;
-    padding: 8px;
-}
-
-.dark-mode .form-group select:focus {
-    border-color: #4a7ab0;
-    box-shadow: 0 0 0 2px rgba(74, 122, 176, 0.2);
-}
-
-/* Styles spécifiques pour Firefox */
-.dark-mode .form-group select:-moz-focusring {
-    color: transparent;
-    text-shadow: 0 0 0 #e2e8f0;
-}
-
-/* Styles pour la liste déroulante native */
-.dark-mode .form-group select::-ms-expand {
-    display: none;
-}
-
-.dark-mode .form-group select option:checked,
-.dark-mode .form-group select option:hover {
-    background-color: #4a7ab0;
-    color: #ffffff;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(74, 122, 176, 0.2);
-}
-
-.button-group {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.submit-button,
-.cancel-button,
-.edit-button,
-.delete-button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.submit-button {
-    background-color: #7c3aed;
-    color: #fff;
-}
-
-.submit-button:hover {
-    background-color: #a78bfa;
-}
-
-.cancel-button {
-    background-color: #e2e8f0;
-    color: #4a5568;
-}
-
-.dark-mode .cancel-button {
-    background-color: #4a5568;
-    color: #e2e8f0;
-}
-
-.cancel-button:hover {
-    background-color: #cbd5e0;
-}
-
-.dark-mode .cancel-button:hover {
-    background-color: #2d3748;
-}
-
-.users-list {
-    list-style: none;
-    padding: 0;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.user-item {
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 22px;
-    margin-bottom: 1rem;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
-    border: 1.5px solid #e3e8f7;
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
+    gap: 16px;
 }
 
-.dark-mode .user-item {
-    background-color: var(--dark-card-bg);
-    border-color: var(--dark-border-color);
+.MuiSelect-select {
+    font-size: 0.9rem !important;
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    min-width: 140px !important;
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #e5e7eb !important;
+    transition: all 0.2s ease !important;
 }
 
-.user-info {
-    display: flex;
-    gap: 2rem;
-    align-items: center;
+.MuiSelect-select:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-.user-info strong {
-    color: var(--text-primary);
-    font-size: 1.1rem;
+.MuiSelect-icon {
+    color: #6366f1 !important;
+    right: 12px !important;
 }
 
-.dark-mode .user-info strong {
-    color: var(--dark-text);
+.MuiDataGrid-root {
+    border: none !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
-.user-info span {
-    color: var(--text-secondary);
+.MuiDataGrid-columnHeaders {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    min-height: 56px !important;
+    text-transform: uppercase !important;
 }
 
-.dark-mode .user-info span {
-    color: var(--dark-text-secondary);
+.MuiDataGrid-columnHeaderTitle {
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    color: #6366f1 !important;
+    letter-spacing: 0.05em !important;
 }
 
-.status {
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    font-weight: 500;
+.MuiDataGrid-cell {
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 16px !important;
+    font-size: 0.95rem !important;
+    color: #334155 !important;
 }
 
-.status.active {
-    background-color: #48bb78;
-    color: white;
+.MuiDataGrid-row {
+    cursor: pointer !important;
 }
 
-.status.inactive {
-    background-color: #f56565;
-    color: white;
+.MuiDataGrid-row:hover {
+    background: linear-gradient(to right, rgba(99, 102, 241, 0.03), rgba(99, 102, 241, 0.07)) !important;
 }
 
-.user-actions {
-    display: flex;
-    gap: 0.5rem;
+.MuiDataGrid-footerContainer {
+    border-top: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    min-height: 52px !important;
 }
 
-.edit-button {
-    background-color: #7c3aed;
-    color: #fff;
-}
-
-.edit-button:hover:not(:disabled) {
-    background-color: #a78bfa;
-}
-
-.edit-button:disabled {
-    background-color: #718096;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.delete-button {
-    background-color: #e53e3e;
-    color: white;
-}
-
-.delete-button:hover {
-    background-color: #c53030;
-}
-
-/* Status badges with improved animations */
+/* Improved status badge styling */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    margin-top: -20px;
-    border-radius: 16px !important;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    text-transform: capitalize;
-    min-width: 120px;
+    padding: 4px 8px 4px 24px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
     position: relative;
-    transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
-    padding: 6px 18px 6px 28px;
-    background: #f0eaff;
-    color: #7c3aed;
-    border: 1.5px solid #e3e8f7;
 }
 
 .status-badge::before {
     content: '';
     position: absolute;
-    left: 12px;
+    left: 8px;
     top: 50%;
     transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #7c3aed, #38bdf8);
-    box-shadow: 0 0 8px #a78bfa;
-    animation: badgePulse 1.5s infinite;
 }
 
 .status-badge.active {
-    background: #e3e8f7;
-    color: #7c3aed;
-    border: 1px solid #e3e8f7;
-    padding-left: 24px;
+    background-color: #dcfce7;
+    color: #16a34a;
 }
 
 .status-badge.active::before {
-    background: #48bb78;
-    box-shadow: 0 0 8px #48bb78;
+    background-color: #16a34a;
 }
 
 .status-badge.inactive {
-    background: #e3e8f7;
-    color: #b0b8d1;
-    border: 1px solid #e3e8f7;
-    padding-left: 24px;
+    background-color: #fee2e2;
+    color: #dc2626;
 }
 
 .status-badge.inactive::before {
-    background: #f56565;
-    box-shadow: 0 0 8px #f56565;
-}
-
-/* Animation au survol */
-.status-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-}
-
-.status-badge.active:hover {
-    background: rgba(72, 187, 120, 0.15);
-}
-
-.status-badge.inactive:hover {
-    background: rgba(245, 101, 101, 0.15);
-}
-
-/* Animation du point */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.4);
+    background-color: #dc2626;
     }
-    70% {
-        box-shadow: 0 0 0 6px rgba(72, 187, 120, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
-    }
-}
 
-.status-badge.active::before {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulseRed {
-    0% {
-        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(245, 101, 101, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0);
-    }
-}
-
-.status-badge.inactive::before {
-    animation: pulseRed 2s infinite;
-}
-
-/* Dark mode styles */
 .dark-mode .status-badge.active {
-    background: rgba(72, 187, 120, 0.15);
-    color: #9ae6b4;
-    border-color: rgba(72, 187, 120, 0.3);
+    background-color: rgba(22, 163, 74, 0.2);
+    color: #4ade80;
 }
 
 .dark-mode .status-badge.inactive {
-    background: rgba(245, 101, 101, 0.15);
-    color: #feb2b2;
-    border-color: rgba(245, 101, 101, 0.3);
+    background-color: rgba(220, 38, 38, 0.2);
+    color: #f87171;
 }
 
-/* DataGrid custom styles with enhanced animations */
-.MuiDataGrid-root {
-    border: none !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    width: 100% !important;
-    height: 100% !important;
-    flex: 1 !important;
+.name-cell, .profile-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.MuiDataGrid-columnHeaders {
-    background: linear-gradient(to bottom, #f8fafc, #f1f5f9) !important;
-    border-bottom: 2px solid #e2e8f0 !important;
-    min-height: 56px !important;
-    width: 100% !important;
+.name-cell .MuiTypography-body1, .profile-cell .MuiTypography-body1 {
+    font-weight: 600;
+    color: #334155;
 }
 
-.dark-mode .MuiDataGrid-columnHeaders {
-    background: linear-gradient(to bottom, #2d3748, #1a202c) !important;
-    border-bottom: 2px solid rgba(74, 85, 104, 0.3) !important;
+.MuiCard-root {
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease !important;
+    border: 2px solid transparent !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-.MuiDataGrid-cell {
-    border-bottom: 1px solid #e2e8f0 !important;
-    padding: 1rem !important;
-    font-size: 0.95rem !important;
-    color: #4a5568 !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+.MuiCard-root:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
 }
 
-.dark-mode .MuiDataGrid-cell {
-    color: #e2e8f0 !important;
-    border-color: rgba(74, 85, 104, 0.2) !important;
+.MuiCard-root.selected {
+    border-color: #7c3aed !important;
+    background-color: rgba(124, 58, 237, 0.03) !important;
 }
 
-.MuiDataGrid-row {
-    cursor: pointer !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+.MuiAvatar-root {
+    transition: all 0.3s ease !important;
 }
 
-.MuiDataGrid-row:hover {
-    background: linear-gradient(to right, rgba(66, 153, 225, 0.04), rgba(66, 153, 225, 0.08)) !important;
-    backdrop-filter: blur(5px);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.MuiCard-root:hover .MuiAvatar-root {
+    transform: scale(1.05) !important;
 }
 
-.dark-mode .MuiDataGrid-row:hover {
-    background: linear-gradient(to right, rgba(66, 153, 225, 0.1), rgba(66, 153, 225, 0.15)) !important;
-    backdrop-filter: blur(5px);
-}
-
-.MuiDataGrid-columnHeaderTitle {
-    font-weight: 600 !important;
-    font-size: 0.95rem !important;
-    background: linear-gradient(135deg, #2d3748, #4a5568);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 0.3px;
-}
-
-.dark-mode .MuiDataGrid-columnHeaderTitle {
-    color: #90cdf4 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.MuiDataGrid-toolbarContainer {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f7fafc;
-}
-
-.dark-mode .MuiDataGrid-toolbarContainer {
-    background: #2d3748 !important;
-    border-bottom: 1px solid rgba(74, 85, 104, 0.3) !important;
-}
-
-.MuiDataGrid-footerContainer {
-    border-top: 1px solid #e2e8f0;
-    background-color: #f7fafc;
-}
-
-.dark-mode .MuiDataGrid-footerContainer {
-    background: #2d3748 !important;
-    border-top: 1px solid rgba(74, 85, 104, 0.3) !important;
-    color: #e2e8f0 !important;
-}
-
-/* Dialog custom styles with enhanced animations */
 .MuiDialog-paper {
-    border-radius: 28px !important;
-    box-shadow: 0 12px 48px rgba(124, 58, 237, 0.10), 0 2px 12px rgba(60,60,60,0.06) !important;
-    background: #fff !important;
-    border: 1.5px solid #e3e8f7 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
 .MuiDialogTitle-root {
-    background: #f5f7ff !important;
-    border-radius: 28px 28px 0 0 !important;
-    padding: 2.2rem 2.5rem 1.2rem 2.5rem !important;
-    border-bottom: 1.5px solid #e3e8f7 !important;
-    font-size: 2rem !important;
-    font-weight: 800 !important;
-    background: linear-gradient(90deg, #7c3aed 30%, #38bdf8 100%) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-    text-fill-color: transparent !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%) !important;
+    color: white !important;
+    padding: 20px 24px !important;
+    font-weight: 600 !important;
 }
 
 .MuiDialogContent-root {
-    padding: 2.5rem 2.5rem 1.5rem 2.5rem !important;
-    background: #fff !important;
-    border-radius: 0 0 28px 28px !important;
-}
-
-.MuiFormControl-root, .MuiTextField-root {
-    margin-bottom: 1.7rem !important;
-}
-
-.MuiOutlinedInput-root {
-    border-radius: 14px !important;
-    background: #f5f7ff !important;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
-    transition: box-shadow 0.2s, border 0.2s;
-}
-
-.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: #7c3aed !important;
-    box-shadow: 0 0 0 2px #a78bfa44;
-}
-
-.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-    border-color: #38bdf8 !important;
-}
-
-.MuiInputAdornment-root .MuiSvgIcon-root, .MuiInputAdornment-root .material-icons {
-    color: #7c3aed !important;
-    opacity: 0.85;
-}
-
-.MuiInputLabel-root {
-    color: #6b7a99 !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.03em;
-}
-
-.MuiInputLabel-root.Mui-focused {
-    color: #7c3aed !important;
+    padding: 24px !important;
 }
 
 .MuiDialogActions-root {
-    padding: 1.5rem 2.5rem 2rem 2.5rem !important;
-    border-top: 1.5px solid #e3e8f7 !important;
-    background: #f5f7ff !important;
-    border-radius: 0 0 28px 28px !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid #e5e7eb !important;
 }
 
-.MuiButton-root {
-    border-radius: 16px !important;
-    background: linear-gradient(90deg, #7c3aed 0%, #38bdf8 100%) !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10) !important;
-    transition: box-shadow 0.2s, transform 0.2s, background 0.2s !important;
-}
-.MuiButton-root:hover {
-    background: linear-gradient(90deg, #a78bfa 0%, #38bdf8 100%) !important;
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18) !important;
-    transform: translateY(-1px) scale(1.03) !important;
-}
-.MuiButton-root:active {
-    transform: scale(0.98) !important;
-}
-
-/* Transitions douces sur tous les champs */
-.MuiOutlinedInput-root, .MuiInputLabel-root, .MuiButton-root {
-    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s !important;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
-    }
-
-    .user-info {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-    }
-
-    .user-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .users-container {
-        padding: 1rem;
-        margin-left: 60px;
-        width: calc(100% - 60px);
-    }
-
-    .users-container.minimized {
-        margin-left: 60px;
-        width: calc(100% - 60px);
-    }
-
-    .users-header {
-        flex-direction: column;
-        gap: 1.25rem;
-        padding: 1.5rem;
-    }
-
-    .users-header h2 {
-        font-size: 1.5rem;
-    }
-
-    .MuiDialog-paper {
-        margin: 1rem !important;
-        width: calc(100% - 2rem) !important;
-    }
-
-    .MuiBox-root {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .MuiDataGrid-root {
-        border-radius: 0;
-    }
-
-    .users-table-container {
-        height: calc(100vh - 200px);
-    }
-
-    .status-badge {
-        padding: 0.5rem 1rem;
-        font-size: 0.8125rem;
-    }
-}
-
-/* Scrollbar styles with enhanced appearance */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 6px;
-}
-
-.dark-mode ::-webkit-scrollbar-track {
-    background: #2d3748;
-}
-
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #cbd5e0, #a0aec0);
-    border-radius: 6px;
-    border: 2px solid #f7fafc;
-}
-
-.dark-mode ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #4a5568, #2d3748);
-    border: 2px solid #2d3748;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #a0aec0, #718096);
-}
-
-/* Action buttons styling */
 .grid-action-item {
-    padding: 0.625rem !important;
-    margin: 0 0.375rem !important;
+    padding: 8px !important;
+    margin: 0 4px !important;
     border-radius: 10px !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     background-color: transparent !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.grid-action-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(66, 153, 225, 0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.grid-action-item:hover::before {
-    opacity: 1;
 }
 
 .grid-action-item:hover {
@@ -871,10 +367,8 @@
 }
 
 .action-icon {
-    font-size: 1.375rem !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    position: relative;
-    z-index: 1;
+    font-size: 1.25rem !important;
+    transition: all 0.3s ease !important;
 }
 
 .edit-icon {
@@ -885,192 +379,313 @@
     color: #f56565 !important;
 }
 
-/* Tooltip styling */
-.MuiTooltip-tooltip {
-    background: rgba(45, 55, 72, 0.98) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 1.25rem !important;
-    font-size: 0.8125rem !important;
-    font-weight: 500 !important;
-    box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
-    letter-spacing: 0.3px;
+.grid-action-item:hover .edit-icon {
+    color: #3182ce !important;
 }
 
-.dark-mode .MuiTooltip-tooltip {
-    background: rgba(237, 242, 247, 0.98) !important;
-    color: #1a202c !important;
-    box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+.grid-action-item:hover .delete-icon {
+    color: #e53e3e !important;
 }
 
-.MuiTooltip-arrow {
-    color: rgba(45, 55, 72, 0.9) !important;
+.MuiListItem-root {
+    transition: all 0.3s ease !important;
+    border-radius: 12px !important;
+    margin-bottom: 4px !important;
+    border-left: 4px solid transparent !important;
 }
 
-.dark-mode .MuiTooltip-arrow {
-    color: rgba(237, 242, 247, 0.9) !important;
+.MuiListItem-root:hover {
+    background-color: rgba(241, 245, 249, 0.7) !important;
+    transform: translateX(4px) !important;
 }
 
-.name-cell {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
+.MuiListItem-root.selected {
+    border-left-color: #7c3aed !important;
+    background-color: rgba(124, 58, 237, 0.03) !important;
 }
 
-.name-cell .MuiTypography-body1 {
-    font-weight: 500;
-    color: #2d3748;
+.MuiCheckbox-root {
+    transition: transform 0.2s ease;
+    color: #7c3aed !important;
 }
 
-.dark-mode .name-cell .MuiTypography-body1 {
-    color: #e2e8f0;
+.MuiCheckbox-root:hover {
+    transform: scale(1.1);
 }
 
-/* Amélioration de la visibilité des cellules du tableau */
-.MuiDataGrid-cell {
-    padding: 8px 16px !important;
-    font-size: 0.95rem !important;
+.MuiCheckbox-root.Mui-checked {
+    color: #7c3aed !important;
 }
 
-.MuiDataGrid-columnHeader {
-    padding: 12px 16px !important;
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-.MuiDataGrid-columnHeaderTitle {
-    font-weight: 600 !important;
-    color: #2d3748 !important;
+::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 8px;
 }
 
-.dark-mode .MuiDataGrid-columnHeaderTitle {
-    color: #90cdf4 !important;
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.7);
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 
-/* Style pour le survol des lignes */
-.MuiDataGrid-row:hover {
-    background-color: rgba(66, 153, 225, 0.04) !important;
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.9);
 }
 
-.dark-mode .MuiDataGrid-row:hover {
-    background-color: rgba(66, 153, 225, 0.08) !important;
-}
-
-.profile-cell {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-}
-
-.profile-cell .MuiTypography-body1 {
-    font-weight: 500;
-    color: #2d3748;
-}
-
-.dark-mode .profile-cell .MuiTypography-body1 {
-    color: #e2e8f0;
-}
-
-.MuiDataGrid-main {
-    width: 100% !important;
-    flex: 1 !important;
+.MuiPaper-root {
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(229, 231, 235, 0.7) !important;
     overflow: hidden !important;
 }
 
-.MuiDataGrid-virtualScroller {
-    width: 100% !important;
-    overflow: auto !important;
+@media (max-width: 768px) {
+    .users-container {
+        padding: 1.25rem !important;
+    }
+
+    .users-header {
+        padding: 14px 18px !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+
+    .MuiTextField-root, .MuiFormControl-root {
+        width: 100% !important;
+    }
+    
+    .create-button {
+        width: 100% !important;
+    }
+    }
+
+.dark-mode .MuiDataGrid-columnHeaders {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3) !important;
+    }
+
+.dark-mode .MuiDataGrid-columnHeaderTitle {
+    color: #93c5fd !important;
 }
 
-.MuiDataGrid-virtualScrollerContent {
-    width: 100% !important;
+.dark-mode .MuiDataGrid-cell {
+    color: #e2e8f0 !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.2) !important;
 }
 
-.MuiDataGrid-virtualScrollerRenderZone {
-    width: 100% !important;
+.dark-mode .MuiDataGrid-row:hover {
+    background: linear-gradient(to right, rgba(96, 165, 250, 0.05), rgba(96, 165, 250, 0.1)) !important;
 }
 
-.dark-mode .create-button {
-    background: linear-gradient(135deg, #4299e1, #2b6cb0);
-    border: 1px solid rgba(66, 153, 225, 0.3);
-    box-shadow: 
-        0 4px 15px rgba(66, 153, 225, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+.dark-mode .phone-cell {
+    color: #9ca3af !important;
 }
 
-.dark-mode .create-button:hover {
-    background: linear-gradient(135deg, #63b3ed, #3182ce);
-    box-shadow: 
-        0 6px 20px rgba(66, 153, 225, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+.dark-mode .search-container {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(75, 85, 99, 0.5);
 }
 
-/* Bouton Créer */
-.create-button {
-    background: linear-gradient(135deg, #4299e1, #3182ce);
-    color: white;
-    padding: 0.875rem 1.75rem;
-    border-radius: 16px;
-    border: none;
-    font-weight: 700;
+.dark-mode .search-container input {
+    color: #e2e8f0;
+}
+
+.dark-mode .view-selector {
+    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark-mode .view-button.Mui-selected {
+    background: rgba(96, 165, 250, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+.dark-mode .MuiTablePagination-root {
+    color: #e2e8f0;
+}
+
+.dark-mode .users-table-container {
+    background: rgba(15, 23, 42, 0.6);
+}
+
+/* Phone icon styling */
+.MuiDataGrid-cell .MuiIconButton-root {
+    color: #6366f1;
+    padding: 6px;
+}
+
+/* Action buttons in table cells */
+.edit-icon-button, .delete-icon-button {
+    padding: 6px !important;
+    margin: 0 3px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.edit-icon-button {
+    color: #3b82f6 !important;
+}
+
+.edit-icon-button:hover {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+.delete-icon-button {
+    color: #ef4444 !important;
+}
+
+.delete-icon-button:hover {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+/* Search field refinements */
+.search-container {
+    background-color: white;
+    border-radius: 50px;
+    border: 1px solid #e5e7eb;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-    transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
-    text-transform: none;
-    position: relative;
+    padding: 0 4px 0 16px;
+    height: 42px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    width: 320px;
     overflow: hidden;
 }
 
-.create-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+.search-container:hover, 
+.search-container:focus-within {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.search-container:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.search-container .MuiInputBase-root {
     height: 100%;
-    background: linear-gradient(
-        rgba(255, 255, 255, 0.1),
-        transparent,
-        rgba(255, 255, 255, 0.1)
-    );
-    transform: translateY(-100%);
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
-.create-button:hover::before {
-    transform: translateY(100%);
+.search-container .MuiInputBase-input {
+    font-size: 0.95rem;
+    padding: 8px 0;
+    color: #334155;
+    font-weight: 400;
 }
 
-.create-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
+.search-icon {
+    color: #6366f1 !important;
+    margin-right: 8px;
 }
 
-.create-button:active {
-    transform: scale(0.98);
+.dark-mode .search-container {
+    background-color: rgba(30, 41, 59, 0.6);
+    border-color: rgba(51, 65, 85, 0.7);
 }
 
-.create-button .material-icons {
-    font-size: 1.25rem;
-    transition: transform 0.3s ease;
+.dark-mode .search-container .MuiInputBase-input {
+    color: #e2e8f0;
 }
 
-.create-button:hover .material-icons {
-    transform: translateX(2px);
+.dark-mode .search-container:hover,
+.dark-mode .search-container:focus-within {
+    border-color: #475569;
+    background-color: rgba(30, 41, 59, 0.8);
 }
 
-/* Table Container */
+.dark-mode .search-container:focus-within {
+    border-color: #818cf8;
+}
+
+/* Top controls container styling */
+.controls-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Enhance view toggle buttons */
+.view-selector {
+    background: rgba(243, 244, 246, 0.7);
+    border-radius: 8px;
+    padding: 2px;
+    border: 1px solid #e5e7eb;
+}
+
+.view-button {
+    min-width: 40px !important;
+    border-radius: 6px !important;
+}
+
+.view-button.Mui-selected {
+    background-color: white !important;
+    color: #6366f1 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Export button styling */
+.export-button {
+    text-transform: none;
+    min-width: 110px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Phone cell styling */
+.phone-cell {
+    display: flex !important;
+    align-items: center !important;
+    color: #6b7280 !important;
+}
+
+.phone-icon {
+    color: #6366f1 !important;
+    font-size: 1.1rem !important;
+    margin-right: 4px !important;
+}
+
+/* Add pagination styling */
+.MuiTablePagination-root {
+    color: #4b5563;
+    overflow: visible;
+}
+
+.MuiTablePagination-selectIcon {
+    color: #6366f1;
+}
+
+.MuiTablePagination-actions .MuiIconButton-root {
+    color: #6366f1;
+}
+
+/* Actions column */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Users table container styling */
 .users-table-container {
     background: #fff;
-    border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
     overflow: hidden;
-    border: 1.5px solid #e3e8f7;
+    border: 1px solid rgba(229, 231, 235, 0.7);
     height: calc(100vh - 240px);
     position: relative;
     width: 100%;
@@ -1078,687 +693,453 @@
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
+    margin-top: 16px;
 }
 
-.dark-mode .users-table-container {
-    background: rgba(26, 32, 44, 0.95);
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* DataGrid custom styles */
-.MuiDataGrid-root {
-    border: none !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    width: 100% !important;
-    height: 100% !important;
-    flex: 1 !important;
-}
-
-.MuiDataGrid-main {
-    width: 100% !important;
-    flex: 1 !important;
+.create-button {
+    background: linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%) !important;
+    border-radius: 12px !important;
+    padding: 10px 24px !important;
+    height: 46px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    position: relative !important;
     overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
-.MuiDataGrid-virtualScroller {
-    width: 100% !important;
-    overflow: auto !important;
-}
-
-.MuiDataGrid-virtualScrollerContent {
-    width: 100% !important;
-}
-
-.MuiDataGrid-virtualScrollerRenderZone {
-    width: 100% !important;
-}
-
-.MuiDataGrid-columnHeaders {
-    width: 100% !important;
-}
-
-.MuiDataGrid-columnHeadersInner {
-    width: 100% !important;
-}
-
-.MuiDataGrid-footerContainer {
-    width: 100% !important;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-    .users-container {
-        padding: 1rem;
-        margin-left: 60px;
-        width: calc(100% - 60px);
+/* Styles pour la table de type "contact-table" (similaire au tableau de Profiles) */
+.contact-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 
-    .users-container.minimized {
-        margin-left: 60px;
-        width: calc(100% - 60px);
-    }
-
-    .users-table-container {
-        height: calc(100vh - 200px);
-    }
-}
-
-/* Mode sombre - Table Container */
-.dark-mode .users-table-container {
-    background: rgba(26, 32, 44, 0.95);
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* Mode sombre - Contenu du tableau */
-.dark-mode .MuiDataGrid-root {
-    color: #e2e8f0 !important;
-}
-
-/* Mode sombre - En-têtes de colonnes */
-.dark-mode .MuiDataGrid-columnHeaders {
-    background: linear-gradient(to bottom, #2d3748, #1a202c) !important;
-    border-bottom: 2px solid rgba(74, 85, 104, 0.3) !important;
-}
-
-.dark-mode .MuiDataGrid-columnHeaderTitle {
-    color: #90cdf4 !important;
-    font-weight: 600 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Mode sombre - Cellules */
-.dark-mode .MuiDataGrid-cell {
-    color: #e2e8f0 !important;
-    border-color: rgba(74, 85, 104, 0.2) !important;
-    background-color: rgba(26, 32, 44, 0.95) !important;
-}
-
-/* Mode sombre - Lignes */
-.dark-mode .MuiDataGrid-row {
-    background-color: rgba(26, 32, 44, 0.95) !important;
-}
-
-.dark-mode .MuiDataGrid-row:hover {
-    background: linear-gradient(to right, rgba(66, 153, 225, 0.1), rgba(66, 153, 225, 0.15)) !important;
-    backdrop-filter: blur(5px);
-}
-
-/* Mode sombre - Nom et email */
-.dark-mode .name-cell .MuiTypography-body1,
-.dark-mode .profile-cell .MuiTypography-body1 {
-    color: #e2e8f0 !important;
-}
-
-/* Mode sombre - Statut */
-.dark-mode .status-badge {
+.contact-table th {
+    background-color: #f8fafc;
+    color: #64748b;
     font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.dark-mode .status-badge.active {
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    color: white !important;
-    box-shadow: 
-        0 2px 10px rgba(56, 161, 105, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+.contact-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 0.875rem;
+    vertical-align: middle;
 }
 
-.dark-mode .status-badge.inactive {
-    background: linear-gradient(135deg, #f56565, #c53030);
-    color: white !important;
-    box-shadow: 
-        0 2px 10px rgba(197, 48, 48, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+.contact-table tr:last-child td {
+    border-bottom: none;
 }
 
-/* Mode sombre - Icônes d'action */
-.dark-mode .grid-action-item {
-    background: rgba(45, 55, 72, 0.5) !important;
+.contact-table tr:hover {
+    background-color: #f8fafc;
 }
 
-.dark-mode .grid-action-item:hover {
-    background: rgba(45, 55, 72, 0.8) !important;
-}
-
-.dark-mode .edit-icon {
-    color: #63b3ed !important;
-}
-
-.dark-mode .delete-icon {
-    color: #fc8181 !important;
-}
-
-/* Mode sombre - Checkbox */
-.dark-mode .MuiCheckbox-root {
-    color: #63b3ed !important;
-}
-
-.dark-mode .MuiCheckbox-root.Mui-checked {
-    color: #4299e1 !important;
-}
-
-/* Mode sombre - Pagination */
-.dark-mode .MuiTablePagination-root {
-    color: #e2e8f0 !important;
-}
-
-.dark-mode .MuiTablePagination-selectIcon,
-.dark-mode .MuiTablePagination-actions {
-    color: #e2e8f0 !important;
-}
-
-/* Mode sombre - Barre d'outils */
-.dark-mode .MuiDataGrid-toolbarContainer {
-    background: #2d3748 !important;
-    border-bottom: 1px solid rgba(74, 85, 104, 0.3) !important;
-}
-
-.dark-mode .MuiDataGrid-toolbarContainer .MuiButton-text {
-    color: #e2e8f0 !important;
-}
-
-.dark-mode .MuiDataGrid-toolbarContainer .MuiButton-text:hover {
-    background-color: rgba(74, 85, 104, 0.08) !important;
-}
-
-/* Mode sombre - Pas de données */
-.dark-mode .MuiDataGrid-overlay {
-    background-color: rgba(45, 55, 72, 0.8) !important;
-    color: #e2e8f0 !important;
-}
-
-/* Mode sombre - Footer */
-.dark-mode .MuiDataGrid-footerContainer {
-    background: #2d3748 !important;
-    border-top: 1px solid rgba(74, 85, 104, 0.3) !important;
-    color: #e2e8f0 !important;
-}
-
-/* Mode sombre - Sélection */
-.dark-mode .MuiDataGrid-row.Mui-selected {
-    background-color: rgba(66, 153, 225, 0.16) !important;
-}
-
-.dark-mode .MuiDataGrid-row.Mui-selected:hover {
-    background-color: rgba(66, 153, 225, 0.24) !important;
-}
-
-/* Mode sombre - Tri des colonnes */
-.dark-mode .MuiDataGrid-sortIcon {
-    color: #e2e8f0 !important;
-}
-
-.dark-mode .MuiDataGrid-columnHeader--sorted {
-    color: #4299e1 !important;
-}
-
-/* Mode sombre - Menu des colonnes */
-.dark-mode .MuiMenu-paper {
-    background-color: #2d3748 !important;
-    color: #e2e8f0 !important;
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-}
-
-.dark-mode .MuiMenuItem-root {
-    color: #e2e8f0 !important;
-}
-
-.dark-mode .MuiMenuItem-root:hover {
-    background-color: rgba(74, 85, 104, 0.08) !important;
-}
-
-/* Styles pour le champ de recherche */
-.MuiTextField-root {
-    transition: all 0.3s ease;
-}
-
-.MuiTextField-root:hover {
-    transform: translateY(-1px);
-}
-
-.MuiTextField-root .MuiOutlinedInput-root {
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-}
-
-.dark-mode .MuiTextField-root .MuiOutlinedInput-root {
-    background: rgba(45, 55, 72, 0.5);
-}
-
-/* Styles pour les filtres */
-.filter-section {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
-    backdrop-filter: blur(10px);
-    border: 1.5px solid #e3e8f7;
-    transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
-}
-
-.dark-mode .filter-section {
-    background: rgba(45, 55, 72, 0.95);
-    border: 1px solid rgba(74, 85, 104, 0.3);
-    box-shadow: 
-        0 4px 20px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* Styles pour les boutons de vue */
-.MuiToggleButtonGroup-root {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.dark-mode .MuiToggleButtonGroup-root {
-    background: rgba(45, 55, 72, 0.5);
-}
-
-.MuiToggleButton-root {
-    color: #4a5568;
-    transition: all 0.3s ease;
-}
-
-.dark-mode .MuiToggleButton-root {
-    color: #e2e8f0;
-}
-
-.MuiToggleButton-root.Mui-selected {
-    background: rgba(66, 153, 225, 0.1);
-    color: #4299e1;
-}
-
-.dark-mode .MuiToggleButton-root.Mui-selected {
-    background: rgba(66, 153, 225, 0.2);
-    color: #63b3ed;
-}
-
-/* Styles pour le bouton d'export */
-.export-button {
-    background: linear-gradient(135deg, #4299e1, #3182ce);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 
-        0 2px 4px rgba(66, 153, 225, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-}
-
-.export-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 
-        0 4px 6px rgba(66, 153, 225, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-}
-
-.dark-mode .export-button {
-    background: linear-gradient(135deg, #63b3ed, #4299e1);
-    box-shadow: 
-        0 2px 4px rgba(66, 153, 225, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* Animation pour le panneau de filtres */
-.filter-panel-enter {
-    opacity: 0;
-    transform: translateY(-10px);
-}
-
-.filter-panel-enter-active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 300ms, transform 300ms;
-}
-
-.filter-panel-exit {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.filter-panel-exit-active {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 300ms, transform 300ms;
-}
-
-/* Styles pour les sélecteurs de filtre */
-.filter-select {
-    min-width: 200px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-}
-
-.dark-mode .filter-select {
-    background: rgba(45, 55, 72, 0.5);
-}
-
-.filter-select:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Styles pour le mode liste */
-.list-view {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.list-item {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08), 0 1.5px 8px rgba(60,60,60,0.04);
-    border: 1.5px solid #e3e8f7;
-}
-
-.dark-mode .list-item {
-    background: rgba(45, 55, 72, 0.95);
-    box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-}
-
-.list-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-}
-
-/* Transitions douces */
-.sidebar a, .sidebar button, .admin-toggle, .users-header, .users-table-container, .user-item, .list-item, .filter-section, .submit-button, .edit-button, .create-button, .export-button, .status-badge {
-    transition: box-shadow 0.3s, border 0.3s, background 0.3s, color 0.3s, transform 0.3s;
-}
-
-/* Custom Edit Button Styling */
-.custom-edit-button {
-    background-color: #9333ea !important; /* Vibrant purple color */
-    color: white !important;
-    border-radius: 30px !important;
-    padding: 8px 20px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3) !important;
-    transition: all 0.3s ease !important;
-    text-transform: none !important;
-    min-width: 120px !important;
-    border: none !important;
-    letter-spacing: 0.5px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.custom-edit-button:hover {
-    background-color: #7e22ce !important; /* Darker purple on hover */
-    box-shadow: 0 6px 12px rgba(147, 51, 234, 0.4) !important;
-    transform: translateY(-2px) !important;
-}
-
-.custom-edit-button:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 2px 5px rgba(147, 51, 234, 0.3) !important;
-}
-
-.custom-edit-button .MuiButton-startIcon {
-    margin-right: 6px !important;
-    font-size: 18px !important;
-}
-
-/* Custom Delete Button Styling */
-.custom-delete-button {
-    background-color: #ef4444 !important; /* Red color */
-    color: white !important;
-    border-radius: 30px !important;
-    padding: 8px 20px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
-    transition: all 0.3s ease !important;
-    text-transform: none !important;
-    min-width: 120px !important;
-    border: none !important;
-    letter-spacing: 0.5px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.custom-delete-button:hover {
-    background-color: #dc2626 !important; /* Darker red on hover */
-    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4) !important;
-    transform: translateY(-2px) !important;
-}
-
-.custom-delete-button:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3) !important;
-}
-
-.custom-delete-button .MuiButton-startIcon {
-    margin-right: 6px !important;
-    font-size: 18px !important;
-}
-
-/* Dark mode styles */
-.dark-mode .custom-edit-button {
-    background-color: #9333ea !important;
-    box-shadow: 0 4px 10px rgba(147, 51, 234, 0.5) !important;
-}
-
-.dark-mode .custom-edit-button:hover {
-    background-color: #7e22ce !important;
-    box-shadow: 0 6px 12px rgba(147, 51, 234, 0.6) !important;
-}
-
-.dark-mode .custom-delete-button {
-    background-color: #ef4444 !important;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5) !important;
-}
-
-.dark-mode .custom-delete-button:hover {
-    background-color: #dc2626 !important;
-    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.6) !important;
-}
-
-/* Styles pour les cartes et sélection */
-.card-container {
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.2s ease;
-}
-
-.card-container:hover {
-    z-index: 2;
-}
-
-.card-container .MuiCard-root {
-    height: 100%;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.card-container .MuiCard-root.selected, 
-.card-container .MuiCard-root[data-selected="true"] {
-    border-color: #4f46e5 !important;
-    background-color: rgba(79, 70, 229, 0.05) !important;
-    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.15) !important;
-}
-
-/* Boutons de sélection */
+/* Styles pour les cases à cocher dans le header et les lignes du tableau */
 .selection-button {
-    opacity: 0;
-    transition: opacity 0.3s ease, transform 0.3s ease !important;
-    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease;
+    border: 2px solid #e5e7eb;
+    color: #64748b;
+    background-color: white;
+}
+
+.selection-button:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+    transform: scale(1.05);
 }
 
 .selection-button.selected {
-    opacity: 1 !important;
-    border-color: #4f46e5 !important;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3) !important;
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
 }
 
-.card-container:hover .selection-button {
-    opacity: 1;
-    transform: scale(1) !important;
-}
-
-/* Animation pulsation lors de la sélection */
-@keyframes selectionPulse {
+/* Animation pour les cases à cocher quand on les coche */
+@keyframes checkboxPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
-        border-color: rgba(79, 70, 229, 0.8);
+        transform: scale(1);
     }
-    70% {
-        box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
-        border-color: rgba(79, 70, 229, 1);
+    50% {
+        transform: scale(1.2);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-        border-color: rgba(79, 70, 229, 0.8);
+        transform: scale(1);
     }
 }
 
-.card-container.just-selected .MuiCard-root {
-    animation: selectionPulse 0.8s 1;
+.selection-button.selected .MuiSvgIcon-root {
+    animation: checkboxPulse 0.3s ease-in-out;
 }
 
-/* Style pour les boutons d'action */
-.action-buttons-container {
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.card-container:hover .action-buttons-container {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Animation pour les boutons d'icône */
-.action-buttons-container .MuiIconButton-root {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 42px;
-    height: 42px;
-}
-
-.action-buttons-container .MuiIconButton-root:hover {
-    transform: translateY(-3px) scale(1.05);
-}
-
-.action-buttons-container .MuiIconButton-root svg {
-    transition: transform 0.2s ease;
-    font-size: 20px;
-}
-
-.action-buttons-container .MuiIconButton-root:hover svg {
-    transform: scale(1.15);
-}
-
-/* Animation au clic */
-.action-buttons-container .MuiIconButton-root:active {
-    transform: scale(0.95);
-}
-
-/* Styles pour les éléments de liste */
-.list-item-container {
-    position: relative;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-    overflow: hidden;
-}
-
-.list-item-container.selected,
-.list-item-container[data-selected="true"] {
-    border-left-color: #4f46e5 !important;
-    background-color: rgba(79, 70, 229, 0.05) !important;
-}
-
-/* Styles spécifiques à la vue liste */
-.list-selection-button {
-    opacity: 0;
-    transition: opacity 0.3s ease, transform 0.3s ease !important;
-}
-
-.list-selection-button.selected {
-    opacity: 1 !important;
-}
-
-.list-item-container:hover .list-selection-button {
-    opacity: 1;
-}
-
-.list-action-buttons {
-    opacity: 0;
-    transform: translateX(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.list-item-container:hover .list-action-buttons {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* Style pour le compteur de sélection */
-.selection-count {
-    display: inline-flex;
+/* Styles pour l'avatar dans la cellule du nom */
+.name-cell {
+    display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
+}
+
+.user-avatar {
     background-color: #4f46e5;
     color: white;
-    border-radius: 20px;
-    padding: 4px 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 600;
     font-size: 0.9rem;
-    line-height: 1.5;
+}
+
+/* Styles pour le point de statut dans les badges */
+.status-badge .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-badge.active .status-dot {
+    background-color: #16a34a;
+}
+
+.status-badge.inactive .status-dot {
+    background-color: #dc2626;
+}
+
+/* Styles pour les boutons d'action dans la dernière colonne */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
     transition: all 0.2s ease;
-    margin-right: 10px;
-    box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+    padding: 0;
 }
 
-.selection-count:hover {
-    background-color: #4338ca;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.4);
+.action-button.edit {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
 }
 
-/* Dark mode adjustments */
-.dark-mode .action-buttons-container {
-    background: linear-gradient(to top, rgba(45, 55, 72, 1), rgba(45, 55, 72, 0.8), rgba(45, 55, 72, 0));
+.action-button.edit:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
 }
 
-.dark-mode .selection-button {
-    background-color: #2d3748 !important;
+.action-button.delete {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.action-button.delete:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Styles pour le nom avec avatar et titre */
+.profile-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.profile-title {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+/* Mise à jour des styles phone-cell pour mieux correspondre au design */
+.phone-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b !important;
+}
+
+/* Styles pour le champ de recherche lui-même */
+.search-field {
+    background: transparent;
+    border: none;
+    font-size: 0.95rem;
+    color: #4b5563;
+    height: 100%;
+    transition: all 0.2s ease;
+}
+
+.search-field::placeholder {
+    color: #9ca3af;
+    opacity: 0.8;
+}
+
+.dark-mode .search-field::placeholder {
+    color: #64748b;
+}
+
+/* Améliorations de l'en-tête */
+.users-header {
+    margin-bottom: 24px;
+}
+
+/* Styles for the selection header when users are selected */
+.selection-header {
+    background: linear-gradient(135deg, #f9faff 0%, #f0f4ff 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(229, 231, 235, 0.7);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.dark-mode .selection-header {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
+    border-color: rgba(51, 65, 85, 0.7);
+}
+
+.selection-header h4 {
+    color: #f97316;
+    background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+}
+
+.delete-selected-button {
+    background: linear-gradient(45deg, #ef4444 0%, #f87171 100%) !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+}
+
+.delete-selected-button:hover {
+    background: linear-gradient(45deg, #dc2626 0%, #ef4444 100%) !important;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+.cancel-selection-button {
+    background-color: transparent !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+}
+
+.cancel-selection-button:hover {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+    transform: translateY(-2px) !important;
+}
+
+.dark-mode .cancel-selection-button {
+    border-color: #374151 !important;
+    color: #9ca3af !important;
+}
+
+.dark-mode .cancel-selection-button:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: #4b5563 !important;
+}
+
+/* Delete confirmation dialog styling */
+.delete-confirm-dialog {
+    position: relative !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+.MuiDialog-paper.delete-confirm-dialog {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    margin: 0 !important;
+}
+
+.delete-dialog-header {
+    background-color: #fee2e2;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.delete-dialog-icon {
+    background-color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+    flex-shrink: 0;
+}
+
+.delete-dialog-icon svg {
+    font-size: 24px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.dark-mode .delete-dialog-icon {
+    background-color: #1e293b;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+.delete-dialog-title {
+    font-weight: 600;
+    color: #b91c1c;
+    font-size: 1.25rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.delete-dialog-content {
+    padding: 24px;
+    background-color: #fff;
+    }
+
+.dark-mode .delete-dialog-content {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    }
+
+.delete-dialog-description {
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.dark-mode .delete-dialog-description {
     color: #e2e8f0;
 }
 
-.dark-mode .selection-button.Mui-checked {
-    background-color: #4299e1 !important;
-    color: #e2e8f0;
+.delete-dialog-warning {
+    font-size: 0.85rem;
+    color: #ef4444;
+    font-weight: 500;
+    padding: 8px 12px;
+    background-color: #fef2f2;
+    border-radius: 6px;
+    border-left: 3px solid #ef4444;
 }
 
-.dark-mode .selection-button:hover {
-    background-color: #4a5568 !important;
+.dark-mode .delete-dialog-warning {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.delete-dialog-actions {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background-color: #fff;
+    border-top: none;
+}
+
+.dark-mode .delete-dialog-actions {
+    background-color: #1e293b;
+}
+
+.delete-dialog-cancel-button {
+    color: #6b7280 !important;
+    border: 1px solid #e5e7eb !important;
+    text-transform: none !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    min-width: 100px !important;
+}
+
+.delete-dialog-cancel-button:hover {
+    background-color: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+}
+
+.dark-mode .delete-dialog-cancel-button {
+    color: #9ca3af !important;
+    border-color: #374151 !important;
+}
+
+.dark-mode .delete-dialog-cancel-button:hover {
+    background-color: rgba(55, 65, 81, 0.5) !important;
+}
+
+.delete-dialog-confirm-button {
+    background-color: #ef4444 !important;
+    color: white !important;
+    text-transform: none !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
+    border-radius: 8px !important;
+    min-width: 100px !important;
+}
+
+.delete-dialog-confirm-button:hover {
+    background-color: #dc2626 !important;
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4) !important;
+}
+
+.dark-mode .delete-dialog-header {
+    background-color: rgba(239, 68, 68, 0.15);
+}
+
+.dark-mode .delete-dialog-title {
+    color: #f87171;
 } 

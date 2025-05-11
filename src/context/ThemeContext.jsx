@@ -11,7 +11,7 @@ export const ThemeProvider = ({ children }) => {
   const toggleTheme = async () => {
     try {
       const newTheme = !isDarkMode;
-      const response = await api.request('/user/preferences/theme', 'POST', { theme: newTheme ? 'dark' : 'light' });
+      const response = await api.updateUserStatus({ theme: newTheme ? 'dark' : 'light' });
       if (response && response.success) {
         setIsDarkMode(newTheme);
       }
@@ -24,7 +24,7 @@ export const ThemeProvider = ({ children }) => {
   React.useEffect(() => {
     const loadTheme = async () => {
       try {
-        const response = await api.request('/user/preferences/theme', 'GET');
+        const response = await api.getUserStatus();
         if (response && response.theme) {
           setIsDarkMode(response.theme === 'dark');
         }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useMenu } from "../../../context/MenuContext";
 import { useTheme } from "../../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
@@ -82,7 +82,9 @@ import {
   FilterList as FilterListIcon,
   Check as CheckIcon,
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
-  People
+  People,
+  ArrowDownward as ArrowDownwardIcon,
+  Details as DetailsIcon
 } from '@mui/icons-material';
 import "./Profiles.css";
 
@@ -101,7 +103,8 @@ const Profiles = () => {
     const [error, setError] = useState(null);
     const [modules, setModules] = useState([]);
     const [menus, setMenus] = useState([]);
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+    // Modifier l'état par défaut pour afficher la vue liste par défaut au lieu de la grille
+    const [viewMode, setViewMode] = useState('list'); // Changé de 'grid' à 'list'
     const [searchQuery, setSearchQuery] = useState('');
     // Ajout des états pour le filtrage
     const [statusFilter, setStatusFilter] = useState('all');
@@ -1058,6 +1061,46 @@ const Profiles = () => {
         return moduleIcons[moduleKey.toLowerCase()] || <AdminIcon sx={{ color: '#5786c1', fontSize: '1.5rem' }} />;
     };
 
+    // Refs pour la navigation
+    const detailsSectionRef = useRef(null);
+    const modulesSectionRef = useRef(null);
+    const [activeNavItem, setActiveNavItem] = useState('details');
+    const formScrollRef = useRef(null);
+    
+    // Fonction pour gérer le défilement vers une section
+    const scrollToSection = (sectionRef, navId) => {
+        if (sectionRef && sectionRef.current) {
+            sectionRef.current.scrollIntoView({ behavior: 'smooth' });
+            setActiveNavItem(navId);
+        }
+    };
+    
+    // Fonction pour détecter quelle section est visible
+    const handleFormScroll = () => {
+        if (!formScrollRef.current) return;
+        
+        const detailsPosition = detailsSectionRef.current?.getBoundingClientRect().top;
+        const modulesPosition = modulesSectionRef.current?.getBoundingClientRect().top;
+        
+        const scrollPosition = formScrollRef.current.scrollTop;
+        
+        if (modulesPosition && modulesPosition <= 100) {
+            setActiveNavItem('modules');
+        } else {
+            setActiveNavItem('details');
+        }
+    };
+    
+    // Fonction pour descendre au bas du formulaire
+    const scrollToBottom = () => {
+        if (formScrollRef.current) {
+            formScrollRef.current.scrollTo({
+                top: formScrollRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
         <Box className={`profiles-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
             sx={{
@@ -1540,84 +1583,21 @@ const Profiles = () => {
                     </Button>
                 </Box>
             ) : filteredProfiles.length === 0 ? (
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    height: '300px',
-                    padding: '40px 20px',
-                    background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-                    margin: '20px 0',
-                    border: '1px solid rgba(229, 231, 235, 0.7)',
-                    transition: 'all 0.3s ease',
-                    animation: 'fadeIn 0.5s ease-out'
-                }}
-                className="no-results-container"
-                >
-                    <Box 
-                        className="no-results-icon"
-                        sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '80px',
-                            height: '80px',
-                            background: 'rgba(255, 255, 255, 0.8)',
-                            backdropFilter: 'blur(8px)',
-                            borderRadius: '50%',
-                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.07)',
-                            marginBottom: '24px',
-                            color: '#9ca3af',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            border: '1px solid rgba(229, 231, 235, 0.7)',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: '-50%',
-                                left: '-50%',
-                                width: '200%',
-                                height: '200%',
-                                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%)',
-                                transform: 'rotate(45deg)',
-                                animation: 'shine 3s infinite linear',
-                                pointerEvents: 'none'
-                            }
-                        }}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="empty-state">
+                    <div className="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             <line x1="11" y1="8" x2="11" y2="14"></line>
                             <line x1="8" y1="11" x2="14" y2="11"></line>
                         </svg>
-                    </Box>
-                    <Typography variant="h6" gutterBottom sx={{ 
-                        fontWeight: 600,
-                        color: '#4f46e5',
-                        background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        mb: 1.5,
-                        letterSpacing: '0.3px'
-                    }}>
-                        No profiles found
-                    </Typography>
-                    <Typography variant="body2" sx={{ 
-                        textAlign: 'center', 
-                        color: '#6b7280',
-                        maxWidth: '350px',
-                        mb: 3
-                    }}>
+                    </div>
+                    <h3 className="empty-state-title">No profiles found</h3>
+                    <p className="empty-state-text">
                         {searchQuery 
                             ? 'No profiles match your search criteria. Try adjusting your filters or search term.' 
                             : 'There are no profiles available. Create a new profile to get started.'}
-                    </Typography>
-
+                    </p>
                     {!searchQuery && (
                         <Button
                             variant="contained"
@@ -1651,7 +1631,7 @@ const Profiles = () => {
                             Create your first profile
                         </Button>
                     )}
-                </Box>
+                </div>
             ) : (
                 viewMode === 'grid' ? (
                     <Grid container spacing={2.5} sx={{ width: '100%', margin: 0 }}>
@@ -2018,109 +1998,96 @@ const Profiles = () => {
                         ))}
                     </Grid>
                 ) : (
-                    <Paper sx={{ 
-                        borderRadius: '12px', 
-                        overflow: 'hidden', 
-                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)', 
-                        border: '1px solid #f0f5ff',
-                        background: 'white',
-                        width: '100%'
-                    }}>
-                        <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
-                            {filteredProfiles.map((profile, index) => (
-                                <React.Fragment key={profile.id}>
-                                    <ListItem 
-                                        alignItems="center" 
+                    // Replace this section with a table
+                    <table className="contact-table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: '40px' }}>
+                                    <IconButton
+                                        size="small"
+                                        onClick={handleHeaderCheckboxClick}
                                         sx={{ 
-                                            py: 2, 
-                                            px: 3,
-                                            transition: 'background-color 0.3s',
-                                            '&:hover': {
-                                                backgroundColor: '#f8fafc'
-                                            },
-                                            width: '100%',
-                                            cursor: 'pointer'
+                                            backgroundColor: profiles.length > 0 && selectedProfiles.length === profiles.length 
+                                                ? 'rgba(79, 70, 229, 0.1)' 
+                                                : 'rgba(255, 255, 255, 0.8)',
+                                            border: selectedProfiles.length > 0 
+                                                ? '1px solid #4f46e5' 
+                                                : '1px solid #e5e7eb',
+                                            color: selectedProfiles.length > 0 
+                                                ? '#4f46e5' 
+                                                : '#64748b',
+                                            padding: '4px',
+                                            width: '24px',
+                                            height: '24px'
                                         }}
-                                        onClick={(e) => handleProfileClick(profile, e)}
                                     >
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            width: '100%',
-                                            justifyContent: 'space-between',
-                                            gap: 2 
-                                        }}>
-                                            {/* Left section with avatar and content */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                                                <Avatar 
+                                        {profiles.length > 0 && selectedProfiles.length === profiles.length ? (
+                                            <CheckIcon fontSize="small" />
+                                        ) : selectedProfiles.length > 0 ? (
+                                            <IndeterminateCheckBoxIcon fontSize="small" />
+                                        ) : (
+                                            <AddIcon fontSize="small" />
+                                        )}
+                                    </IconButton>
+                                </th>
+                                <th>NAME</th>
+                                <th>DESCRIPTION</th>
+                                <th>MODULES</th>
+                                <th>STATUS</th>
+                                <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProfiles.map(profile => (
+                                <tr key={profile.id} onClick={(e) => handleProfileClick(profile, e)}>
+                                    <td>
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (selectedProfiles.includes(profile.id)) {
+                                                    setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
+                                                } else {
+                                                    setSelectedProfiles(prev => [...prev, profile.id]);
+                                                }
+                                            }}
                                                     sx={{ 
-                                                        bgcolor: getAvatarColor(profile.id),
-                                                        width: 42,
-                                                        height: 42,
-                                                        fontSize: '0.95rem',
-                                                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                                                        mr: 2,
-                                                        flexShrink: 0
-                                                    }}
-                                                >
+                                                backgroundColor: selectedProfiles.includes(profile.id) 
+                                                    ? '#4f46e5' 
+                                                    : 'white',
+                                                border: selectedProfiles.includes(profile.id) 
+                                                    ? '2px solid #4f46e5' 
+                                                    : '2px solid #e5e7eb',
+                                                color: selectedProfiles.includes(profile.id) 
+                                                    ? 'white' 
+                                                    : '#64748b',
+                                                padding: '4px',
+                                                width: '24px',
+                                                height: '24px'
+                                            }}
+                                        >
+                                            {selectedProfiles.includes(profile.id) ? (
+                                                <CheckIcon fontSize="small" />
+                                            ) : (
+                                                <AddIcon fontSize="small" />
+                                            )}
+                                        </IconButton>
+                                    </td>
+                                    <td>
+                                        <div className="name-cell">
+                                            <div className="user-avatar">
                                                     {getInitials(profile.name)}
-                                                </Avatar>
-                                                
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                                                        <Typography variant="body1" sx={{ 
-                                                            fontWeight: 600, 
-                                                            color: '#333', 
-                                                            mr: 1.5,
-                                                            fontSize: '0.95rem',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
-                                                        }}>
-                                                            {profile.name}
-                                                        </Typography>
-                                                        <Chip
-                                                            label={profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
-                                                            size="small"
-                                                            data-status={profile.status?.toLowerCase()}
-                                                            sx={{
-                                                                bgcolor: profile.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
-                                                                color: profile.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
-                                                                fontWeight: '600',
-                                                                py: 0.5,
-                                                                px: 1.5,
-                                                                height: '24px',
-                                                                fontSize: '0.75rem',
-                                                                borderRadius: '4px',
-                                                                border: profile.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
-                    }}
-                />
-                                                    </Box>
-                                                    
-                                                    <Typography variant="body2" color="text.secondary" sx={{ 
-                                                        fontSize: '0.8rem', 
-                                                        color: '#6b7280',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-                                                        {profile.description || t('profiles.noDescription')}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                            
-                                            {/* Right section with modules and action buttons */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                                                {/* Modules section */}
-                                                <Box sx={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    gap: 1, 
-                                                    minWidth: '180px',
-                                                    '@media (max-width: 1200px)': {
-                                                        display: 'none'
-                                                    }
-                                                }}>
+                                            </div>
+                                            <div>
+                                                <div className="profile-name">{profile.name}</div>
+                                                <div className="profile-title">{profile.title || ''}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{profile.description || t('profiles.noDescription')}</td>
+                                    <td>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                     {profile.modules && Array.isArray(profile.modules) && profile.modules.length > 0 ? (
                                                         profile.modules.slice(0, 2).map((moduleId, index) => {
                                                             const module = modules.find(m => m.id === moduleId);
@@ -2130,20 +2097,20 @@ const Profiles = () => {
                                                                     label={module ? module.title : `Module ${moduleId}`}
                                                                     size="small"
                                                                     sx={{ 
-                                                                        backgroundColor: '#eef2ff', 
+                                                                bgcolor: 'rgba(79, 70, 229, 0.08)',
                                                                         color: '#4f46e5',
                                                                         fontSize: '0.7rem',
-                                                                        fontWeight: 500,
                                                                         height: '22px',
-                                                                        borderRadius: '4px',
-                                                                        flexShrink: 0
+                                                                borderRadius: '6px',
+                                                                my: 0.5,
+                                                                fontWeight: 500
                                                                     }}
                                                                 />
                                                             );
                                                         })
                                                     ) : (
-                                                        <Typography variant="body2" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                                                            No modules
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                                    {t('profiles.noModules')}
                                                         </Typography>
                                                     )}
                                                     {profile.modules && profile.modules.length > 2 && (
@@ -2151,122 +2118,52 @@ const Profiles = () => {
                                                             label={`+${profile.modules.length - 2}`}
                                                             size="small"
                                                             sx={{ 
-                                                                backgroundColor: '#f1f5f9', 
+                                                        backgroundColor: 'rgba(148, 163, 184, 0.15)', 
                                                                 color: '#64748b',
                                                                 fontSize: '0.7rem',
                                                                 height: '22px',
-                                                                borderRadius: '4px',
-                                                                flexShrink: 0
+                                                        borderRadius: '6px',
+                                                        my: 0.5,
+                                                        fontWeight: 500
                                                             }}
                                                         />
                                                     )}
                                                 </Box>
-                                                
-                                                {/* Action buttons */}
-                                                <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                                                    <Button 
+                                    </td>
+                                    <td>
+                                        <div className={`status-badge ${profile.status?.toLowerCase() || 'inactive'}`}>
+                                            <span className="status-dot"></span>
+                                            {profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="action-buttons">
+                                            <button 
+                                                className="action-button edit"
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
                                                             handleEdit(profile.id);
                                                         }}
-                                                        sx={{
-                                                            background: 'linear-gradient(90deg, #9333ea 0%, #7e22ce 100%)',
-                                                            color: 'white',
-                                                            borderRadius: '6px',
-                                                            textTransform: 'none',
-                                                            fontWeight: 500,
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.8rem',
-                                                            minHeight: '32px',
-                                                            minWidth: '90px',
-                                                            boxShadow: '0 3px 6px rgba(147, 51, 234, 0.3)',
-                                                            '&:hover': {
-                                                                background: 'linear-gradient(90deg, #7e22ce 0%, #6b21a8 100%)',
-                                                                boxShadow: '0 4px 8px rgba(147, 51, 234, 0.4)',
-                                                                transform: 'translateY(-2px)'
-                                                            },
-                                                            transition: 'all 0.3s ease',
-                                                            '@media (max-width: 600px)': {
-                                                                minWidth: 'unset',
-                                                                width: '36px',
-                                                                height: '36px',
-                                                                padding: 0,
-                                                                justifyContent: 'center'
-                                                            }
-                                                        }}
-                                                        startIcon={<EditIcon sx={{ 
-                                                            fontSize: '0.85rem',
-                                                            '@media (max-width: 600px)': {
-                                                                marginRight: 0
-                                                            }
-                                                        }} />}
-                                                    >
-                                                        <Box component="span" sx={{ 
-                                                            '@media (max-width: 600px)': { 
-                                                                display: 'none' 
-                                                            } 
-                                                        }}>
-                                                        Edit
-                                                        </Box>
-                                                    </Button>
-                                                    <Button 
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </button>
+                                            <button 
+                                                className="action-button delete"
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
                                                             handleDelete(profile.id);
                                                         }}
-                                                        sx={{
-                                                            background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
-                                                            color: 'white',
-                                                            borderRadius: '6px',
-                                                            textTransform: 'none',
-                                                            fontWeight: 500,
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.8rem',
-                                                            minHeight: '32px',
-                                                            minWidth: '90px',
-                                                            boxShadow: '0 3px 6px rgba(239, 68, 68, 0.3)',
-                                                            '&:hover': {
-                                                                background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
-                                                                boxShadow: '0 4px 8px rgba(239, 68, 68, 0.4)',
-                                                                transform: 'translateY(-2px)'
-                                                            },
-                                                            transition: 'all 0.3s ease',
-                                                            '@media (max-width: 600px)': {
-                                                                minWidth: 'unset',
-                                                                width: '36px',
-                                                                height: '36px',
-                                                                padding: 0,
-                                                                justifyContent: 'center'
-                                                            }
-                                                        }}
-                                                        startIcon={<DeleteIcon sx={{ 
-                                                            fontSize: '0.85rem',
-                                                            '@media (max-width: 600px)': {
-                                                                marginRight: 0
-                                                            }
-                                                        }} />}
-                                                    >
-                                                        <Box component="span" sx={{ 
-                                                            '@media (max-width: 600px)': { 
-                                                                display: 'none' 
-                                                            } 
-                                                        }}>
-                                                        Delete
-                                                        </Box>
-                                                    </Button>
-                                                </Box>
-                                            </Box>
-                                        </Box>
-                                    </ListItem>
-                                    {index < filteredProfiles.length - 1 && <Divider />}
-                                </React.Fragment>
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             ))}
-                        </List>
-            </Paper>
+                        </tbody>
+                    </table>
                 )
             )}
 
@@ -2276,937 +2173,391 @@ const Profiles = () => {
                 onClose={handleCancel} 
                 maxWidth="md" 
                 fullWidth
-                className="profile-dialog"
-                TransitionProps={{
-                    onEnter: () => {
-                        // Initialiser les refs avec les valeurs actuelles
-                        if (editingProfile !== null && profiles[editingProfile]) {
-                            nameInputRef.current = profiles[editingProfile].name || '';
-                            descriptionInputRef.current = profiles[editingProfile].description || '';
-                        } else {
-                            nameInputRef.current = '';
-                            descriptionInputRef.current = '';
-                        }
+                PaperProps={{
+                    style: {
+                        borderRadius: '12px',
+                        overflow: 'hidden'
                     }
                 }}
-                PaperProps={{
-                    sx: {
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-                        maxHeight: '90vh',
-                        height: 'auto',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    },
-                    className: "profile-form-modal-paper"
-                }}
             >
-                {/* En-tête du formulaire */}
-                <Box sx={{ 
-                    height: '80px', 
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    px: 3,
-                    color: 'white',
-                    flexShrink: 0
-                }} className="profile-form-header">
-                    <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2
-                    }}>
-                        <Box sx={{
-                            width: '40px',
-                            height: '40px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: '10px'
-                        }}>
-                            {editingProfile !== null ? (
-                                <EditIcon />
-                            ) : (
+                <div className="profile-form-header">
+                    <h2>
+                        <span className="icon">
                                 <AddIcon />
-                            )}
-                        </Box>
-                        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    {editingProfile !== null ? t('profiles.edit') : t('profiles.create')}
-                        </Typography>
-                    </Box>
+                        </span>
+                        {editingProfile !== null ? 'Edit Profile' : 'Create Profile'}
+                    </h2>
                     <IconButton 
                         onClick={handleCancel} 
-                        size="medium" 
-                        aria-label="close"
                         sx={{
-                            position: 'absolute',
-                            right: 16,
                             color: 'white',
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            bgcolor: 'rgba(255, 255, 255, 0.2)',
                             '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                                bgcolor: 'rgba(255, 255, 255, 0.3)'
                             }
                         }}
-                        className="profile-form-close-button"
                     >
                         <CancelIcon />
                     </IconButton>
-                </Box>
-
-                {/* Contenu du formulaire avec défilement */}
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        height: 'calc(100% - 80px - 70px)', // hauteur - header - footer
-                        overflow: 'hidden'
-                    }}
+                </div>
+                
+                <div className="profile-form-nav">
+                    <div 
+                        className={`profile-form-nav-item ${activeNavItem === 'details' ? 'active' : ''}`}
+                        onClick={() => scrollToSection(detailsSectionRef, 'details')}
+                    >
+                        <span className="nav-icon"><DetailsIcon fontSize="small" /></span>
+                        Details
+                    </div>
+                    <div 
+                        className={`profile-form-nav-item ${activeNavItem === 'modules' ? 'active' : ''}`}
+                        onClick={() => scrollToSection(modulesSectionRef, 'modules')}
+                    >
+                        <span className="nav-icon"><SecurityIcon fontSize="small" /></span>
+                        Modules and Permissions
+                    </div>
+                </div>
+                
+                <div 
+                    className="profile-form-content profile-form-scrollable" 
+                    ref={formScrollRef}
+                    onScroll={handleFormScroll}
                 >
-                    {/* Section des détails (fixe) */}
-                    <Box sx={{ p: 4, backgroundColor: 'white', flexShrink: 0 }}>
-                        <Typography variant="h6" sx={{ 
-                            mb: 3, 
-                            color: '#4b5563',
-                            fontWeight: 600,
-                            position: 'relative',
-                            pl: 2,
-                                '&::before': {
-                                    content: '""',
-                                position: 'absolute',
-                                left: 0,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                width: 4,
-                                height: '70%',
-                                borderRadius: 2,
-                                backgroundColor: '#7c3aed'
-                                }
-                            }}>
-                                {t('profiles.details')}
-                            </Typography>
-                            
-                        <TextField
-                            fullWidth
-                            label={t('profiles.name')}
-                                value={newProfile.name || ''}
+                    <form onSubmit={handleSubmit}>
+                        <div className="profile-form-section" ref={detailsSectionRef}>
+                            <div className="profile-form-section-title">Details</div>
+                            <div className="profile-form-field">
+                                <label>
+                                    Profile Name
+                                    <span className="required">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editingProfile !== null ? profiles[editingProfile]?.name || '' : newProfile.name || ''}
                             onChange={(e) => {
-                                    const value = e.target.value;
-                                    // Stocker la valeur dans le ref immédiatement
-                                    nameInputRef.current = value;
-                                    // Et aussi dans l'état pour l'affichage
-                                    setNewProfile(prev => ({...prev, name: value}));
-                                if (formErrors.name) {
-                                        setFormErrors(prev => ({...prev, name: ''}));
-                                    }
-                                }}
-                                onBlur={(e) => {
-                                    // Validation supplémentaire lors de la perte de focus
-                                    if (!e.target.value || e.target.value.trim() === '') {
-                                        setFormErrors(prev => ({...prev, name: t('profiles.nameRequired')}));
-                                }
-                            }}
-                            error={!!formErrors.name}
-                            helperText={formErrors.name}
-                                required
-                                inputProps={{
-                                    autoComplete: 'off'
-                                }}
-                                sx={{
-                                    mb: 3,
-                                    '& .MuiOutlinedInput-root': {
-                                    borderRadius: '10px',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#7c3aed'
-                                    },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#7c3aed',
-                                        borderWidth: 2
+                                        nameInputRef.current = e.target.value;
+                                        if (editingProfile !== null) {
+                                            const updatedProfiles = [...profiles];
+                                            updatedProfiles[editingProfile] = {
+                                                ...updatedProfiles[editingProfile],
+                                                name: e.target.value
+                                            };
+                                            setProfiles(updatedProfiles);
+                                        } else {
+                                            setNewProfile({ ...newProfile, name: e.target.value });
                                         }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#7c3aed'
-                                },
-                                '& .MuiInputBase-input': {
-                                    padding: '14px 16px'
-                                    }
-                                }}
-                            className="profile-form-input"
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t('profiles.description')}
-                                value={newProfile.description || ''}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    // Stocker la valeur dans le ref immédiatement
-                                    descriptionInputRef.current = value;
-                                    // Et aussi dans l'état pour l'affichage
-                                    setNewProfile(prev => ({...prev, description: value}));
-                                }}
-                            multiline
-                            rows={3}
-                                inputProps={{
-                                    autoComplete: 'off'
-                                }}
-                                sx={{
-                                    mb: 0,
-                                    '& .MuiOutlinedInput-root': {
-                                    borderRadius: '10px',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#7c3aed'
-                                    },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#7c3aed',
-                                        borderWidth: 2
+                                        // Effacer l'erreur si le champ n'est plus vide
+                                        if (e.target.value.trim() !== '' && formErrors.name) {
+                                            setFormErrors({ ...formErrors, name: '' });
                                         }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#7c3aed'
-                                    }
-                                }}
-                            className="profile-form-input"
-                            />
-                        </Box>
-
-                        <Divider />
-
-                    {/* Section des modules (défilable) */}
-                        <Box sx={{ 
-                            backgroundColor: '#f9fafb',
-                        flex: '1 1 auto',
-                        overflowY: 'auto',
-                        p: 4
-                    }}
-                    className="modules-scrollable-container"
-                    >
-                        <Typography variant="h6" sx={{ 
-                            mb: 3, 
-                            color: '#4b5563',
-                            fontWeight: 600,
-                            position: 'relative',
-                            pl: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                            gap: 1,
-                                '&::before': {
-                                    content: '""',
-                                position: 'absolute',
-                                left: 0,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                width: 4,
-                                height: '70%',
-                                borderRadius: 2,
-                                backgroundColor: '#7c3aed'
-                                }
-                            }}>
-                            {t('profiles.modules')}
-                        {formErrors.modules && (
-                                    <Chip 
-                                        label={formErrors.modules} 
-                                        size="small" 
-                                        color="error"
-                                    sx={{ 
-                                        ml: 1, 
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        borderRadius: '6px',
-                                        height: '24px'
                                     }}
-                                    />
+                                    placeholder="Enter profile name"
+                                />
+                                {formErrors.name && (
+                                    <div className="field-error">{formErrors.name}</div>
                                 )}
-                            </Typography>
-
-                        <Box sx={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: { 
-                                xs: '1fr', 
-                                sm: 'repeat(2, 1fr)' 
-                            },
-                            gap: 3
-                        }}>
-                                {Object.entries(moduleStructureState).map(([moduleName, moduleData]) => (
-                                <Paper 
-                                        key={moduleName} 
-                                    elevation={0}
-                                        sx={{
-                                            border: '1px solid #e5e7eb',
-                                        borderRadius: '12px',
-                                            overflow: 'hidden',
-                                            transition: 'all 0.2s ease',
-                                            '&:hover': {
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                                                borderColor: '#d1d5db'
-                                            }
-                                        }}
-                                    className="module-card"
-                                >
-                                    <Box sx={{
-                                        p: 2,
-                                        backgroundColor: '#f3f4f6',
-                                        borderBottom: '1px solid #e5e7eb',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={newProfile.modules[moduleName]?.access || false}
-                                                onChange={(e) => handleModuleChange(moduleName, e.target.checked)}
-                                                    sx={{
-                                                        color: '#9ca3af',
-                                                        '&.Mui-checked': {
-                                                            color: '#7c3aed'
-                                                        },
-                                                        '& .MuiSvgIcon-root': {
-                                                            fontSize: '1.25rem'
-                                                        }
-                                                    }}
-                                            />
+                            </div>
+                            
+                            <div className="profile-form-field">
+                                <label>Description</label>
+                                <textarea
+                                    value={editingProfile !== null ? profiles[editingProfile]?.description || '' : newProfile.description || ''}
+                                onChange={(e) => {
+                                        descriptionInputRef.current = e.target.value;
+                                        if (editingProfile !== null) {
+                                            const updatedProfiles = [...profiles];
+                                            updatedProfiles[editingProfile] = {
+                                                ...updatedProfiles[editingProfile],
+                                                description: e.target.value
+                                            };
+                                            setProfiles(updatedProfiles);
+                                        } else {
+                                            setNewProfile({ ...newProfile, description: e.target.value });
                                         }
-                                        label={
-                                                <Typography variant="subtitle1" sx={{ 
-                                                    fontWeight: 600,
-                                                    color: '#374151',
-                                                    fontSize: '0.95rem'
-                                                }}>
-                                                {moduleData.title}
-                                            </Typography>
-                                        }
-                                            sx={{
-                                                m: 0,
-                                                width: '100%'
-                                            }}
-                                    />
-                                    </Box>
+                                    }}
+                                    placeholder="Enter profile description"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="profile-form-section" ref={modulesSectionRef}>
+                            <div className="profile-form-section-title">Modules and Permissions</div>
+                            
+                        {formErrors.modules && (
+                                <div className="field-error" style={{ marginBottom: '16px' }}>
+                                    {formErrors.modules}
+                                </div>
+                            )}
+                            
+                            <div className="modules-grid">
+                                {Object.keys(moduleStructureState).map(moduleName => {
+                                    const module = moduleStructureState[moduleName];
+                                    const profileData = editingProfile !== null ? profiles[editingProfile] : newProfile;
+                                    const moduleAccess = profileData?.modules?.[moduleName]?.access || false;
                                     
-                                    <Box sx={{ 
-                                            p: 2,
-                                            display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                                        gap: 1
-                                        }}>
-                                            {Object.entries(moduleData.subModules || {}).map(([subModule, label]) => (
-                                            <FormControlLabel
-                                                key={subModule}
-                                                control={
-                                                    <Checkbox
-                                                        checked={newProfile.modules[moduleName]?.subModules?.[subModule] || false}
-                                                        onChange={(e) => handleSubModuleChange(moduleName, subModule, e.target.checked)}
-                                                            size="small"
-                                                            sx={{
-                                                                color: '#9ca3af',
-                                                                '&.Mui-checked': {
-                                                                color: '#7c3aed'
-                                                            },
-                                                            '& .MuiSvgIcon-root': {
-                                                                fontSize: '1.1rem'
-                                                                }
-                                                            }}
+                                    return (
+                                        <div className="module-card" key={moduleName}>
+                                            <div className="module-card-header">
+                                                <label className="module-checkbox">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={moduleAccess}
+                                                onChange={(e) => handleModuleChange(moduleName, e.target.checked)}
                                                     />
-                                                }
-                                                label={
-                                                    <Typography variant="body2" sx={{
-                                                            color: '#4b5563',
-                                                        fontWeight: 500,
-                                                        fontSize: '0.85rem'
-                                                        }}>
-                                                        {label}
-                                                    </Typography>
-                                                }
-                                                    sx={{
-                                                        m: 0,
-                                                        p: 1,
-                                                        borderRadius: '6px',
-                                                        '&:hover': {
-                                                            backgroundColor: '#f3f4f6'
-                                                        }
-                                                    }}
-                                            />
-                                        ))}
-                                    </Box>
-                                </Paper>
-                            ))}
-                        </Box>
-                    </Box>
-                </Box>
-
-                {/* Boutons d'action fixes en bas */}
-                <Box sx={{ 
-                    p: 3,
-                    borderTop: '1px solid #e5e7eb',
-                    backgroundColor: '#f9fafb',
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 2,
-                    flexShrink: 0,
-                    height: '70px'
-                }}
-                className="form-actions-container"
-                >
-                    <Button 
+                                                </label>
+                                                <span className="module-name">{module.title}</span>
+                                            </div>
+                                            
+                                            <div className="module-card-content">
+                                                <div className="submodule-list">
+                                                    {Object.keys(module.subModules || {}).map(subModuleName => {
+                                                        const subModuleChecked = profileData?.modules?.[moduleName]?.subModules?.[subModuleName] || false;
+                                                        
+                                                        return (
+                                                            <div className="submodule-item" key={subModuleName}>
+                                                                <label className="submodule-checkbox">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={subModuleChecked}
+                                                                        onChange={(e) => handleSubModuleChange(moduleName, subModuleName, e.target.checked)}
+                                                                    />
+                                                                </label>
+                                                                <span className="submodule-name">
+                                                                    {module.subModules[subModuleName]}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div className="profile-form-actions">
+                    <button 
+                        type="button" 
+                        className="cancel-button"
                         onClick={handleCancel} 
-                        variant="outlined"
-                        sx={{
-                            borderRadius: '10px',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            color: '#6b7280',
-                            borderColor: '#d1d5db',
-                            px: 3,
-                            py: 1.2,
-                            '&:hover': {
-                                backgroundColor: '#f3f4f6',
-                                borderColor: '#9ca3af'
-                            }
-                        }}
-                        className="profile-form-cancel-button"
                     >
-                        {t('profiles.cancel')}
-                    </Button>
-                    <Button 
+                        Cancel
+                    </button>
+                    <button 
+                        type="button" 
+                        className="submit-button"
                         onClick={handleSubmit} 
-                        variant="contained" 
-                        sx={{
-                            borderRadius: '10px',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            backgroundColor: '#7c3aed',
-                            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
-                            px: 3,
-                            py: 1.2,
-                            '&:hover': {
-                                backgroundColor: '#6d28d9',
-                                boxShadow: '0 6px 16px rgba(124, 58, 237, 0.25)'
-                            }
-                        }}
-                        className="profile-form-submit-button"
                     >
-                        {editingProfile !== null ? t('profiles.save') : t('profiles.create')}
-                    </Button>
-                </Box>
+                        {editingProfile !== null ? 'Update Profile' : 'Create Profile'}
+                    </button>
+                </div>
+                
+                {/* Bouton de défilement vers le bas */}
+                <button className="scroll-button" onClick={scrollToBottom}>
+                    <ArrowDownwardIcon />
+                </button>
             </Dialog>
 
-            {/* Dialog pour afficher les détails essentiels du profil */}
+            {/* Profile modal */}
             <Dialog
                 open={profileModal}
                 onClose={handleCloseProfileModal}
-                maxWidth="sm"
+                aria-labelledby="profile-dialog-title"
+                maxWidth="md"
                 fullWidth
                 PaperProps={{
-                    sx: {
-                        borderRadius: '20px',
-                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        maxHeight: '90vh'
-                    },
-                    className: "profile-modal-paper"
+                    style: {
+                        borderRadius: '12px',
+                        overflow: 'hidden'
+                    }
                 }}
             >
-                {selectedProfileDetails && (
-                    <>
-                        <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                            {/* Header coloré */}
-                            <Box 
-                                className="profile-header-gradient"
-                sx={{ 
-                                height: '120px', 
-                                background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
-                                position: 'relative',
-                                borderRadius: '20px 20px 0 0'
-                            }} 
-                        />
-                        
-                        {/* Bouton de fermeture */}
+                <Box className="profile-modal-header">
                         <IconButton 
                             onClick={handleCloseProfileModal}
-                            className="profile-close-button"
                             sx={{
                                 position: 'absolute',
                                 top: 16,
                                 right: 16,
-                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                 color: 'white',
+                            bgcolor: 'rgba(255, 255, 255, 0.2)',
                                 '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.3)'
+                                bgcolor: 'rgba(255, 255, 255, 0.3)'
                                 }
                 }}
             >
                             <CancelIcon />
                         </IconButton>
                         
-                        {/* Avatar */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <Avatar
-                            className="profile-avatar"
                             sx={{
-                                width: 100,
-                                height: 100,
-                                bgcolor: getAvatarColor(selectedProfileDetails.id),
-                                fontSize: '2.5rem',
+                                width: 80, 
+                                height: 80, 
+                                bgcolor: getAvatarColor(selectedProfileDetails?.id),
+                                fontSize: '2rem',
                                 fontWeight: 'bold',
-                                position: 'absolute',
-                                top: 70,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                border: '6px solid white',
-                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+                                mr: 3,
+                                boxShadow: '0 0 0 4px rgba(255, 255, 255, 0.2)'
                             }}
                         >
-                            {getInitials(selectedProfileDetails.name)}
+                            {getInitials(selectedProfileDetails?.name || '')}
                         </Avatar>
+                        <Box>
+                            <Typography variant="h5" component="h2" sx={{ fontWeight: '600', mb: 1 }}>
+                                {selectedProfileDetails?.name || ''}
+                            </Typography>
+                            <Typography variant="body1">
+                                {selectedProfileDetails?.description || ''}
+                            </Typography>
+                        </Box>
                 </Box>
                         
-                        {/* Zone principale défilable */}
-                        <Box 
-                                        sx={{ 
-                                mt: 7, 
-                                px: 4, 
-                                pt: 2, 
-                                textAlign: 'center',
-                                overflowY: 'auto',
-                                flex: '1 1 auto'
-                                        }}
-                                    >
-                            <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.75rem', mb: 1 }}>
-                                {selectedProfileDetails.name}
-                            </Typography>
-                            
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
                             <Chip
-                                className="profile-status-chip"
-                                label={selectedProfileDetails.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
-                                size="small"
-                                data-status={selectedProfileDetails.status?.toLowerCase()}
+                            label={selectedProfileDetails?.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
                                             sx={{ 
-                                    mb: 3,
-                                    mt: 1,
-                                    bgcolor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#ecfdf5' : '#fef2f2',
-                                    color: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444',
+                                bgcolor: selectedProfileDetails?.status?.toLowerCase() === 'active' 
+                                    ? 'rgba(16, 185, 129, 0.2)' 
+                                    : 'rgba(239, 68, 68, 0.2)',
+                                color: 'white',
                                     fontWeight: '600',
-                                    fontSize: '0.75rem',
-                                    borderRadius: '4px',
-                                    padding: '4px 12px',
-                                    border: selectedProfileDetails.status?.toLowerCase() === 'active' ? '1px solid #6ee7b7' : '1px solid #fca5a5',
-                                    '&::before': {
-                                        content: '""',
-                                        display: 'inline-block',
-                                        width: 8,
-                                        height: 8,
-                                        borderRadius: '50%',
-                                        marginRight: 6,
-                                        backgroundColor: selectedProfileDetails.status?.toLowerCase() === 'active' ? '#10b981' : '#ef4444'
-                                                }
-                                            }}
-                                        />
-                            
-                            {selectedProfileDetails.description && (
-                                <Typography variant="body1" sx={{ 
-                                    color: '#6b7280', 
-                                    mb: 4,
-                                    maxWidth: '90%',
-                                    mx: 'auto',
-                                    lineHeight: 1.6
-                                }}>
-                                    {selectedProfileDetails.description}
+                                mr: 2
+                            }}
+                        />
+                        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                            Modules: {selectedProfileDetails?.modules?.length || 0}
                                                     </Typography>
-                            )}
-                            
-                            <Divider sx={{ mb: 3 }} />
-                            
-                            {/* Modules et Permissions */}
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="subtitle1" sx={{ 
-                                    fontWeight: 600, 
-                                    mb: 3,
-                                    color: '#4b5563',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 1
-                                }}>
-                                    <span>Modules et Permissions</span>
-                                                </Typography>
-                                
-                                {/* Grid layout pour les modules */}
-                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
-                                    {/* Modules du profil */}
-                                    {selectedProfileDetails.modules && Array.isArray(selectedProfileDetails.modules) && 
-                                        selectedProfileDetails.modules.map((moduleId, index) => {
-                                            const module = modules.find(m => m.id === moduleId);
-                                            const moduleName = module ? module.title : `Module ${moduleId}`;
-                                            
-                                            // Trouver les sous-modules (menus) associés au module
-                                            const relatedMenus = selectedProfileDetails.menus && Array.isArray(selectedProfileDetails.menus) 
-                                                ? menus.filter(menu => menu.module === moduleId && selectedProfileDetails.menus.includes(menu.id))
-                                                : [];
+                    </Box>
+                </Box>
+                
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {selectedProfileDetails?.modules && Array.isArray(selectedProfileDetails.modules) && 
+                        modules.filter(m => selectedProfileDetails.modules.includes(m.id)).map(module => {
+                            // Filtrer les menus associés à ce module qui sont également dans les menus du profil
+                            const moduleMenus = menus.filter(menu => 
+                                menu.module === module.id && 
+                                selectedProfileDetails.menus && 
+                                Array.isArray(selectedProfileDetails.menus) && 
+                                selectedProfileDetails.menus.includes(menu.id)
+                            );
                                                 
                                             return (
-                                                <Box
-                                                    key={moduleId}
-                                                    className="profile-module-card"
-                                                        sx={{ 
-                                                        borderRadius: '12px',
-                                                        overflow: 'hidden',
-                                                        border: '1px solid #e5e7eb',
-                                                        backgroundColor: '#f9fafb',
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': {
-                                                            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
-                                                            transform: 'translateY(-3px)'
-                                                        }
-                                                    }}
-                                                >
-                                                    {/* En-tête du module */}
-                                                    <Box 
-                                                        className="profile-module-header" 
-                                        sx={{ 
-                                                            p: 2,
-                                                            backgroundColor: '#eef2ff',
-                                                            borderBottom: '1px solid #e0e7ff',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: 1
-                                        }}
-                                    >
-                                                        {getModuleIcon(module?.code?.toLowerCase() || '')}
-                                                        <Typography 
-                                                            className="profile-module-header-title"
-                                            sx={{ 
-                                                    fontWeight: 600,
-                                                                color: '#4f46e5',
-                                                                fontSize: '0.95rem'
-                                                            }}
-                                                        >
-                                                            {moduleName}
+                                <Grid item xs={12} sm={6} md={4} key={module.id}>
+                                    <Box className="profile-module-card">
+                                        <Box className="profile-module-header">
+                                            <Box className="module-icon">
+                                                {getModuleIcon(module.code?.toLowerCase() || '')}
+                                            </Box>
+                                            <Typography className="module-title">
+                                                {module.title}
                                                         </Typography>
                                                     </Box>
-                                                    
-                                                    {/* Conteneur des sous-modules */}
-                                                    <Box 
-                                                        className="profile-submodule-container" 
-                                                        sx={{
-                                                            p: 2,
-                                                            minHeight: '60px'
-                                                        }}
-                                                    >
-                                                        {relatedMenus.length > 0 ? (
-                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                                {relatedMenus.map(menu => (
-                                                                <Chip
+                                        <Box className="profile-module-content">
+                                            {moduleMenus.length > 0 ? (
+                                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                                    {moduleMenus.map(menu => (
+                                                        <Box 
                                                                         key={menu.id}
-                                                                        label={menu.title}
-                                                                        className="profile-submodule-chip"
-                                                                        size="small"
-                                                                    sx={{ 
-                                                                            backgroundColor: 'white',
-                                                                            color: '#4b5563',
-                                                                            border: '1px solid #e5e7eb',
-                                                                            fontSize: '0.75rem',
-                                                                        fontWeight: 500,
-                                                                            borderRadius: '4px',
-                                                                            transition: 'all 0.2s ease',
-                                                                            '&:hover': {
-                                                                                backgroundColor: '#f3f4f6',
-                                                                                borderColor: '#d1d5db',
-                                                                                transform: 'translateY(-1px)',
-                                                                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-                                                                            }
-                                                                        }}
-                                                                    />
+                                                            className="profile-module-menu"
+                                                        >
+                                                            {menu.title}
+                                                        </Box>
                                                                 ))}
                                                             </Box>
                                                         ) : (
-                                                            <Box 
-                                                                className="profile-submodule-empty"
-                                        sx={{ 
-                                                                    display: 'flex', 
-                                                                    alignItems: 'center', 
-                                                                    justifyContent: 'center', 
-                                                                    height: '100%' 
-                                                                    }}
-                                    >
-                                                                <Typography 
-                                                                    variant="body2" 
-                                            sx={{ 
-                                                                        fontStyle: 'italic', 
-                                                                        color: '#9ca3af', 
-                                                                        fontSize: '0.8rem'
-                                                                    }}
-                                                                >
-                                                                    Accès au module complet
-                                                                        </Typography>
+                                                <Box className="profile-module-empty">
+                                                    No menus for this module
                                                             </Box>
                                                                     )}
                                                                 </Box>
                                                 </Box>
-                                                        );
-                                                    })
-                                    }
+                                </Grid>
+                            );
+                        })}
+                        {(!selectedProfileDetails?.modules || selectedProfileDetails.modules.length === 0) && (
+                            <Grid item xs={12}>
+                                <Box sx={{ textAlign: 'center', p: 3, color: 'text.secondary' }}>
+                                    <Typography>No modules assigned to this profile</Typography>
                                 </Box>
-                                
-                                {/* Message si aucun module */}
-                                {(!selectedProfileDetails.modules || !Array.isArray(selectedProfileDetails.modules) || selectedProfileDetails.modules.length === 0) && (
-                                    <Typography 
-                                        variant="body2" 
-                                        color="text.secondary" 
-                                        sx={{ textAlign: 'center', mt: 2 }}
-                                    >
-                                                    {t('profiles.noModules')}
-                                                </Typography>
-                                            )}
-                        </Box>
-
-                        {/* Section des utilisateurs associés au profil */}
-                        <Divider sx={{ my: 3 }} />
-                        
-                        <Box sx={{ mb: 3 }}>
-                            <Typography variant="subtitle1" sx={{ 
-                                fontWeight: 600, 
-                                mb: 3,
-                                color: '#4b5563',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 1
-                            }}>
-                                <span>Utilisateurs associés</span>
-                                <Chip 
-                                    label={profileUsers.length} 
-                                    size="small" 
-                                    color="primary"
-                                    sx={{ 
-                                        bgcolor: '#eef2ff',
-                                        color: '#4f46e5',
-                                        fontWeight: 600,
-                                        fontSize: '0.75rem',
-                                        height: '20px',
-                                        minWidth: '28px',
-                                        borderRadius: '10px'
-                                    }}
-                                />
+                            </Grid>
+                        )}
+                    </Grid>
+                    
+                    {/* Profile Users Section */}
+                    <Typography variant="h6" sx={{ mb: 2, mt: 4, fontWeight: 600 }}>
+                        Users with this profile
                             </Typography>
                             
                             {loadingUsers ? (
-                                <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-                                    <Typography variant="body2" sx={{ color: '#6b7280', fontStyle: 'italic' }}>
-                                        Chargement des utilisateurs...
-                                    </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                            <Typography>Loading users...</Typography>
                                 </Box>
                             ) : profileUsers.length > 0 ? (
-                                <Box sx={{ 
-                                    maxHeight: '250px', 
-                                    overflowY: 'auto',
-                                    borderRadius: '12px',
-                                    border: '1px solid #e5e7eb',
-                                    backgroundColor: '#f9fafb',
-                                    mb: 2
-                                }}>
-                                    <List sx={{ p: 1 }}>
-                                        {profileUsers.map((user, index) => (
-                                            <React.Fragment key={user.id || index}>
-                                                <ListItem 
-                                                    sx={{ 
-                                                        borderRadius: '8px',
-                                                        mb: index < profileUsers.length - 1 ? 0.5 : 0,
-                                                        p: 1,
-                                                        '&:hover': {
-                                                            backgroundColor: '#f3f4f6'
-                                                        }
-                                                    }}
-                                                >
-                                                    <ListItemAvatar>
-                                                        <Avatar 
-                                                            sx={{ 
-                                                                width: 36, 
-                                                                height: 36,
-                                                                bgcolor: `${getAvatarColor(user.id || index)}80`,
-                                                                fontSize: '0.85rem',
-                                                                fontWeight: 600
-                                                            }}
-                                                        >
-                                                            {getInitials(`${user.firstName || ''} ${user.lastName || ''}` || user.email || '')}
-                                                        </Avatar>
-                                                    </ListItemAvatar>
-                                                    <ListItemText 
-                                                        primary={
-                                                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#4b5563' }}>
-                                                                {user.firstName ? `${user.firstName} ${user.lastName || ''}` : (user.email || 'Utilisateur sans nom')}
-                                                            </Typography>
-                                                        }
-                                                        secondary={
-                                                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                                                                {user.email || ''}
-                                                            </Typography>
-                                                        }
-                                                    />
-                                                    <ListItemSecondaryAction>
-                                                        <Chip
-                                                            label={user.status === 'active' ? 'Actif' : 'Inactif'}
-                                                            size="small"
-                                                            sx={{ 
-                                                                height: '20px',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 500,
-                                                                bgcolor: user.status === 'active' ? '#ecfdf5' : '#fef2f2',
-                                                                color: user.status === 'active' ? '#10b981' : '#ef4444',
-                                                                border: user.status === 'active' ? '1px solid #a7f3d0' : '1px solid #fecaca'
-                                                            }}
-                                                        />
-                                                    </ListItemSecondaryAction>
-                                                </ListItem>
-                                                {index < profileUsers.length - 1 && <Divider component="li" variant="middle" />}
-                                            </React.Fragment>
-                                        ))}
-                                    </List>
-                                </Box>
-                            ) : (
-                                <Box 
-                                    sx={{ 
-                                        display: 'flex', 
-                                        flexDirection: 'column', 
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        py: 4,
-                                        px: 2,
-                                        backgroundColor: '#f9fafb',
-                                        borderRadius: '12px',
-                                        border: '1px solid #e5e7eb'
-                                    }}
-                                >
-                                    <Box sx={{ 
-                                        width: 48, 
-                                        height: 48, 
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        bgcolor: '#f3f4f6',
-                                        mb: 2
-                                    }}>
-                                        <People sx={{ fontSize: '1.5rem', color: '#9ca3af' }} />
-                                    </Box>
-                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500, mb: 1 }}>
-                                        Aucun utilisateur associé
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: '#9ca3af', textAlign: 'center' }}>
-                                        Ce profil n'est attribué à aucun utilisateur pour le moment.
-                                    </Typography>
+                        <table className="profile-users-table">
+                            <thead>
+                                <tr>
+                                    <th>NAME</th>
+                                    <th>EMAIL</th>
+                                    <th>PHONE</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {profileUsers.map(user => (
+                                    <tr key={user.id}>
+                                        <td>
+                                            <div className="name-cell">
+                                                <div className="user-avatar" style={{ backgroundColor: getAvatarColor(user.id) }}>
+                                                    {getInitials(user.name || user.email)}
+                                                </div>
+                                                <div>
+                                                    <div className="profile-name">{user.name}</div>
+                                                    <div className="profile-title">{user.title || ''}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{user.email}</td>
+                                        <td>{user.phone || 'N/A'}</td>
+                                        <td>
+                                            <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`}>
+                                                <span className="status-dot"></span>
+                                                {user.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <Box sx={{ textAlign: 'center', p: 3, bgcolor: '#f9fafb', borderRadius: '8px' }}>
+                            <Typography color="text.secondary">No users have been assigned to this profile</Typography>
                                 </Box>
                             )}
-                        </Box>
-                    </Box>
-                    
-                    {/* Zone des boutons fixes en bas */}
-                    <Box 
-                                    sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            gap: 2,
-                            py: 3,
-                            px: 4,
-                            borderTop: '1px solid rgba(229, 231, 235, 0.5)',
-                            backgroundColor: 'white',
-                            flexShrink: 0
-                        }}
-                        className="profile-action-buttons-container"
-                    >
+                </DialogContent>
+                
+                <Box className="profile-modal-actions">
                 <Button 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // Close the modal first
-                                setProfileModal(false);
-                                // Then handle the edit action with a slight delay to ensure modal is closed
-                                setTimeout(() => {
-                                    handleEdit(selectedProfileDetails.id);
-                                }, 50);
-                            }}
+                        onClick={() => handleEdit(selectedProfileDetails?.id)}
+                        className="profile-edit-button"
                             startIcon={<EditIcon />}
-                            className="profile-action-button edit-button"
-                                        sx={{ 
-                                backgroundColor: '#7c3aed',
-                                color: 'white',
-                                borderRadius: '10px',
-                                padding: '10px 24px',
-                                                fontWeight: 600,
-                                fontSize: '0.9rem',
-                                textTransform: 'none',
-                                boxShadow: '0 4px 6px rgba(124, 58, 237, 0.2)',
-                                minWidth: '140px',
-                                '&:hover': {
-                                    backgroundColor: '#6d28d9',
-                                    boxShadow: '0 6px 10px rgba(124, 58, 237, 0.3)'
-                                }
-                            }}
-                        >
-                            Edit Profile
+                        variant="contained"
+                        disableElevation
+                    >
+                        {t('profiles.editProfile', 'Edit Profile')}
                 </Button>
                 <Button 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // Close the modal first
-                                setProfileModal(false);
-                                // Then handle the delete action with a slight delay to ensure modal is closed
-                                setTimeout(() => {
-                                    handleDelete(selectedProfileDetails.id);
-                                }, 50);
-                            }}
-                            startIcon={<DeleteIcon />}
-                            className="profile-action-button delete-button"
-                                                                    sx={{ 
-                                backgroundColor: '#ef4444',
-                                color: 'white',
-                                borderRadius: '10px',
-                                padding: '10px 24px',
-                                fontWeight: 600,
-                                fontSize: '0.9rem',
-                                textTransform: 'none',
-                                boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)',
-                                minWidth: '140px',
-                                '&:hover': {
-                                    backgroundColor: '#dc2626',
-                                    boxShadow: '0 6px 10px rgba(239, 68, 68, 0.3)'
-                                }
-                            }}
-                        >
-                            Delete Profile
-                </Button>
-                <Button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleCloseProfileModal();
-                            }}
-                            className="profile-action-button close-button"
-                            sx={{ 
-                                borderRadius: '10px',
-                                padding: '10px 24px',
-                                fontWeight: 600,
-                                fontSize: '0.9rem',
-                                textTransform: 'none',
-                                color: '#4b5563',
-                                backgroundColor: '#f3f4f6',
-                                border: '1px solid #e5e7eb',
-                                minWidth: '140px',
-                                '&:hover': {
-                                    backgroundColor: '#e5e7eb'
-                                }
-                            }}
-                        >
-                            Close
+                        onClick={handleCloseProfileModal}
+                        className="profile-close-button"
+                        variant="outlined"
+                    >
+                        {t('common.close', 'Close')}
                 </Button>
                                                             </Box>
-                    </>
-                )}
             </Dialog>
 
             {/* Boîte de dialogue de confirmation de suppression */}

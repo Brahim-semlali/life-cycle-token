@@ -24,478 +24,607 @@
 
 /* Enhanced header styles */
 .profiles-header {
-    background: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(135deg, #f9faff 0%, #f0f4ff 100%);
     backdrop-filter: blur(10px);
     border-radius: 16px;
-    padding: 18px 24px;
+    padding: 20px 24px;
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(229, 231, 235, 0.7);
     transition: all 0.3s ease;
 }
 
 .dark-mode .profiles-header {
-    background: rgba(30, 41, 59, 0.8);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
     border-color: rgba(51, 65, 85, 0.7);
 }
 
 .profiles-header:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.09);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
 }
 
-.profiles-container h2 {
-    color: #b0b8d1;
-    margin-bottom: 30px;
-    font-size: 24px;
+/* Amélioration du titre du tableau */
+.profiles-header h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4f46e5;
+    margin: 0;
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+/* Amélioration des filtres */
+.profiles-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Style amélioré pour les sélecteurs de filtres */
+.MuiSelect-select {
+    font-size: 0.9rem !important;
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    min-width: 140px !important;
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #e5e7eb !important;
+    transition: all 0.2s ease !important;
+}
+
+.MuiSelect-select:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.MuiSelect-icon {
+    color: #6366f1 !important;
+    right: 12px !important;
+}
+
+/* Style de l'en-tête des colonnes du tableau */
+.contact-table th,
+.profiles-table th {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #6366f1;
     font-weight: 600;
-    text-align: center;
+    text-align: left;
+    padding: 14px 20px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
 }
 
-.profiles-container h3 {
-    color: #b0b8d1;
-    margin: 30px 0 20px;
-    font-size: 20px;
-    font-weight: 500;
-    text-align: center;
+.contact-table th:hover,
+.profiles-table th:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
 }
 
-.profiles-container form {
-    background: var(--bg-secondary);
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: 0 auto 30px;
-    border: 1px solid var(--border-color);
+/* Style pour le bouton Create Profile */
+.create-button {
+    background: linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%) !important;
+    border-radius: 12px !important;
+    padding: 10px 24px !important;
+    height: 46px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3) !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
-.profiles-container input[type="text"] {
+.create-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 14px;
-    margin-bottom: 25px;
-    transition: all 0.2s ease;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.profiles-container input[type="text"]:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(74, 122, 176, 0.2);
-    outline: none;
+.create-button:hover {
+    background: linear-gradient(45deg, #6d28d9 0%, #7c3aed 100%) !important;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4) !important;
+    transform: translateY(-2px) !important;
 }
 
-.modules-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
+.create-button:hover::after {
+    opacity: 1;
 }
 
-.module-section {
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #e3e8f7;
-}
-
-.dark-mode .module-section {
-    background: #2d3748;
-    border-color: #4a5568;
-}
-
-.module-label {
+/* Amélioration du champ de recherche */
+.search-container {
+    background: white;
+    border-radius: 50px;
+    border: 1px solid #e5e7eb;
+    padding: 4px 8px 4px 16px;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    min-width: 280px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
 }
 
-.submodule-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-left: 1.5rem;
-}
-
-.submodule-label {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-}
-
-.checkmark {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #4299e1;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.checkbox-container input:checked + .checkmark {
-    background-color: #4299e1;
-    border-color: #4299e1;
-}
-
-.checkbox-container input:checked + .checkmark:after {
-    content: "✓";
-    color: white;
-    font-size: 14px;
-}
-
-.profiles-container button {
-    width: 100%;
-    padding: 12px;
-    background-color: #4a7ab0;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    margin-top: 20px;
-}
-
-.profiles-container button:hover {
-    background-color: #6899ca;
+.search-container:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
 }
 
-.profiles-container ul {
-    list-style: none;
-    padding: 0;
-    max-width: 800px;
-    margin: 0 auto 40px;
+.search-container input {
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    flex: 1;
+    padding: 10px 0;
+    outline: none;
+    color: #374151;
 }
 
-.profiles-container li {
-    background: #ffffff;
-    padding: 20px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
+.search-container input::placeholder {
+    color: #9ca3af;
 }
 
-.profile-header {
+.search-icon {
+    color: #6366f1;
+    margin-right: 4px;
+    transition: transform 0.2s ease;
+}
+
+.search-container:focus-within .search-icon {
+    transform: scale(1.1);
+}
+
+/* Amélioration des boutons de sélection de vue */
+.view-selector {
+    background: rgba(243, 244, 246, 0.7);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(229, 231, 235, 0.7);
+    border-radius: 50px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    padding: 4px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
+    gap: 4px;
+}
+
+/* Profile table styles */
+.profiles-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 2rem;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.profiles-table th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+    text-align: left;
+    padding: 16px;
+    font-size: 0.875rem;
     border-bottom: 1px solid #e2e8f0;
 }
 
-.profile-header strong {
-    font-size: 18px;
-    color: #2c3e50;
+.profiles-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 0.875rem;
+}
+
+.profiles-table tr:last-child td {
+    border-bottom: none;
+}
+
+.profiles-table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Profile list item styles */
+.profile-list-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    background-color: #fff;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.profile-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.profile-description {
+    color: #64748b;
+    font-size: 0.85rem;
 }
 
 .profile-modules {
+    color: #64748b;
+    font-size: 0.85rem;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    align-items: center;
 }
 
-.profile-module {
-    background: #f8f9fa;
-    padding: 12px 15px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border: 1px solid #e2e8f0;
-}
-
-.profile-module:last-child {
-    margin-bottom: 0;
-}
-
-.module-name {
+.profile-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
-    color: #4a5568;
 }
 
-.submodules {
-    color: #718096;
-    font-size: 13px;
-    background: white;
-    padding: 4px 12px;
-    border-radius: 4px;
-    border: 1px solid #e2e8f0;
-    max-width: 60%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.profile-status.active {
+    background-color: #dcfce7;
+    color: #16a34a;
 }
 
-/* Style des checkboxes */
-input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    border: 2px solid #4a7ab0;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    position: relative;
-    appearance: none;
-    background: white;
-}
-
-input[type="checkbox"]:checked {
-    background-color: #4a7ab0;
-    border-color: #4a7ab0;
-}
-
-input[type="checkbox"]:checked::after {
-    content: '✓';
-    position: absolute;
-    color: white;
-    font-size: 14px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.submit-button, .cancel-button, .edit-button, .delete-button {
-    flex: 1;
-    padding: 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.submit-button {
-    background-color: #7c3aed;
-    color: #fff;
-    border: none;
-}
-
-.submit-button:hover {
-    background-color: #a78bfa;
-}
-
-.cancel-button {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.cancel-button:hover {
-    background-color: var(--bg-secondary);
+.profile-status.inactive {
+    background-color: #fee2e2;
+    color: #dc2626;
 }
 
 .profile-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+}
+
+.edit-button, .delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .edit-button {
-    background-color: #4a7ab0;
-    color: white;
+    background-color: #ede9fe;
+    color: #7c3aed;
 }
 
-.edit-button:hover:not(:disabled) {
-    background-color: #6899ca;
-}
-
-.edit-button:disabled {
-    background-color: #cbd5e0;
-    cursor: not-allowed;
-    opacity: 0.7;
+.edit-button:hover {
+    background-color: #ddd6fe;
 }
 
 .delete-button {
-    background-color: #e53e3e;
-    color: white;
+    background-color: #fee2e2;
+    color: #dc2626;
 }
 
 .delete-button:hover {
-    background-color: #c53030;
+    background-color: #fecaca;
 }
 
-/* Animation pour les actions */
-.submit-button:after, .cancel-button:after, .edit-button:after, .delete-button:after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
+/* Profile table row styles */
+.profile-row td {
+    vertical-align: middle;
 }
 
-.submit-button:focus:not(:active):after,
-.cancel-button:focus:not(:active):after,
-.edit-button:focus:not(:active):after,
-.delete-button:focus:not(:active):after {
-    animation: ripple 1s ease-out;
+.profile-row td:first-child,
+.profile-row th:first-child {
+    padding-left: 24px;
 }
 
-@keyframes ripple {
+.profile-row td:last-child,
+.profile-row th:last-child {
+    padding-right: 24px;
+    text-align: right;
+}
+
+/* User avatar and initials */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-right: 12px;
+}
+
+.name-cell {
+    display: flex;
+    align-items: center;
+}
+
+/* Status badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.status-badge.inactive {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.status-badge .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-badge.active .status-dot {
+    background-color: #16a34a;
+}
+
+.status-badge.inactive .status-dot {
+    background-color: #dc2626;
+}
+
+/* Action buttons */
+.action-button {
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+
+.action-button.edit {
+    background-color: #ede9fe;
+    color: #7c3aed;
+}
+
+.action-button.edit:hover {
+    background-color: #ddd6fe;
+}
+
+.action-button.delete {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.action-button.delete:hover {
+    background-color: #fecaca;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Loading skeletons */
+.skeleton-item {
+    height: 20px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+@keyframes loading {
     0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-    }
-    20% {
-        transform: scale(25, 25);
-        opacity: 0.3;
+        background-position: 200% 0;
     }
     100% {
-        opacity: 0;
-        transform: scale(40, 40);
+        background-position: -200% 0;
     }
 }
 
-/* Dark mode specific styles */
-.dark-mode .profiles-container {
-    background: var(--bg-primary);
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.dark-mode .profiles-container form {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
+.empty-state-icon {
+    font-size: 48px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
 }
 
-.dark-mode .module-section {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
+.empty-state-title {
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
 }
 
-.dark-mode .submodule-label {
-    background: var(--bg-primary);
-    border-color: var(--border-color);
-    color: var(--text-secondary);
+.empty-state-text {
+    color: #64748b;
+    margin-bottom: 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.dark-mode .submodule-label:hover {
-    background: var(--bg-secondary);
+/* Table responsive styles */
+@media (max-width: 768px) {
+    .profiles-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
 
-.dark-mode input[type="checkbox"] {
-    border-color: var(--border-color);
-    background-color: var(--bg-primary);
-}
-
-.dark-mode input[type="checkbox"]:checked {
-    background-color: var(--accent-color);
-}
-
-/* RTL Support */
-[dir="rtl"] .profiles-container {
-    margin-left: 0;
-    margin-right: 250px;
-}
-
-[dir="rtl"] .profiles-container.minimized {
-    margin-left: 0;
-    margin-right: 80px;
-}
-
-[dir="rtl"] .submodule-section {
-    margin-left: 0;
-    margin-right: 30px;
-}
-
-/* Improved grid & card styles */
-.profile-card {
-    position: relative;
+/* Specific styles for contacts/users list shown in the second image */
+.contact-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #fff;
+    border-radius: 12px;
     overflow: hidden;
-    background: white;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    transform-origin: center !important;
-    border: 1px solid rgba(226, 232, 240, 0.6) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.dark-mode .profile-card {
-    background: rgba(30, 41, 59, 0.9);
-    border-color: rgba(51, 65, 85, 0.6) !important;
+.contact-table th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.profile-card:hover {
-    transform: translateY(-8px) !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
-    border-color: rgba(79, 70, 229, 0.2) !important;
+.contact-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 0.875rem;
+    vertical-align: middle;
 }
 
-.dark-mode .profile-card:hover {
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25) !important;
-    border-color: rgba(99, 102, 241, 0.4) !important;
+.contact-table tr:last-child td {
+    border-bottom: none;
 }
 
-/* Improved avatar styles */
-.profile-card .MuiAvatar-root {
-    position: relative;
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    z-index: 10;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
-    border: 3px solid white !important;
+.contact-table tr:hover {
+    background-color: #f8fafc;
 }
 
-.dark-mode .profile-card .MuiAvatar-root {
-    border-color: rgba(30, 41, 59, 0.9) !important;
+.contact-table .name-cell {
+    display: flex;
+    align-items: center;
 }
 
-.profile-card:hover .MuiAvatar-root {
-    transform: scale(1.12) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
+.contact-table .contact-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 12px;
 }
 
-/* Enhanced status badge styles */
-.status-badge, .MuiChip-root[data-status] {
-    padding: 5px 12px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.3px !important;
-    transition: all 0.3s ease !important;
-    position: relative !important;
-    overflow: hidden !important;
+.contact-table .contact-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.status-badge.active, .MuiChip-root[data-status="active"] {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-    color: #059669 !important;
-    border: 1px solid rgba(110, 231, 183, 0.6) !important;
+.contact-table .contact-details {
+    display: flex;
+    flex-direction: column;
 }
 
-.status-badge.inactive, .MuiChip-root[data-status="inactive"] {
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
-    color: #dc2626 !important;
-    border: 1px solid rgba(252, 165, 165, 0.6) !important;
+.contact-table .contact-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 2px;
 }
 
-.profile-card:hover .MuiChip-root[data-status] {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+.contact-table .contact-title {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.contact-table .phone-cell, 
+.contact-table .email-cell {
+    color: #64748b;
+}
+
+.contact-table .added-by-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-table .added-by-name {
+    color: #334155;
+    font-weight: 500;
+}
+
+.contact-table .added-by-date {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.contact-table .list-cell {
+    text-align: right;
+}
+
+.contact-table .list-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: #f1f5f9;
+    color: #475569;
 }
 
 /* Enhanced module chip styles */
@@ -844,7 +973,7 @@ input[type="checkbox"]:checked::after {
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E") !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E") !important;
     background-size: 40px 40px !important;
     opacity: 0.5 !important;
     z-index: 0 !important;
@@ -2550,3 +2679,560 @@ input[type="checkbox"]:checked::after {
 .action-buttons-container .MuiIconButton-root:active {
     transform: scale(0.95);
 } 
+
+/* Styles pour la modal du profil */
+.profile-modal-header {
+    background: linear-gradient(135deg, #673ab7 0%, #8561c5 100%);
+    padding: 32px;
+    color: white;
+    position: relative;
+}
+
+.profile-modal-header .MuiAvatar-root {
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.profile-module-card {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background-color: #f9fafb;
+    transition: all 0.3s ease-in-out;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-module-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.profile-module-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f0f4f8;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.profile-module-header .module-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    margin-right: 12px;
+    background-color: rgba(103, 58, 183, 0.1);
+    color: #673ab7;
+}
+
+.profile-module-header .module-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.profile-module-content {
+    padding: 16px;
+    flex: 1;
+}
+
+.profile-module-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.profile-module-menu {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    margin: 4px;
+    background-color: #edf2f7;
+    color: #4a5568;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.profile-module-menu:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+/* Style pour le tableau des utilisateurs */
+.profile-users-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 16px;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.profile-users-table th {
+    background-color: #f8fafc;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.profile-users-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.875rem;
+    color: #334155;
+}
+
+.profile-users-table tr:last-child td {
+    border-bottom: none;
+}
+
+.profile-users-table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Style pour les boutons du bas */
+.profile-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 24px;
+    border-top: 1px solid #e2e8f0;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.profile-edit-button {
+    background: linear-gradient(135deg, #673ab7 0%, #8561c5 100%);
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-width: 140px !important;
+    text-transform: none !important;
+    box-shadow: 0 2px 6px rgba(103, 58, 183, 0.2) !important;
+    white-space: nowrap !important;
+    height: 40px !important;
+    line-height: 40px !important;
+}
+
+.profile-edit-button:hover {
+    box-shadow: 0 4px 10px rgba(103, 58, 183, 0.3) !important;
+    transform: translateY(-2px) !important;
+}
+
+.profile-close-button {
+    background-color: transparent !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+    border-radius: 8px !important;
+    padding: 0 20px !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer;
+    transition: all 0.2s ease !important;
+    min-width: 140px !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.profile-close-button:hover {
+    background-color: #f8fafc !important;
+    color: #4a5568 !important;
+    border-color: #cbd5e0 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+    transform: none !important;
+}
+
+/* Styles pour le formulaire de création/édition de profil */
+.profile-form-header {
+    background: linear-gradient(135deg, #673ab7 0%, #8561c5 100%);
+    padding: 20px 32px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px 12px 0 0;
+}
+
+.profile-form-header h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.profile-form-header h2 .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.profile-form-content {
+    padding: 24px 32px;
+}
+
+.profile-form-section {
+    margin-bottom: 32px;
+}
+
+.profile-form-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 24px;
+    padding-left: 12px;
+    border-left: 4px solid #673ab7;
+}
+
+.profile-form-field {
+    margin-bottom: 20px;
+}
+
+.profile-form-field label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.profile-form-field .required {
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+.profile-form-field input,
+.profile-form-field textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #1f2937;
+    transition: all 0.2s ease;
+}
+
+.profile-form-field input:focus,
+.profile-form-field textarea:focus {
+    outline: none;
+    border-color: #673ab7;
+    box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.1);
+}
+
+.profile-form-field textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.profile-form-field .field-error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* Module grid */
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.module-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.module-card-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.module-card-header .module-checkbox {
+    margin-right: 12px;
+}
+
+.module-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none;
+    border: 2px solid #d1d5db;
+    background-color: white;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.module-checkbox input[type="checkbox"]:checked {
+    background-color: #673ab7;
+    border-color: #673ab7;
+}
+
+.module-checkbox input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.module-card-header .module-name {
+    font-weight: 600;
+    color: #374151;
+}
+
+.module-card-content {
+    padding: 16px;
+}
+
+.submodule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.submodule-item {
+    display: flex;
+    align-items: center;
+}
+
+.submodule-item .submodule-checkbox {
+    margin-right: 12px;
+}
+
+.submodule-item .submodule-name {
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+/* Form actions */
+.profile-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 32px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.cancel-button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #4b5563;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+    background-color: #f9fafb;
+}
+
+.submit-button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+    background: linear-gradient(135deg, #673ab7 0%, #8561c5 100%);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-button:hover {
+    box-shadow: 0 4px 10px rgba(103, 58, 183, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Styles pour la navigation du formulaire */
+.profile-form-nav {
+    background-color: #f9fafb;
+    padding: 12px 24px;
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.profile-form-nav-item {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-form-nav-item:hover {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.profile-form-nav-item.active {
+    background-color: #ede9fe;
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.profile-form-nav-item .nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style pour le contenu scrollable du formulaire */
+.profile-form-scrollable {
+    max-height: calc(80vh - 160px);
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+/* Ajout d'un bouton de défilement vers le bas */
+.scroll-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+    border: none;
+}
+
+.scroll-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.4);
+}
+
+.scroll-button svg {
+    font-size: 24px;
+}
+
+/* Amélioration du padding des sections du formulaire */
+.profile-form-section {
+    padding-top: 24px;
+    padding-bottom: 24px;
+    scroll-margin-top: 80px; /* Pour le scroll smooth */
+}
+
+/* Amélioration du footer du formulaire */
+.profile-form-actions {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+    z-index: 9;
+}
+
+/* Responsive pour la navigation */
+@media (max-width: 768px) {
+    .profile-form-nav {
+        padding: 8px 16px;
+    }
+    
+    .profile-form-nav-item {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .profile-form-scrollable {
+        max-height: calc(80vh - 120px);
+    }
+}
+
+/* Réduction de l'espace entre Description et Modules */
+.profile-form-section + .profile-form-section {
+    padding-top: 0;
+    margin-top: 10px;
+}
+
+/* Espace pour la section Modules et Permissions */
+.profile-form-section:last-child {
+    margin-bottom: 20px;
+}
+
+.dark-mode .profile-modal-actions {
+    border-top: 1px solid rgba(51, 65, 85, 0.5);
+    background-color: #1e293b;
+}
+
+.dark-mode .profile-edit-button {
+    background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+}
+
+.dark-mode .profile-edit-button:hover {
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.dark-mode .profile-close-button {
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+.dark-mode .profile-close-button:hover {
+    background-color: rgba(30, 41, 59, 0.7);
+    border-color: #475569 !important;
+    color: #cbd5e0 !important;
+}

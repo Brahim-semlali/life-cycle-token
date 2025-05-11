@@ -5,6 +5,146 @@ const api = {
     // URL de base de l'API, utilise la variable d'environnement ou localhost par défaut
     baseURL: process.env.REACT_APP_API_URL || 'https://localhost:8000',
 
+    // Méthodes spécifiques pour les préférences utilisateur
+    async getUserLanguage() {
+        try {
+            // Utiliser l'API GET /user/language/ pour obtenir la langue actuelle
+            const response = await this.request('/user/language/', 'GET');
+            console.log('User language response:', response);
+            
+            // Convert language code to lowercase for UI consistency
+            if (response && response.language) {
+                response.language = response.language.toLowerCase();
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Error getting user language:', error);
+            return { language: 'en' }; // Langue par défaut en cas d'erreur
+        }
+    },
+
+    async updateUserLanguage(language) {
+        try {
+            // Vérifier que la langue est valide (codes ISO standards)
+            const validLanguages = ['EN', 'FR', 'AR']; // Updated to match UserLanguage choices from the model
+            if (!validLanguages.includes(language.toUpperCase())) {
+                throw new Error('Invalid language code');
+            }
+            
+            // Utiliser l'API PUT /user/language/ pour mettre à jour la langue
+            // Envoyer la langue dans le format attendu par l'API
+            const response = await this.request('/user/language/', 'PUT', { 
+                language: language.toUpperCase() // Use 'language' field instead of 'code'
+            });
+            console.log('Update language response:', response);
+            return response;
+        } catch (error) {
+            console.error('Error updating user language:', error);
+            throw error;
+        }
+    },
+
+    async getUserStatus() {
+        try {
+            // Utiliser l'API GET /user/status/ pour obtenir le statut actuel
+            const response = await this.request('/user/status/', 'GET');
+            console.log('User status response:', response);
+            return response;
+        } catch (error) {
+            console.error('Error getting user status:', error);
+            return {}; // Statut vide par défaut en cas d'erreur
+        }
+    },
+
+    async updateUserStatus(status) {
+        try {
+            // Utiliser l'API POST /user/status/ pour mettre à jour le statut
+            const response = await this.request('/user/status/', 'POST', status);
+            console.log('Update status response:', response);
+            return response;
+        } catch (error) {
+            console.error('Error updating user status:', error);
+            throw error;
+        }
+    },
+    
+    async getPasswordPolicy() {
+        try {
+            // Essayer plusieurs endpoints pour obtenir la politique de mot de passe
+            let response = null;
+            
+            try {
+                // Utiliser l'API correcte selon la documentation
+                response = await this.request('/user/password-policy/', 'GET');
+            } catch (e1) {
+                console.log('First password policy endpoint failed, trying alternative');
+                try {
+                    // Si ça échoue, essayer une autre API
+                    response = await this.request('/api/security/password-policy/', 'GET');
+                } catch (e2) {
+                    console.log('Second password policy endpoint failed, using default policy');
+                    // Si tous les endpoints échouent, utiliser une politique par défaut
+                    response = {
+                        min_length: 8,
+                        require_uppercase: true,
+                        require_lowercase: true,
+                        require_number: true,
+                        require_special_char: false,
+                        max_login_attempts: 3,
+                        lockout_duration: 30,
+                        password_expiration: 90,
+                        prevent_password_reuse: 5,
+                        min_password_age: 1,
+                        session_timeout: 30
+                    };
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Error getting password policy:', error);
+            // Retourner une politique par défaut en cas d'erreur
+            return {
+                min_length: 8,
+                require_uppercase: true,
+                require_lowercase: true,
+                require_number: true,
+                require_special_char: false,
+                max_login_attempts: 3,
+                lockout_duration: 30,
+                password_expiration: 90,
+                prevent_password_reuse: 5,
+                min_password_age: 1,
+                session_timeout: 30
+            };
+        }
+    },
+    
+    async updatePasswordPolicy(policyData) {
+        try {
+            let response = null;
+            
+            try {
+                // Utiliser l'API correcte selon la documentation
+                response = await this.request('/user/password-policy/', 'POST', policyData);
+            } catch (e1) {
+                console.log('First password policy update endpoint failed, trying alternative');
+                try {
+                    // Si ça échoue, essayer une autre API
+                    response = await this.request('/api/security/password-policy/', 'POST', policyData);
+                } catch (e2) {
+                    console.log('All password policy update endpoints failed');
+                    throw e2;
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('Error updating password policy:', error);
+            throw error;
+        }
+    },
     
     // Fonction principale pour faire les requêtes API
     async request(endpoint, method = 'GET', data = null) {
@@ -13,6 +153,7 @@ const api = {
         // En-têtes de base pour toutes les requêtes
         const headers = {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
         };
 
         // Configuration de la requête fetch avec les cookies
@@ -33,7 +174,14 @@ const api = {
 
             // Gestion des erreurs HTTP
             if (!response.ok) {
-                const errorData = await response.json();
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // Si la réponse n'est pas du JSON valide
+                    errorData = { detail: await response.text() || 'Request failed' };
+                }
+                
                 console.error('Error details:', errorData);
                 
                 const error = new Error(errorData.detail || 'Request failed');

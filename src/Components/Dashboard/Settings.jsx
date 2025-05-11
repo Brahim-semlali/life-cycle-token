@@ -23,8 +23,7 @@ const Settings = () => {
   const languages = [
     { code: 'fr', name: 'Français' },
     { code: 'en', name: 'English' },
-    { code: 'ar', name: 'العربية' },
-    { code: 'es', name: 'Español' }
+    { code: 'ar', name: 'العربية' }
   ];
 
   // Synchroniser i18n avec le contexte de langue au chargement
@@ -178,6 +177,13 @@ const Settings = () => {
   // Handle language change
   const handleLanguageChange = (e) => {
     const newLanguage = e.target.value;
+    
+    // Vérifier que la langue est valide
+    const validLanguages = ['en', 'fr', 'ar'];
+    if (!validLanguages.includes(newLanguage)) {
+      console.error('Invalid language code:', newLanguage);
+      return;
+    }
     
     // Mettre à jour le contexte de langue (qui sauvegarde aussi la préférence)
     changeLanguage(newLanguage);

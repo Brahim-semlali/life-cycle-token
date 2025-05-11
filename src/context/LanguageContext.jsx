@@ -11,9 +11,14 @@ export const LanguageProvider = ({ children }) => {
   // Function to change the language
   const changeLanguage = async (languageCode) => {
     try {
-      const response = await api.request('/user/preferences/language', 'POST', { language: languageCode });
+      // Convert to uppercase for API but keep lowercase for UI
+      const apiLanguageCode = languageCode.toUpperCase();
+      const uiLanguageCode = languageCode.toLowerCase();
+      
+      // Utiliser la méthode spécifique pour mettre à jour la langue
+      const response = await api.updateUserLanguage(apiLanguageCode);
       if (response && response.success) {
-        setCurrentLanguage(languageCode);
+        setCurrentLanguage(uiLanguageCode);
       }
     } catch (error) {
       console.error('Error saving language preference:', error);
@@ -24,7 +29,8 @@ export const LanguageProvider = ({ children }) => {
   React.useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const response = await api.request('/user/preferences/language', 'GET');
+        // Utiliser la méthode spécifique pour obtenir la langue actuelle
+        const response = await api.getUserLanguage();
         if (response && response.language) {
           setCurrentLanguage(response.language);
         }

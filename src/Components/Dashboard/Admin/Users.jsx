@@ -41,7 +41,8 @@ import {
   ListItemAvatar,
   ListItemText,
   ListItemSecondaryAction,
-  Divider
+  Divider,
+  InputBase
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -62,7 +63,9 @@ import {
   AccountCircle as AccountCircleIcon,
   MoreVert as MoreVertIcon,
   Check as CheckIcon,
-  LockOutlined
+  LockOutlined,
+  IndeterminateCheckBox as IndeterminateCheckBoxIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { getAllProfiles } from '../../../services/ProfileService';
@@ -94,13 +97,14 @@ const Users = () => {
         minPasswordAge: 1,
         sessionTimeout: 30
     });
-    const [viewMode, setViewMode] = useState('grid');
+    const [viewMode, setViewMode] = useState('list');
     const [showFilters, setShowFilters] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterProfile, setFilterProfile] = useState('all');
     const [anchorEl, setAnchorEl] = useState(null);
     const [menuUser, setMenuUser] = useState(null);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
     const emptyUser = {
         firstName: '',
@@ -183,23 +187,10 @@ const Users = () => {
     useEffect(() => {
         const loadPasswordRules = async () => {
             try {
-                let response = null;
+                // Utiliser la nouvelle méthode getPasswordPolicy
+                const rules = await api.getPasswordPolicy();
                 
-                // Essayer plusieurs endpoints dans l'ordre
-                try {
-                    response = await api.request('/administration/passwordpolicy/get', 'GET');
-                } catch (e1) {
-                    try {
-                        response = await api.request('/user/password-policy/', 'GET');
-                    } catch (e2) {
-                        response = await api.request('/api/administration_passwordpolicy/get', 'GET');
-                    }
-                }
-
-                if (response) {
-                    // Si la réponse est un tableau, prendre le premier élément
-                    const rules = Array.isArray(response) ? response[0] : response;
-                    
+                if (rules) {
                     // S'assurer que les valeurs booléennes sont correctement interprétées
                     setPasswordRules({
                         minLength: parseInt(rules.min_length) || 8,
@@ -517,21 +508,33 @@ const Users = () => {
                     justifyContent: 'center',
                     width: '100%'
                 }}>
-                    <Checkbox
-                        checked={selectedUsers.includes(params.row.id)}
-                        onChange={() => handleRowClick(params)}
+                    <IconButton
+                        size="small"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleRowClick(params);
                         }}
-                        size="small"
-                        sx={{
+                        sx={{ 
+                            backgroundColor: selectedUsers.includes(params.row.id) 
+                                ? '#4f46e5' 
+                                : 'white',
+                            border: selectedUsers.includes(params.row.id) 
+                                ? '2px solid #4f46e5' 
+                                : '2px solid #e5e7eb',
+                            color: selectedUsers.includes(params.row.id) 
+                                ? 'white' 
+                                : '#64748b',
                             padding: '4px',
-                            '&:hover': {
-                                backgroundColor: 'transparent'
-                            }
+                            width: '24px',
+                            height: '24px'
                         }}
-                    />
+                    >
+                        {selectedUsers.includes(params.row.id) ? (
+                            <CheckIcon fontSize="small" />
+                        ) : (
+                            <AddIcon fontSize="small" />
+                        )}
+                    </IconButton>
                 </Box>
             ),
             renderHeader: () => (
@@ -541,22 +544,35 @@ const Users = () => {
                     justifyContent: 'center',
                     width: '100%'
                 }}>
-                    <Checkbox
-                        checked={users.length > 0 && selectedUsers.length === users.length}
-                        indeterminate={selectedUsers.length > 0 && selectedUsers.length < users.length}
-                        onChange={handleHeaderCheckboxClick}
+                    <IconButton
+                        size="small"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleHeaderCheckboxClick();
                         }}
-                        size="small"
-                        sx={{
+                        sx={{ 
+                            backgroundColor: users.length > 0 && selectedUsers.length === users.length 
+                                ? 'rgba(79, 70, 229, 0.1)' 
+                                : 'rgba(255, 255, 255, 0.8)',
+                            border: selectedUsers.length > 0 
+                                ? '1px solid #4f46e5' 
+                                : '1px solid #e5e7eb',
+                            color: selectedUsers.length > 0 
+                                ? '#4f46e5' 
+                                : '#64748b',
                             padding: '4px',
-                            '&:hover': {
-                                backgroundColor: 'transparent'
-                            }
+                            width: '24px',
+                            height: '24px'
                         }}
-                    />
+                    >
+                        {users.length > 0 && selectedUsers.length === users.length ? (
+                            <CheckIcon fontSize="small" />
+                        ) : selectedUsers.length > 0 ? (
+                            <IndeterminateCheckBoxIcon fontSize="small" />
+                        ) : (
+                            <AddIcon fontSize="small" />
+                        )}
+                    </IconButton>
                 </Box>
             ),
         },
@@ -569,9 +585,24 @@ const Users = () => {
                 const firstName = params.row.firstName || '';
                 const lastName = params.row.lastName || '';
                 const fullName = `${firstName} ${lastName}`.trim();
+                const initials = getInitials(firstName, lastName);
+                const avatarColor = getAvatarColor(params.row.id);
+                
                 return (
                     <Box className="name-cell">
-                        <Typography variant="body1">{fullName}</Typography>
+                        <div className="user-avatar" style={{ backgroundColor: avatarColor }}>
+                            {initials}
+                        </div>
+                        <div>
+                            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                {fullName}
+                            </Typography>
+                            {params.row.title && (
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                    {params.row.title}
+                                </Typography>
+                            )}
+                        </div>
                     </Box>
                 );
             }
@@ -744,83 +775,124 @@ const Users = () => {
         setMenuUser(null);
     };
 
+    const handleDeleteSelected = () => {
+        if (selectedUsers.length === 0) return;
+        setOpenDeleteDialog(true);
+    };
+
+    const confirmDeleteSelected = async () => {
+        try {
+            // Delete each selected user
+            for (const userId of selectedUsers) {
+                await api.requestWithFallbacks('/user/delete/', 'POST', { id: userId });
+            }
+            
+            // Update UI
+            setUsers(prev => prev.filter(user => !selectedUsers.includes(user.id)));
+            setSelectedUsers([]);
+            setOpenDeleteDialog(false);
+            
+            // Reload users in background
+            loadUsers();
+        } catch (error) {
+            console.error('Error deleting selected users:', error);
+            // Still update UI for better UX
+            setUsers(prev => prev.filter(user => !selectedUsers.includes(user.id)));
+            setSelectedUsers([]);
+            setOpenDeleteDialog(false);
+        }
+    };
+
+    const cancelSelection = () => {
+        setSelectedUsers([]);
+    };
+
     return (
         <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                backgroundColor: isDarkMode ? '#2d3748' : 'white',
-                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-                padding: '10px 20px',
-                borderRadius: '10px',
-                mb: 3,
-                gap: 2
-            }}>
-                <Typography variant="h4" component="h1" sx={{ color: isDarkMode ? '#e2e8f0' : '#f97316' }}>
-                    {filteredUsers.length} {t('users.title')}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <TextField
-                        size="small"
-                        placeholder={t('users.search')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchIcon />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={{ width: 200 }}
-                    />
-                    
-                    <ToggleButtonGroup
-                        value={viewMode}
-                        exclusive
-                        onChange={handleViewModeChange}
-                        aria-label="view mode"
-                        size="small"
-                    >
-                        <ToggleButton value="grid" aria-label="grid view">
-                            <GridViewIcon />
-                        </ToggleButton>
-                        <ToggleButton value="list" aria-label="list view">
-                            <ListViewIcon />
-                        </ToggleButton>
-                    </ToggleButtonGroup>
-                    
-                    <IconButton onClick={() => setShowFilters(!showFilters)}>
-                        <FilterListIcon />
-                    </IconButton>
-                    <Button
-                        variant="outlined"
-                        startIcon={<FileDownloadIcon />}
-                        onClick={() => handleExport('csv')}
-                    >
-                        {t('users.export')}
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => {
-                            setEditingUser(null);
-                            setNewUser(emptyUser);
-                            setOpenDialog(true);
-                        }}
-                        sx={{
-                            backgroundColor: '#f97316',
-                            '&:hover': {
-                                backgroundColor: '#ea580c',
-                            },
-                            height: '40px'
-                        }}
-                    >
-                        {t('users.create')}
-                    </Button>
+            {selectedUsers.length > 0 ? (
+                <Box className="users-header selection-header">
+                    <Typography variant="h4" component="h1">
+                        {selectedUsers.length} {t('users.selected')}
+                    </Typography>
+                    <Box className="users-actions">
+                        <Button
+                            variant="contained"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={handleDeleteSelected}
+                            className="delete-selected-button"
+                        >
+                            {t('users.deleteSelected')} ({selectedUsers.length})
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<CloseIcon />}
+                            onClick={cancelSelection}
+                            className="cancel-selection-button"
+                        >
+                            {t('users.cancelSelection')}
+                        </Button>
+                    </Box>
                 </Box>
-            </Box>
+            ) : (
+                <Box className="users-header">
+                    <Typography variant="h4" component="h1">
+                        {filteredUsers.length} {t('users.title')}
+                    </Typography>
+                    <Box className="users-actions">
+                        <div className="search-container">
+                            <SearchIcon className="search-icon" />
+                            <InputBase
+                                placeholder={t('users.search')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-field"
+                                fullWidth
+                            />
+                        </div>
+                        
+                        <ToggleButtonGroup
+                            value={viewMode}
+                            exclusive
+                            onChange={handleViewModeChange}
+                            aria-label="view mode"
+                            size="small"
+                            className="view-selector"
+                        >
+                            <ToggleButton value="grid" aria-label="grid view" className="view-button">
+                                <GridViewIcon />
+                            </ToggleButton>
+                            <ToggleButton value="list" aria-label="list view" className="view-button">
+                                <ListViewIcon />
+                            </ToggleButton>
+                        </ToggleButtonGroup>
+                        
+                        <IconButton onClick={() => setShowFilters(!showFilters)}>
+                            <FilterListIcon />
+                        </IconButton>
+                        <Button
+                            variant="outlined"
+                            startIcon={<FileDownloadIcon />}
+                            onClick={() => handleExport('csv')}
+                            className="export-button"
+                        >
+                            {t('users.export')}
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => {
+                                setEditingUser(null);
+                                setNewUser(emptyUser);
+                                setOpenDialog(true);
+                            }}
+                            className="create-button"
+                        >
+                            {t('users.create')}
+                        </Button>
+                    </Box>
+                </Box>
+            )}
 
             <Collapse in={showFilters}>
                 <Paper sx={{ p: 2, mb: 2 }}>
@@ -862,31 +934,19 @@ const Users = () => {
                 <Grid container spacing={3}>
                     {filteredUsers.map(user => (
                         <Grid item xs={12} sm={6} md={4} lg={4} key={user.id}>
-                            <Card sx={{ 
-                                position: 'relative',
-                                borderRadius: '16px',
-                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                transition: 'transform 0.3s, box-shadow 0.3s, border 0.2s ease',
-                                '&:hover': {
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
-                                },
-                                border: selectedUsers.includes(user.id) ? '2px solid #4f46e5' : '2px solid transparent',
-                                backgroundColor: selectedUsers.includes(user.id) ? 'rgba(79, 70, 229, 0.03)' : 'white',
-                                cursor: 'pointer'
-                            }} 
-                            className={`card-container ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
-                            onClick={() => {
-                                setSelectedUsers(prev => 
-                                    prev.includes(user.id)
-                                        ? prev.filter(id => id !== user.id)
-                                        : [...prev, user.id]
-                                );
-                            }}
+                            <Card 
+                                className={selectedUsers.includes(user.id) ? 'selected' : ''}
+                                onClick={() => {
+                                    setSelectedUsers(prev => 
+                                        prev.includes(user.id)
+                                            ? prev.filter(id => id !== user.id)
+                                            : [...prev, user.id]
+                                    );
+                                }}
                             >
-                                <Checkbox
-                                    checked={selectedUsers.includes(user.id)}
-                                    onChange={(e) => {
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedUsers(prev => 
                                             prev.includes(user.id)
@@ -894,30 +954,35 @@ const Users = () => {
                                                 : [...prev, user.id]
                                         );
                                     }}
-                                    onClick={(e) => e.stopPropagation()}
                                     className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
-                                    icon={<AddIcon />}
-                                    checkedIcon={<CheckIcon />}
                                     sx={{
                                         position: 'absolute',
                                         top: 10,
                                         right: 10,
                                         zIndex: 10,
-                                        bgcolor: 'background.paper',
-                                        borderRadius: '50%',
-                                        width: 40,
-                                        height: 40,
+                                        backgroundColor: selectedUsers.includes(user.id) 
+                                            ? '#4f46e5' 
+                                            : 'white',
+                                        border: selectedUsers.includes(user.id) 
+                                            ? '2px solid #4f46e5' 
+                                            : '2px solid #e5e7eb',
+                                        color: selectedUsers.includes(user.id) 
+                                            ? 'white' 
+                                            : '#64748b',
+                                        width: 36,
+                                        height: 36,
                                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                        transform: 'scale(0.9)',
                                         '& .MuiSvgIcon-root': {
-                                            fontSize: '1.3rem',
-                                        },
-                                        '&.Mui-checked': {
-                                            bgcolor: '#4f46e5',
-                                            color: 'white',
+                                            fontSize: '1.1rem',
                                         }
                                     }}
-                                />
+                                >
+                                    {selectedUsers.includes(user.id) ? (
+                                        <CheckIcon />
+                                    ) : (
+                                        <AddIcon />
+                                    )}
+                                </IconButton>
                                 
                                 <CardContent 
                                     sx={{ 
@@ -949,25 +1014,8 @@ const Users = () => {
                                     
                                     <Chip
                                         label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
-                                        sx={{
-                                            mb: 2,
-                                            bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
-                                            color: '#fff',
-                                            fontWeight: 'bold',
-                                            px: 1,
-                                            '&::before': {
-                                                content: '""',
-                                                display: 'inline-block',
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                marginRight: 1,
-                                                backgroundColor: user.status === 'active' ? 'success.main' : 'error.main',
-                                                boxShadow: user.status === 'active' 
-                                                    ? '0 0 0 2px rgba(46, 204, 113, 0.3)' 
-                                                    : '0 0 0 2px rgba(231, 76, 60, 0.3)'
-                                            }
-                                        }}
+                                        className={`status-badge ${user.status}`}
+                                        sx={{ mb: 2 }}
                                     />
                                     
                                     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
@@ -996,6 +1044,7 @@ const Users = () => {
                                     }}>
                                         <IconButton
                                             onClick={() => handleEdit(user.id)}
+                                            className="action-button edit"
                                             sx={{ 
                                                 bgcolor: '#9333ea',
                                                 color: 'white',
@@ -1009,6 +1058,7 @@ const Users = () => {
                                         </IconButton>
                                         <IconButton
                                             onClick={() => handleDelete(user.id)}
+                                            className="action-button delete"
                                             sx={{ 
                                                 bgcolor: '#ef4444',
                                                 color: 'white',
@@ -1027,169 +1077,145 @@ const Users = () => {
                     ))}
                 </Grid>
             ) : (
-                <Paper sx={{ borderRadius: '16px', overflow: 'hidden' }}>
-                    <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                        {filteredUsers.map((user, index) => (
-                            <React.Fragment key={user.id}>
-                                <ListItem 
-                                    alignItems="center" 
-                                    className={`list-item-container ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
-                                    sx={{
-                                        py: 2, 
-                                        px: 3,
-                                        transition: 'background-color 0.3s, border-color 0.2s',
-                                        position: 'relative',
-                                        '&:hover': {
-                                            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                                        },
-                                        borderLeft: selectedUsers.includes(user.id) ? '4px solid #4f46e5' : '4px solid transparent',
-                                        backgroundColor: selectedUsers.includes(user.id) ? 'rgba(79, 70, 229, 0.03)' : 'transparent',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={() => {
-                                        setSelectedUsers(prev => 
-                                            prev.includes(user.id)
-                                                ? prev.filter(id => id !== user.id)
-                                                : [...prev, user.id]
-                                        );
+                <table className="contact-table">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '40px' }}>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleHeaderCheckboxClick}
+                                    sx={{ 
+                                        backgroundColor: users.length > 0 && selectedUsers.length === users.length 
+                                            ? 'rgba(79, 70, 229, 0.1)' 
+                                            : 'rgba(255, 255, 255, 0.8)',
+                                        border: selectedUsers.length > 0 
+                                            ? '1px solid #4f46e5' 
+                                            : '1px solid #e5e7eb',
+                                        color: selectedUsers.length > 0 
+                                            ? '#4f46e5' 
+                                            : '#64748b',
+                                        padding: '4px',
+                                        width: '24px',
+                                        height: '24px'
                                     }}
                                 >
-                                    <Checkbox
-                                        checked={selectedUsers.includes(user.id)}
-                                        onChange={(e) => {
+                                    {users.length > 0 && selectedUsers.length === users.length ? (
+                                        <CheckIcon fontSize="small" />
+                                    ) : selectedUsers.length > 0 ? (
+                                        <IndeterminateCheckBoxIcon fontSize="small" />
+                                    ) : (
+                                        <AddIcon fontSize="small" />
+                                    )}
+                                </IconButton>
+                            </th>
+                            <th>FULL NAME</th>
+                            <th>EMAIL</th>
+                            <th>PHONE</th>
+                            <th>PROFILE</th>
+                            <th>STATUS</th>
+                            <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredUsers.map(user => (
+                            <tr key={user.id} onClick={() => handleRowClick({ id: user.id })}>
+                                <td>
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                            e.preventDefault();
                                             e.stopPropagation();
-                                            setSelectedUsers(prev => 
-                                                prev.includes(user.id)
-                                                    ? prev.filter(id => id !== user.id)
-                                                    : [...prev, user.id]
-                                            );
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className={`selection-button list-selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
-                                        icon={<AddIcon />}
-                                        checkedIcon={<CheckIcon />}
-                                        sx={{
-                                            position: 'absolute',
-                                            left: 8,
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            zIndex: 10,
-                                            bgcolor: 'background.paper',
-                                            borderRadius: '50%',
-                                            width: 36,
-                                            height: 36,
-                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '1.2rem',
-                                            },
-                                            '&.Mui-checked': {
-                                                bgcolor: '#4f46e5',
-                                                color: 'white',
+                                            if (selectedUsers.includes(user.id)) {
+                                                setSelectedUsers(prev => prev.filter(id => id !== user.id));
+                                            } else {
+                                                setSelectedUsers(prev => [...prev, user.id]);
                                             }
                                         }}
-                                    />
-                                    
-                                    <ListItemAvatar sx={{ ml: 4 }} onClick={(e) => e.stopPropagation()}>
-                                        <Avatar 
-                                            sx={{ 
-                                                bgcolor: getAvatarColor(user.id),
-                                                width: 50,
-                                                height: 50
+                                        sx={{ 
+                                            backgroundColor: selectedUsers.includes(user.id) 
+                                                ? '#4f46e5' 
+                                                : 'white',
+                                            border: selectedUsers.includes(user.id) 
+                                                ? '2px solid #4f46e5' 
+                                                : '2px solid #e5e7eb',
+                                            color: selectedUsers.includes(user.id) 
+                                                ? 'white' 
+                                                : '#64748b',
+                                            padding: '4px',
+                                            width: '24px',
+                                            height: '24px'
+                                        }}
+                                    >
+                                        {selectedUsers.includes(user.id) ? (
+                                            <CheckIcon fontSize="small" />
+                                        ) : (
+                                            <AddIcon fontSize="small" />
+                                        )}
+                                    </IconButton>
+                                </td>
+                                <td>
+                                    <div className="name-cell">
+                                        <div className="user-avatar" style={{ backgroundColor: getAvatarColor(user.id) }}>
+                                            {getInitials(user.firstName, user.lastName)}
+                                        </div>
+                                        <div>
+                                            <div className="profile-name">{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
+                                            {user.title && <div className="profile-title">{user.title}</div>}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{user.email}</td>
+                                <td>
+                                    <Box className="phone-cell">
+                                        {user.phone ? (
+                                            <>
+                                                <PhoneIcon className="phone-icon" />
+                                                <span>{user.phone}</span>
+                                            </>
+                                        ) : (
+                                            <IconButton disabled size="small">
+                                                <PhoneIcon className="phone-icon" sx={{ opacity: 0.3 }} />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                </td>
+                                <td>
+                                    {user.profile ? user.profile.name : ''}
+                                </td>
+                                <td>
+                                    <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`}>
+                                        <span className="status-dot"></span>
+                                        {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div className="action-buttons">
+                                        <button 
+                                            className="action-button edit"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleEdit(user.id);
                                             }}
                                         >
-                                            {getInitials(user.firstName, user.lastName)}
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        onClick={(e) => e.stopPropagation()}
-                                        primary={
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mr: 2 }}>
-                                                    {user.fullName}
-                                                </Typography>
-                                                <Chip
-                                                    size="small"
-                                                    label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
-                                                    sx={{
-                                                        height: 24,
-                                                        bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
-                                                        color: '#fff',
-                                                        fontWeight: 'bold',
-                                                        px: 1,
-                                                        '&::before': {
-                                                            content: '""',
-                                                            display: 'inline-block',
-                                                            width: 6,
-                                                            height: 6,
-                                                            borderRadius: '50%',
-                                                            marginRight: 0.5,
-                                                            backgroundColor: user.status === 'active' ? 'success.main' : 'error.main',
-                                                            boxShadow: user.status === 'active' 
-                                                                ? '0 0 0 2px rgba(46, 204, 113, 0.3)' 
-                                                                : '0 0 0 2px rgba(231, 76, 60, 0.3)'
-                                                        }
-                                                    }}
-                                                />
-                                            </Box>
-                                        }
-                                        secondary={
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', mt: 0.5 }}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'medium' }}>
-                                                    {user.profile ? user.profile.name : 'No Profile'}
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, gap: 3 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <EmailIcon fontSize="small" sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {user.email}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <PhoneIcon fontSize="small" sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {user.phone || '(555) 555-0109'}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                        }
-                                    />
-                                    <ListItemSecondaryAction className="action-buttons-container list-action-buttons" onClick={(e) => e.stopPropagation()}>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <IconButton
-                                                onClick={() => handleEdit(user.id)}
-                                                sx={{ 
-                                                    bgcolor: '#9333ea',
-                                                    color: 'white',
-                                                    '&:hover': {
-                                                        bgcolor: '#7e22ce',
-                                                        boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)'
-                                                    }
-                                                }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                onClick={() => handleDelete(user.id)}
-                                                sx={{ 
-                                                    bgcolor: '#ef4444',
-                                                    color: 'white',
-                                                    '&:hover': {
-                                                        bgcolor: '#dc2626',
-                                                        boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
-                                                    }
-                                                }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Box>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                                {index < filteredUsers.length - 1 && <Divider variant="inset" component="li" />}
-                            </React.Fragment>
+                                            <EditIcon fontSize="small" />
+                                        </button>
+                                        <button 
+                                            className="action-button delete"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleDelete(user.id);
+                                            }}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         ))}
-                    </List>
-                </Paper>
+                    </tbody>
+                </table>
             )}
 
             <Menu
@@ -1357,7 +1383,7 @@ const Users = () => {
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton
+                                    <IconButton
                                                 aria-label="toggle confirm password visibility"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 edge="end"
@@ -1373,7 +1399,7 @@ const Users = () => {
                         <Typography 
                             variant="caption" 
                             color="text.secondary" 
-                            sx={{ 
+                                        sx={{ 
                                 mb: 2, 
                                 display: 'block',
                                 backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.9)',
@@ -1464,9 +1490,68 @@ const Users = () => {
                         onClick={handleSubmit} 
                         variant="contained" 
                         startIcon={<SaveIcon />}
-                        sx={{ backgroundColor: '#f97316', '&:hover': { backgroundColor: '#ea580c' } }}
+                        className="create-button"
                     >
                         {editingUser !== null ? t('users.save') : t('users.create')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog 
+                open={openDeleteDialog} 
+                onClose={() => setOpenDeleteDialog(false)}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                PaperProps={{
+                    className: "delete-confirm-dialog",
+                    style: {
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
+                        margin: '0'
+                    }
+                }}
+                BackdropProps={{
+                    style: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }}
+                maxWidth="xs"
+                fullWidth
+            >
+                <Box className="delete-dialog-header">
+                    <div className="delete-dialog-icon">
+                        <DeleteIcon />
+                    </div>
+                    <Typography variant="h6" className="delete-dialog-title">
+                        {t('users.confirmDeleteMultiple')}
+                    </Typography>
+                </Box>
+                
+                <DialogContent className="delete-dialog-content">
+                    <Typography className="delete-dialog-description">
+                        {t('users.confirmDeleteMultipleDesc', { count: selectedUsers.length })}
+                    </Typography>
+                    <Typography variant="body2" className="delete-dialog-warning">
+                        {t('users.confirmDeleteWarning')}
+                    </Typography>
+                </DialogContent>
+                
+                <DialogActions className="delete-dialog-actions">
+                    <Button 
+                        onClick={() => setOpenDeleteDialog(false)} 
+                        variant="outlined"
+                        className="delete-dialog-cancel-button"
+                    >
+                        {t('common.cancel')}
+                    </Button>
+                    <Button 
+                        onClick={handleDeleteSelected} 
+                        variant="contained"
+                        color="error"
+                        className="delete-dialog-confirm-button"
+                    >
+                        {t('common.delete')}
                     </Button>
                 </DialogActions>
             </Dialog>
