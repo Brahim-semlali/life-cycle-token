@@ -114,7 +114,7 @@ export const es = {
 'users.statusCONFIRMED': 'Confirmado',
 'users.statusREJECTED': 'Rechazado',
 'users.statusSUSPENDED': 'Suspendido',
-  
+'users.selected': 'usuarios seleccionados',
   // Security
   'security.title': 'Seguridad',
   'security.settings': 'Configuración de seguridad',

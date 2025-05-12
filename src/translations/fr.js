@@ -65,6 +65,8 @@ export const fr = {
   'users.fullName': 'Nom complet',
   'users.actionss': 'Actions',
   'profiles.clickToView': 'Cliquez pour voir',
+  'common.cancel': 'Annuler',
+  'common.delete': 'Supprimer',
 
 
   // Users
@@ -103,6 +105,12 @@ export const fr = {
   'users.status': 'Statut',
   'users.statusActive': 'Actif',
   'users.statusInactive': 'Inactif',
+  'users.statusPENDING': 'En attente',
+  'users.selected': 'utilisateurs sélectionnés',
+  'profiles.selected': 'profils sélectionnés',
+  'users.statusCONFIRMED': 'Confirmé',
+  'users.statusREJECTED': 'Rejeté',
+  'users.statusSUSPENDED': 'Suspendu',
   'users.save': 'Enregistrer',
   'users.cancel': 'Annuler',
   'users.list': 'Liste des utilisateurs',

@@ -65,7 +65,9 @@ import {
   Check as CheckIcon,
   LockOutlined,
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  LockPerson as LockPersonIcon,
+  LockOpen as LockOpenIcon
 } from '@mui/icons-material';
 import "./Users.css";
 import { getAllProfiles } from '../../../services/ProfileService';
@@ -105,6 +107,8 @@ const Users = () => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [menuUser, setMenuUser] = useState(null);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
+    const [singleDeleteDialog, setSingleDeleteDialog] = useState(false);
 
     const emptyUser = {
         firstName: '',
@@ -153,6 +157,14 @@ const Users = () => {
                     ? profiles.find(p => p.id === profileId) 
                     : null;
                     
+                // Normaliser le statut (toujours en minuscules pour l'UI)
+                let normalizedStatus = 'active'; // Valeur par défaut
+                if (user.status) {
+                    normalizedStatus = user.status.toLowerCase();
+                }
+                
+                console.log(`User ${user.id || user.email} status normalized from "${user.status}" to "${normalizedStatus}"`);
+                
                 return {
                     ...user,
                     id: user.id || user.email,
@@ -161,7 +173,7 @@ const Users = () => {
                     lastName: user.last_name,
                     profileId: profileId,
                     profile: userProfile || null,
-                    status: user.status || 'active'
+                    status: normalizedStatus
                 };
             }).sort((a, b) => {
                 return (a.firstName || '').localeCompare(b.firstName || '');
@@ -334,13 +346,16 @@ const Users = () => {
                 console.log('No profile selected for this user');
             }
             
+            // S'assurer que le statut est en majuscules pour l'API
+            const userStatus = newUser.status ? newUser.status.toUpperCase() : 'ACTIVE';
+            
             const userToSave = {
                 email: newUser.email,
                 password: newUser.password,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
                 profileId: profileId,
-                status: newUser.status || 'ACTIVE',
+                status: userStatus,
                 phone: newUser.phone
             };
 
@@ -401,6 +416,7 @@ const Users = () => {
             console.log('Editing user:', user);
             console.log('User profile:', user.profile);
             console.log('User profile_id:', user.profileId);
+            console.log('User status:', user.status);
             
             // Extraire et normaliser l'ID du profil à partir de toutes les sources possibles
             let profileId = null;
@@ -420,12 +436,17 @@ const Users = () => {
             const userProfile = profileId ? profiles.find(p => p.id === profileId) : null;
             console.log('Corresponding profile object:', userProfile);
             
+            // Normaliser le statut (convertir en minuscules pour l'UI)
+            const normalizedStatus = user.status ? user.status.toLowerCase() : 'active';
+            console.log('Normalized status for UI:', normalizedStatus);
+            
             setEditingUser(users.findIndex(u => u.id === id));
             setNewUser({
                 ...user,
                 firstName: user.firstName || user.first_name || '',
                 lastName: user.lastName || user.last_name || '',
                 profileId: profileId ? profileId.toString() : '', // Convertir en chaîne pour le composant Select
+                status: normalizedStatus,
                 password: '',
                 confirmPassword: ''
             });
@@ -433,25 +454,40 @@ const Users = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm(t('users.confirmDelete'))) {
+    const handleDelete = (id) => {
+        const user = users.find(u => u.id === id);
+        if (user) {
+            setUserToDelete(user);
+            setSingleDeleteDialog(true);
+        }
+    };
+
+    const confirmSingleDelete = async () => {
+        if (userToDelete && userToDelete.id) {
             try {
-                // Utiliser requestWithFallbacks au lieu de request pour une meilleure gestion des erreurs
-                await api.requestWithFallbacks('/user/delete/', 'POST', { id });
+                // Utiliser requestWithFallbacks pour une meilleure gestion des erreurs
+                await api.requestWithFallbacks('/user/delete/', 'POST', { id: userToDelete.id });
                 
-                // Mettre à jour l'UI immédiatement, même si la requête échoue côté serveur
-                setUsers(prev => prev.filter(user => user.id !== id));
+                // Mettre à jour l'UI immédiatement
+                setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
                 
-                // Recharger les utilisateurs en arrière-plan pour synchroniser avec le serveur
+                // Recharger les utilisateurs en arrière-plan
                 loadUsers();
             } catch (error) {
                 console.error('Erreur lors de la suppression:', error);
-                
-                // Même si l'API échoue, mettre à jour l'UI comme si la suppression avait réussi
-                // pour une meilleure expérience utilisateur
-                setUsers(prev => prev.filter(user => user.id !== id));
+                // Mettre à jour l'UI même en cas d'erreur
+                setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
             }
+            
+            // Fermer la boîte de dialogue et réinitialiser l'utilisateur à supprimer
+            setSingleDeleteDialog(false);
+            setUserToDelete(null);
         }
+    };
+
+    const cancelSingleDelete = () => {
+        setSingleDeleteDialog(false);
+        setUserToDelete(null);
     };
 
     const handleCancel = () => {
@@ -489,6 +525,41 @@ const Users = () => {
             prev.length === users.length ? [] : users.map(user => user.id)
         );
     }, [users]);
+
+    // Améliorer la fonction handleToggleUserStatus pour mieux gérer les statuts
+    const handleToggleUserStatus = async (userId, currentStatus) => {
+        try {
+            // Convertir le statut en majuscules pour l'API
+            const newStatus = currentStatus.toLowerCase() === 'active' ? 'BLOCKED' : 'ACTIVE';
+            
+            console.log(`Changing user ${userId} status from ${currentStatus} to ${newStatus}`);
+            
+            // Mise à jour de l'interface utilisateur immédiatement pour une meilleure réactivité
+            setUsers(prev => prev.map(user => 
+                user.id === userId 
+                    ? { ...user, status: newStatus.toLowerCase() } 
+                    : user
+            ));
+            
+            // Utiliser la méthode spécifique pour mettre à jour le statut
+            await api.updateUserStatus(userId, newStatus);
+            
+            // Recharger les utilisateurs pour s'assurer que les données sont à jour
+            loadUsers();
+            
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du statut:', error);
+            // Revenir à l'état précédent en cas d'erreur
+            setUsers(prev => prev.map(user => 
+                user.id === userId 
+                    ? { ...user, status: currentStatus.toLowerCase() } 
+                    : user
+            ));
+            
+            // Afficher un message d'erreur à l'utilisateur
+            alert(t('users.errorUpdatingStatus', 'Erreur lors de la mise à jour du statut de l\'utilisateur'));
+        }
+    };
 
     // Mémorisation des colonnes
     const columns = useMemo(() => [
@@ -677,6 +748,37 @@ const Users = () => {
                         }}
                     />
                 </Tooltip>,
+                params.row.status?.toLowerCase() === 'active' ? (
+                    <Tooltip title={t('users.block')} arrow placement="top">
+                        <GridActionsCellItem
+                            icon={<LockPersonIcon className="action-icon block-icon" />}
+                            label={t('users.block')}
+                            onClick={() => handleToggleUserStatus(params.id, params.row.status)}
+                            className="grid-action-item"
+                            sx={{
+                                '&:hover': {
+                                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                },
+                                color: '#f59e0b'
+                            }}
+                        />
+                    </Tooltip>
+                ) : params.row.status?.toLowerCase() === 'blocked' ? (
+                    <Tooltip title={t('users.unblock')} arrow placement="top">
+                        <GridActionsCellItem
+                            icon={<LockOpenIcon className="action-icon unblock-icon" />}
+                            label={t('users.unblock')}
+                            onClick={() => handleToggleUserStatus(params.id, params.row.status)}
+                            className="grid-action-item"
+                            sx={{
+                                '&:hover': {
+                                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                },
+                                color: '#10b981'
+                            }}
+                        />
+                    </Tooltip>
+                ) : null,
                 <Tooltip title={t('users.delete')} arrow placement="top">
                     <GridActionsCellItem
                         icon={<DeleteIcon className="action-icon delete-icon" />}
@@ -1056,6 +1158,44 @@ const Users = () => {
                                         >
                                             <EditIcon />
                                         </IconButton>
+                                        {user.status?.toLowerCase() === 'active' && (
+                                            <IconButton
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleUserStatus(user.id, user.status);
+                                                }}
+                                                className="action-button block"
+                                                sx={{ 
+                                                    bgcolor: '#f59e0b',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        bgcolor: '#d97706',
+                                                        boxShadow: '0 4px 8px rgba(245, 158, 11, 0.3)'
+                                                    }
+                                                }}
+                                            >
+                                                <LockPersonIcon />
+                                            </IconButton>
+                                        )}
+                                        {user.status?.toLowerCase() === 'blocked' && (
+                                            <IconButton
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleUserStatus(user.id, user.status);
+                                                }}
+                                                className="action-button unblock"
+                                                sx={{ 
+                                                    bgcolor: '#10b981',
+                                                    color: 'white',
+                                                    '&:hover': {
+                                                        bgcolor: '#059669',
+                                                        boxShadow: '0 4px 8px rgba(16, 185, 129, 0.3)'
+                                                    }
+                                                }}
+                                            >
+                                                <LockOpenIcon />
+                                            </IconButton>
+                                        )}
                                         <IconButton
                                             onClick={() => handleDelete(user.id)}
                                             className="action-button delete"
@@ -1200,6 +1340,30 @@ const Users = () => {
                                         >
                                             <EditIcon fontSize="small" />
                                         </button>
+                                        {user.status?.toLowerCase() === 'active' && (
+                                            <button 
+                                                className="action-button block"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleToggleUserStatus(user.id, user.status);
+                                                }}
+                                            >
+                                                <LockPersonIcon fontSize="small" />
+                                            </button>
+                                        )}
+                                        {user.status?.toLowerCase() === 'blocked' && (
+                                            <button 
+                                                className="action-button unblock"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleToggleUserStatus(user.id, user.status);
+                                                }}
+                                            >
+                                                <LockOpenIcon fontSize="small" />
+                                            </button>
+                                        )}
                                         <button 
                                             className="action-button delete"
                                             onClick={(e) => {
@@ -1543,7 +1707,7 @@ const Users = () => {
                         variant="outlined"
                         className="delete-dialog-cancel-button"
                     >
-                        {t('common.cancel')}
+                        {t('users.cancel', 'Annuler')}
                     </Button>
                     <Button 
                         onClick={handleDeleteSelected} 
@@ -1551,7 +1715,66 @@ const Users = () => {
                         color="error"
                         className="delete-dialog-confirm-button"
                     >
-                        {t('common.delete')}
+                        {t('users.delete', 'Supprimer')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog 
+                open={singleDeleteDialog} 
+                onClose={cancelSingleDelete}
+                aria-labelledby="single-delete-dialog-title"
+                aria-describedby="single-delete-dialog-description"
+                PaperProps={{
+                    className: "delete-confirm-dialog",
+                    style: {
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
+                        margin: '0'
+                    }
+                }}
+                BackdropProps={{
+                    style: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }}
+                maxWidth="xs"
+                fullWidth
+            >
+                <Box className="delete-dialog-header">
+                    <div className="delete-dialog-icon">
+                        <DeleteIcon />
+                    </div>
+                    <Typography variant="h6" className="delete-dialog-title">
+                        {t('users.deleteTitle', 'Delete User')}
+                    </Typography>
+                </Box>
+                
+                <DialogContent className="delete-dialog-content">
+                    <Typography className="delete-dialog-description">
+                        {t('users.deleteConfirmMessage', 'Are you sure you want to delete the user')} {userToDelete ? `${userToDelete.firstName} ${userToDelete.lastName}` : ''}?
+                    </Typography>
+                    <Typography variant="body2" className="delete-dialog-warning">
+                        {t('users.deleteWarning', 'This action cannot be undone. All data associated with this user will be permanently removed.')}
+                    </Typography>
+                </DialogContent>
+                
+                <DialogActions className="delete-dialog-actions">
+                    <Button 
+                        onClick={cancelSingleDelete} 
+                        variant="outlined"
+                        className="delete-dialog-cancel-button"
+                    >
+                        {t('users.cancel', 'Cancel')}
+                    </Button>
+                    <Button 
+                        onClick={confirmSingleDelete} 
+                        variant="contained"
+                        color="error"
+                        className="delete-dialog-confirm-button"
+                    >
+                        {t('users.delete', 'Delete')}
                     </Button>
                 </DialogActions>
             </Dialog>

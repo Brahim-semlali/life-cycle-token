@@ -57,11 +57,25 @@ const api = {
         }
     },
 
-    async updateUserStatus(status) {
+    async updateUserStatus(userId, status) {
         try {
-            // Utiliser l'API POST /user/status/ pour mettre à jour le statut
-            const response = await this.request('/user/status/', 'POST', status);
-            console.log('Update status response:', response);
+            // Vérifier que le statut est valide
+            const validStatuses = ['ACTIVE', 'INACTIVE', 'BLOCKED', 'SUSPENDED'];
+            const normalizedStatus = status.toUpperCase();
+            
+            if (!validStatuses.includes(normalizedStatus)) {
+                throw new Error('Invalid user status');
+            }
+            
+            console.log(`Updating user ${userId} status to ${normalizedStatus}`);
+            
+            // Utiliser directement la méthode POST avec l'endpoint /user/update/ qui fonctionne
+            const response = await this.request('/user/update/', 'POST', {
+                id: userId,
+                status: normalizedStatus
+            });
+            
+            console.log('Update user status response:', response);
             return response;
         } catch (error) {
             console.error('Error updating user status:', error);

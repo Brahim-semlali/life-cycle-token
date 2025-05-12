@@ -96,10 +96,13 @@ export const en = {
   'modules.clients.title': 'Clients',
   'modules.clients.management': 'Management',
   'modules.clients.contracts': 'Contracts',
+  'common.cancel': 'Cancel',
+  'common.delete': 'Delete',
   'modules.clients.billing': 'Billing',
 
   // Users
   'users.title': 'Users',
+  'profiles.selected': 'profiles selected',
   'users.create': 'Create User',
   'users.edit': 'Edit User',
   'users.delete': 'Delete User',

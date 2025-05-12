@@ -102,7 +102,10 @@ export const ar = {
 'users.statusCONFIRMED': 'مؤكد',
 'users.statusREJECTED': 'مرفوض',
 'users.statusSUSPENDED': 'معلق',
-  
+'users.selected': 'مستخدمين محددين',
+'profiles.selected': 'الملفات الشخصية المحددة',
+'common.cancel': 'إلغاء',
+'common.delete': 'حذف',
   // Security
   'security.title': 'الأمان',
   'security.settings': 'إعدادات الأمان',
