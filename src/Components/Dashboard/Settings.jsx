@@ -185,6 +185,8 @@ const Settings = () => {
       return;
     }
     
+    console.log(`Changing language from UI: ${newLanguage}`);
+    
     // Mettre à jour le contexte de langue (qui sauvegarde aussi la préférence)
     changeLanguage(newLanguage);
     

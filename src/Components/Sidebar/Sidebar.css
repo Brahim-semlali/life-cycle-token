@@ -22,6 +22,14 @@
     border-right: 1px solid rgba(229, 231, 235, 0.3);
 }
 
+/* Dark mode styles for sidebar */
+.sidebar.dark-mode {
+    background: linear-gradient(145deg, #1a1d23 0%, #111827 100%);
+    color: #e2e8f0;
+    border-right: 1px solid rgba(55, 65, 81, 0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
 .sidebar.minimized {
     width: 80px;
     overflow: visible;
@@ -36,6 +44,12 @@
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(5px);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode sidebar header */
+.sidebar.dark-mode .sidebar-header {
+    border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+    background: rgba(17, 24, 39, 0.5);
 }
 
 .logo {
@@ -69,6 +83,19 @@
     margin-top: 2px;
 }
 
+/* Dark mode logo text */
+.sidebar.dark-mode .logo-full h2 {
+    background: linear-gradient(90deg, #818cf8 0%, #a78bfa 50%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0px 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+.sidebar.dark-mode .logo-full span {
+    color: #9ca3af;
+}
+
 .logo-icon {
     width: 40px;
     height: 40px;
@@ -83,6 +110,12 @@
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     position: relative;
     overflow: hidden;
+}
+
+/* Dark mode logo icon */
+.sidebar.dark-mode .logo-icon {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .logo-icon::before {
@@ -111,10 +144,22 @@
     position: relative;
 }
 
+/* Dark mode toggle button */
+.sidebar.dark-mode .toggle-button {
+    background: rgba(139, 92, 246, 0.1);
+    color: #9ca3af;
+}
+
 .toggle-button:hover {
     background-color: rgba(124, 58, 237, 0.1);
     color: #7c3aed;
     transform: translateX(2px);
+}
+
+/* Dark mode toggle button hover */
+.sidebar.dark-mode .toggle-button:hover {
+    background-color: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
 }
 
 .toggle-button::after {
@@ -129,8 +174,16 @@
     transition: box-shadow 0.3s ease;
 }
 
+.sidebar.dark-mode .toggle-button::after {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+}
+
 .toggle-button:active::after {
     box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.15);
+}
+
+.sidebar.dark-mode .toggle-button:active::after {
+    box-shadow: 0 0 0 5px rgba(139, 92, 246, 0.25);
 }
 
 .sidebar-content {
@@ -174,6 +227,12 @@
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(5px);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode sidebar footer */
+.sidebar.dark-mode .sidebar-footer {
+    border-top: 1px solid rgba(55, 65, 81, 0.5);
+    background: rgba(17, 24, 39, 0.4);
 }
 
 .settings-link a, .logout-button {
@@ -568,4 +627,69 @@
 .sidebar.minimized .module-item:hover .module-submenu ~ .tooltip-text {
     opacity: 0;
     visibility: hidden;
+}
+
+/* Dark mode styles for modules */
+.sidebar.dark-mode .module-item {
+    color: #e2e8f0;
+}
+
+.sidebar.dark-mode .module-item:hover {
+    background-color: rgba(124, 58, 237, 0.15);
+    color: #a78bfa;
+}
+
+.sidebar.dark-mode .module-item.active {
+    background-color: rgba(124, 58, 237, 0.25);
+    color: #a78bfa;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+}
+
+/* Dark mode styles for submenu */
+.sidebar.dark-mode .module-submenu {
+    border-left: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+.sidebar.dark-mode .module-submenu a {
+    color: #e2e8f0;
+}
+
+.sidebar.dark-mode .module-submenu a:hover {
+    background-color: rgba(124, 58, 237, 0.15);
+    color: #a78bfa;
+}
+
+.sidebar.dark-mode .module-submenu a.active {
+    background-color: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+}
+
+/* Dark mode settings and logout buttons */
+.sidebar.dark-mode .settings-link a, 
+.sidebar.dark-mode .logout-button {
+    color: #e2e8f0;
+}
+
+.sidebar.dark-mode .settings-link a:hover, 
+.sidebar.dark-mode .logout-button:hover {
+    background-color: rgba(124, 58, 237, 0.15);
+    color: #a78bfa;
+}
+
+.sidebar.dark-mode .settings-link a.active {
+    background-color: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+}
+
+/* Dark mode tooltips */
+.sidebar.dark-mode .tooltip-text {
+    background: #1f2937;
+    color: #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode minimized submenu */
+.sidebar.dark-mode.minimized .module-submenu {
+    background: #1f2937;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMenu } from "../../context/MenuContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
 import { useAuth } from "../../context/AuthContext";
 import ModuleService from "../../services/ModuleService";
@@ -53,6 +54,7 @@ const ROUTE_MAPPING = {
 const Sidebar = () => {
     const [isModuleOpen, setIsModuleOpen] = useState({});
     const { isMinimized, setIsMinimized } = useMenu();
+    const { isDarkMode } = useTheme();
     const { t } = useTranslation();
     const { allModules, allMenus, userModules, userMenus, logout, user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
@@ -329,7 +331,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className={`sidebar ${isMinimized ? "minimized" : ""}`}>
+        <div className={`sidebar ${isMinimized ? "minimized" : ""} ${isDarkMode ? "dark-mode" : ""}`}>
             <div className="sidebar-header">
                 <div className="logo">
                     {!isMinimized ? (

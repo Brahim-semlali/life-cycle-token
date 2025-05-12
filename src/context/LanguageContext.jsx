@@ -11,17 +11,41 @@ export const LanguageProvider = ({ children }) => {
   // Function to change the language
   const changeLanguage = async (languageCode) => {
     try {
+      if (!languageCode) {
+        console.error('Invalid language code: empty or undefined');
+        return;
+      }
+      
       // Convert to uppercase for API but keep lowercase for UI
       const apiLanguageCode = languageCode.toUpperCase();
       const uiLanguageCode = languageCode.toLowerCase();
       
+      console.log(`Changing language to: ${apiLanguageCode} (API) / ${uiLanguageCode} (UI)`);
+      
+      // Special handling for English to debug the issue
+      if (uiLanguageCode === 'en') {
+        console.log('Processing English language change request');
+      }
+      
       // Utiliser la méthode spécifique pour mettre à jour la langue
       const response = await api.updateUserLanguage(apiLanguageCode);
-      if (response && response.success) {
+      console.log('Language update response:', response);
+      
+      if (response && (response.success || response.new_language)) {
+        console.log(`Setting current language to: ${uiLanguageCode}`);
         setCurrentLanguage(uiLanguageCode);
+        
+        // Save to localStorage as additional backup
+        localStorage.setItem('userLanguage', uiLanguageCode);
+        
+        return true;
+      } else {
+        console.warn('Language update response did not contain success flag:', response);
+        return false;
       }
     } catch (error) {
       console.error('Error saving language preference:', error);
+      return false;
     }
   };
 
@@ -29,10 +53,25 @@ export const LanguageProvider = ({ children }) => {
   React.useEffect(() => {
     const loadLanguage = async () => {
       try {
-        // Utiliser la méthode spécifique pour obtenir la langue actuelle
+        // Try loading from localStorage first as fallback
+        const savedLanguage = localStorage.getItem('userLanguage');
+        if (savedLanguage) {
+          console.log(`Loading language from localStorage: ${savedLanguage}`);
+          setCurrentLanguage(savedLanguage.toLowerCase());
+        }
+        
+        // Then try to get from API
+        console.log('Fetching language from API...');
         const response = await api.getUserLanguage();
+        console.log('API language response:', response);
+        
         if (response && response.language) {
-          setCurrentLanguage(response.language);
+          const apiLanguage = response.language.toLowerCase();
+          console.log(`Setting language from API: ${apiLanguage}`);
+          setCurrentLanguage(apiLanguage);
+          
+          // Update localStorage
+          localStorage.setItem('userLanguage', apiLanguage);
         }
       } catch (error) {
         console.error('Error loading language preference:', error);

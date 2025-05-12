@@ -11,12 +11,20 @@ export const ThemeProvider = ({ children }) => {
   const toggleTheme = async () => {
     try {
       const newTheme = !isDarkMode;
-      const response = await api.updateUserStatus({ theme: newTheme ? 'dark' : 'light' });
+      const themeValue = newTheme ? 'dark' : 'light';
+      
+      // Save to localStorage first as fallback
+      localStorage.setItem('userTheme', themeValue);
+      
+      // Then try to update via API
+      const response = await api.updateUserTheme(themeValue);
       if (response && response.success) {
         setIsDarkMode(newTheme);
       }
     } catch (error) {
       console.error('Error saving theme preference:', error);
+      // Still update the UI even if API fails
+      setIsDarkMode(!isDarkMode);
     }
   };
 
@@ -24,9 +32,18 @@ export const ThemeProvider = ({ children }) => {
   React.useEffect(() => {
     const loadTheme = async () => {
       try {
-        const response = await api.getUserStatus();
-        if (response && response.theme) {
-          setIsDarkMode(response.theme === 'dark');
+        // First try to get from localStorage as fallback
+        const savedTheme = localStorage.getItem('userTheme');
+        if (savedTheme) {
+          setIsDarkMode(savedTheme === 'dark');
+        } else {
+          // Then try the API
+          const response = await api.getUserTheme();
+          if (response && response.theme) {
+            setIsDarkMode(response.theme === 'dark');
+            // Save to localStorage for future use
+            localStorage.setItem('userTheme', response.theme);
+          }
         }
       } catch (error) {
         console.error('Error loading theme preference:', error);

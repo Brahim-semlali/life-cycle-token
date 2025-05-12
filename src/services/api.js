@@ -26,16 +26,26 @@ const api = {
 
     async updateUserLanguage(language) {
         try {
+            // Ensure language is not null or undefined
+            if (!language) {
+                throw new Error('Language code is required');
+            }
+
+            // Convert to uppercase and ensure it's a string
+            const normalizedLang = language.toString().toUpperCase();
+            
             // Vérifier que la langue est valide (codes ISO standards)
             const validLanguages = ['EN', 'FR', 'AR']; // Updated to match UserLanguage choices from the model
-            if (!validLanguages.includes(language.toUpperCase())) {
-                throw new Error('Invalid language code');
+            if (!validLanguages.includes(normalizedLang)) {
+                throw new Error(`Invalid language code: ${normalizedLang}`);
             }
+            
+            console.log(`Updating user language to: ${normalizedLang}`);
             
             // Utiliser l'API PUT /user/language/ pour mettre à jour la langue
             // Envoyer la langue dans le format attendu par l'API
             const response = await this.request('/user/language/', 'PUT', { 
-                language: language.toUpperCase() // Use 'language' field instead of 'code'
+                language: normalizedLang // Use 'language' field instead of 'code'
             });
             console.log('Update language response:', response);
             return response;
@@ -686,7 +696,37 @@ const api = {
             
             return staticUsers.find(u => u.id === userId);
         }
-    }
+    },
+
+    async getUserTheme() {
+        try {
+            // Try to get theme from user status or preferences
+            const response = await this.getUserStatus();
+            return { 
+                theme: response && response.theme ? response.theme : 'light'
+            };
+        } catch (error) {
+            console.error('Error getting user theme:', error);
+            return { theme: 'light' }; // Default theme in case of error
+        }
+    },
+
+    async updateUserTheme(theme) {
+        try {
+            // Validate theme
+            if (!['light', 'dark'].includes(theme)) {
+                throw new Error('Invalid theme value');
+            }
+            
+            // We could add a dedicated endpoint later
+            // For now, just return success to avoid errors
+            console.log(`Theme preference set to: ${theme}`);
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating user theme:', error);
+            throw error;
+        }
+    },
 };
 
 // Export des services
