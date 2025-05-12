@@ -1,312 +1,347 @@
-# Titrit Technologies Project Documentation
+# Titrit Technologies - Plateforme de Gestion des Tokens
 
-## Table of Contents
-1. [Overview](#overview)
-2. [Technologies Used](#technologies-used)
-3. [Project Structure](#project-structure)
-4. [User Management](#user-management)
-5. [Getting Started](#getting-started)
-6. [API Configuration](#api-configuration)
-7. [Environment Variables](#environment-variables)
-8. [Password Management](#password-management)
-9. [Internationalization](#internationalization)
+## Table des matières
+1. [Vue d'ensemble](#vue-densemble)
+2. [Technologies utilisées](#technologies-utilisées)
+3. [Structure du projet](#structure-du-projet)
+4. [Fonctionnalités principales](#fonctionnalités-principales)
+5. [Installation et configuration](#installation-et-configuration)
+6. [Configuration de l'API](#configuration-de-lapi)
+7. [Authentification et sécurité](#authentification-et-sécurité)
+8. [Gestion des utilisateurs et des profils](#gestion-des-utilisateurs-et-des-profils)
+9. [Internationalisation (i18n)](#internationalisation-i18n)
+10. [Thème et personnalisation](#thème-et-personnalisation)
+11. [Notifications système](#notifications-système)
+12. [Documentation technique](#documentation-technique)
 
-## Overview
-This project is a web application developed with React.js, implementing a modern user interface with authentication, user management, and dashboard features.
+## Vue d'ensemble
+Titrit Technologies est une application web moderne développée avec React.js qui fournit une interface utilisateur complète pour la gestion des tokens, des utilisateurs, des profils, de la sécurité et d'autres fonctionnalités administratives. L'application est conçue avec une approche modulaire permettant d'activer ou de désactiver des fonctionnalités spécifiques en fonction des besoins des utilisateurs.
 
-## Technologies Used
+## Technologies utilisées
 
 ### Frontend
-- **React.js** (v19.1.0) - JavaScript framework for building user interfaces
-- **React Router DOM** (v7.5.0) - Routing management in the application
-- **Axios** (v1.8.4) - HTTP client for API requests
-- **React Icons** (v5.5.0) - Icon library
-- **CSS Modules** - For component styling
+- **React.js (v18.2.0)** - Bibliothèque JavaScript pour la création d'interfaces utilisateur
+- **React Router (v7.5.0)** - Gestion du routage dans l'application
+- **Material UI (v7.0.2)** - Composants UI modernes et réactifs
+- **MUI X Data Grid (v8.0.0)** - Tableaux de données avancés
+- **Axios (v1.9.0)** - Client HTTP pour les requêtes API
+- **i18next (v25.0.1)** - Bibliothèque d'internationalisation
+- **Notistack (v3.0.2)** - Système de notifications empilables
+- **XLSX (v0.18.5)** - Manipulation de fichiers Excel pour l'import/export de traductions
 
-### Development Tools
-- **Create React App** - Initial project setup
-- **ESLint** - Code linting
-- **Jest** - Unit testing
-- **Web Vitals** - Performance measurement
+### Développement
+- **React Scripts** - Configuration de développement
+- **React App Rewired** - Personnalisation de la configuration webpack
+- **ESLint** - Analyse statique du code
+- **Autoprefixer & PostCSS** - Optimisation CSS
+- **HTTPS en développement** - Utilisation de certificats SSL locaux (mkcert)
 
-## Project Structure
+## Structure du projet
 
 ```
 src/
-├── Components/           # React Components
-│   ├── LoginForm/       # Login form
-│   ├── Sidebar/         # Navigation sidebar
-│   ├── Dashboard/       # Dashboard components
-│   │   ├── Admin/       # Admin components (Users, Profiles)
-│   │   └── ...         # Other dashboard sections
-│   └── Assets/          # Static resources
-├── context/             # React Context providers
-│   ├── MenuContext.jsx  # Menu management
-│   ├── AuthContext.jsx  # Authentication management
-│   └── ...             # Other contexts
-├── config/              # Configuration files
-│   ├── predefinedUsers.js    # User management
-│   └── predefinedProfiles.js # Profile management
-├── index.js            # Entry point
-└── App.css             # Global styles
+├── Components/             # Composants React
+│   ├── LoginForm/         # Formulaire de connexion
+│   ├── Sidebar/           # Barre latérale de navigation
+│   ├── Dashboard/         # Composants du tableau de bord
+│   │   ├── Admin/         # Gestion administrative (utilisateurs, profils, sécurité)
+│   │   ├── TokenManager/  # Gestion des tokens
+│   │   ├── IssuerTSP/     # Émetteur TSP
+│   │   ├── ChargeBack/    # Gestion des remboursements
+│   │   └── Transactions/  # Gestion des transactions
+│   └── Utils/             # Composants utilitaires
+├── context/               # Contextes React pour la gestion d'état globale
+│   ├── AuthContext.jsx    # Gestion de l'authentification
+│   ├── ThemeContext.jsx   # Gestion du thème (clair/sombre)
+│   ├── LanguageContext.jsx # Gestion des langues
+│   └── MenuContext.jsx    # Gestion de l'état du menu
+├── services/              # Services d'API et utilitaires
+│   ├── api.js             # Service principal d'API
+│   ├── AuthService.js     # Services d'authentification
+│   ├── UserService.js     # Services de gestion des utilisateurs
+│   ├── ProfileService.js  # Services de gestion des profils
+│   └── ModuleService.js   # Services de gestion des modules
+├── translations/          # Fichiers de traduction
+│   ├── en.js             # Traductions anglaises
+│   ├── fr.js             # Traductions françaises
+│   ├── ar.js             # Traductions arabes
+│   └── es.js             # Traductions espagnoles
+├── routes/                # Configuration des routes
+├── config/                # Fichiers de configuration
+├── App.js                 # Composant principal de l'application
+└── index.js              # Point d'entrée de l'application
 ```
 
-## User Management
+## Fonctionnalités principales
 
-### Predefined Users
-The system includes several predefined user accounts with different access levels:
+### Administration
+- **Gestion des utilisateurs** - Création, modification, suppression et recherche d'utilisateurs
+- **Gestion des profils** - Définition de rôles et de permissions pour les utilisateurs
+- **Paramètres de sécurité** - Configuration des règles de mot de passe et des politiques de sécurité
+- **Gestion des clients** - Interface pour la gestion des clients et leur configuration
 
-1. **Admin Account**
-   - Email: admin@titrit.com
-   - Password: Admin@123
-   - Access: Full administrative access
+### Token Manager
+- **Gestion des risques** - Évaluation et gestion des risques liés aux tokens
+- **Step-Up** - Authentification renforcée pour les transactions sensibles
+- **Équipe anti-fraude** - Outils pour l'équipe de gestion des fraudes
+- **Centre d'appel** - Interface pour le support client
 
-2. **Security Team**
-   - Email: security@titrit.com
-   - Password: Security@123
-   - Access: Security management features
+### Issuer TSP
+- **Gestion des tokens** - Création et gestion des tokens
+- **MDES** - Intégration avec Mastercard Digital Enablement Service
+- **VTS** - Intégration avec Visa Token Service
 
-3. **Bank Team**
-   - Email: bank@titrit.com
-   - Password: Bank@123
-   - Access: Banking operations
+### Autres modules
+- **ChargeBack** - Gestion des remboursements et des contestations
+- **Transactions** - Suivi et gestion des transactions
 
-4. **Call Center Team**
-   - Email: callcenter@titrit.com
-   - Password: CallCenter@123
-   - Access: Customer service features
+### Fonctionnalités transversales
+- **Multi-langue** - Support de plusieurs langues (anglais, français, arabe, espagnol)
+- **Thème sombre/clair** - Personnalisation de l'interface utilisateur
+- **Interface responsive** - Adaptation à différentes tailles d'écran
+- **Contrôle d'accès** - Accès basé sur les rôles et les permissions
+- **Système de notifications** - Affichage de messages d'information et d'erreur
+- **Import/Export** - Fonctionnalités pour importer et exporter des données (notamment les traductions)
 
-### Creating New Users
-Administrators can create new users through the admin interface:
+## Installation et configuration
 
-1. Log in as admin
-2. Navigate to Dashboard > Admin > Users
-3. Click "Create User" and fill in the details:
-   - First Name
-   - Last Name
-   - Email
-   - Username
-   - Password
-   - Profile Selection
-   - Status (Active/Inactive)
+### Prérequis
+- Node.js (v16 ou supérieur)
+- npm ou yarn
+- Serveur API backend fonctionnel
 
-### User Persistence
-- New users created by administrators are automatically added to the system's predefined users
-- User data persists between sessions using localStorage
-- User profiles and access rights are managed through the profile system
+### Installation
+1. Clonez le dépôt
+```bash
+git clone https://github.com/votre-organisation/titrit-technologies.git
+cd titrit-technologies
+```
 
-### Profile Management
-Users can be assigned different profiles with specific access rights:
-- Admin Profile: Full system access
-- Security Team: Security management
-- Bank Team: Banking operations
-- Call Center: Customer service
-- Custom profiles can be created and managed
+2. Installez les dépendances
+```bash
+npm install
+# ou
+yarn install
+```
 
-## Components
+3. Créez des certificats SSL locaux pour le développement HTTPS
+```bash
+# Installez mkcert si nécessaire
+mkcert -install
+mkcert localhost
 
-### LoginForm
-- User authentication management
-- Validation of forms
-- Integration with the authentication API
-- Support for predefined and custom users
+# Assurez-vous que les fichiers sont nommés:
+# - localhost.pem
+# - localhost-key.pem
+```
 
-### Sidebar
-- Dynamic navigation based on user profile
-- Menu state management via MenuContext
-- Responsive interface
-- Access control based on user permissions
+4. Démarrez le serveur de développement
+```bash
+npm start
+# ou
+yarn start
+```
 
-### Dashboard/Admin
-- User Management Interface
-- Profile Management
-- Security Settings
-- Access Control Management
+L'application sera accessible à l'adresse https://localhost:3001
 
-## Configuration
+### Configuration des ports
+Par défaut, l'application frontend utilise le port 3001. Vous pouvez modifier ce port dans le fichier `package.json` en ajustant la variable d'environnement `PORT` dans la commande de démarrage.
 
-### Environment Variables
-The project uses HTTPS in development with local SSL certificates:
-- SSL_CRT_FILE=cert/localhost.pem
-- SSL_KEY_FILE=cert/localhost-key.pem
+## Configuration de l'API
 
-### Scripts Available
-- `npm start` - Launches the HTTPS development server
-- `npm build` - Creates a production version
-- `npm test` - Launches tests
-- `npm eject` - Ejects CRA configuration
+### Configuration du service API
+L'application utilise un service API centralisé dans `src/services/api.js` avec les fonctionnalités suivantes:
+- URL de base configurable via variable d'environnement
+- Gestion automatique des cookies de session
+- Gestion des erreurs et des tentatives de reconnexion
+- Support pour différents endpoints et méthodes
 
-## API Configuration
+### Variables d'environnement
+Créez un fichier `.env` à la racine du projet avec le contenu suivant:
+```
+REACT_APP_API_URL=https://localhost:8000
+```
 
-### API Service Setup
-The application uses Axios for API requests with the following features:
-- Centralized API configuration in `src/services/api.js`
-- Automatic token management for authenticated requests
-- Error handling and authentication failure management
-- Default headers configuration
-
-### API Usage Example
+### Exemple d'utilisation de l'API
 ```javascript
 import api from '../services/api';
 
-// GET request
-api.get('/endpoint')
-  .then(response => {
-    // Handle response
-  })
-  .catch(error => {
-    // Handle error
-  });
-
-// POST request
-api.post('/endpoint', data)
-  .then(response => {
-    // Handle response
-  })
-  .catch(error => {
-    // Handle error
-  });
-```
-
-## Environment Variables
-
-### Required Variables
-- `REACT_APP_API_URL`: Base URL for API requests (default: http://localhost:3000)
-
-### Development Environment
-Create a `.env` file in the project root with the following content:
-```
-REACT_APP_API_URL=http://localhost:3000
-```
-
-### Production Environment
-For production, set the environment variables in your hosting platform:
-- Heroku: Use the dashboard or CLI
-- Netlify: Use the site settings
-- Vercel: Use the project settings
-
-### Security Notes
-- Never commit `.env` files to version control
-- Use `.env.example` as a template for required variables
-- Keep sensitive information in environment variables
-- Use HTTPS in production environments
-
-## Getting Started
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Launch the development server:
-```bash
-npm start
-```
-
-3. Access the application:
-- URL: https://localhost:3000
-- Use predefined admin credentials to start:
-  - Email: admin@titrit.com
-  - Password: Admin@123
-
-## Security
-- Use of HTTPS in development
-- Secure token management
-- Protection of sensitive routes
-- Role-based access control
-- Password encryption
-- Session management
-
-## Performance
-- Image and asset optimization
-- Lazy loading of components
-- Monitoring via Web Vitals
-- Efficient state management
-
-## Maintenance
-- Modular and reusable code
-- Component documentation
-- Unit tests for critical features
-- User management documentation
-
-## Password Management
-
-### Password Security Features
-- Password visibility toggle
-- Password confirmation requirement
-- Password strength validation
-- Password rules enforcement:
-  - Minimum length (8 characters)
-  - Uppercase letters required
-  - Lowercase letters required
-  - Numbers required
-  - Special characters required
-
-### Password Rules Configuration
-Password rules can be configured through the security settings:
-```javascript
-const passwordRules = {
-    minLength: 8,
-    requireUppercase: true,
-    requireLowercase: true,
-    requireNumbers: true,
-    requireSpecialChars: true
+// Récupérer les données d'utilisateur
+const getUserData = async (userId) => {
+  try {
+    const response = await api.request(`/user/${userId}/`, 'GET');
+    return response;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données:', error);
+    throw error;
+  }
 };
 ```
 
-### Password Validation
-The system validates passwords against the following criteria:
-- Length requirements
-- Character type requirements
-- Password confirmation match
-- Password history (if enabled)
-- Password expiration (if enabled)
+## Authentification et sécurité
 
-## Internationalization
+### Processus d'authentification
+1. L'utilisateur saisit ses identifiants sur la page de connexion
+2. Les identifiants sont envoyés à l'API d'authentification
+3. Un cookie de session est défini après une authentification réussie
+4. Ce cookie est automatiquement inclus dans toutes les requêtes suivantes
 
-### Supported Languages
-The application supports multiple languages:
-- English (en)
-- French (fr)
-- Spanish (es)
-- Arabic (ar)
+### Sécurité des mots de passe
+L'application applique des règles strictes pour les mots de passe:
+- Longueur minimale (8 caractères par défaut)
+- Combinaison de lettres majuscules et minuscules
+- Inclusion de chiffres
+- Caractères spéciaux (facultatif mais recommandé)
 
-### Translation Management
-Translations are managed through:
-1. Excel template (`public/assets/templates/translations_template.xlsx`)
-2. JSON files in `src/translations/`
-3. Dynamic import/export functionality
+### Protection des routes
+Toutes les routes protégées utilisent des composants d'autorisation qui vérifient:
+- L'authentification de l'utilisateur
+- Les permissions basées sur le profil de l'utilisateur
+- L'accès aux modules spécifiques
 
-### Translation Structure
-The translation system uses a key-value structure:
+### HTTPS en développement
+L'application utilise HTTPS même en environnement de développement pour assurer la sécurité des cookies et des données transmises. Cette configuration utilise mkcert pour générer des certificats SSL locaux.
+
+## Gestion des utilisateurs et des profils
+
+### Création d'utilisateurs
+Les administrateurs peuvent créer de nouveaux utilisateurs avec les informations suivantes:
+- Informations personnelles (nom, prénom, email)
+- Profil assigné (détermine les permissions)
+- Statut (actif, inactif, bloqué, etc.)
+- Informations de contact
+
+### Profils et permissions
+Les profils définissent l'accès aux différents modules et fonctionnalités:
+- Chaque profil peut être configuré avec des permissions spécifiques
+- Les permissions sont organisées par modules et menus
+- Les utilisateurs héritent des permissions de leur profil assigné
+
+### Interface de gestion avancée
+- Tableaux de données interactifs avec MUI X Data Grid
+- Pagination, tri et filtrage des listes d'utilisateurs et de profils
+- Opérations par lots (suppression multiple, changement de statut, etc.)
+- Recherche avancée
+
+## Internationalisation (i18n)
+
+### Langues supportées
+- Anglais (en)
+- Français (fr)
+- Arabe (ar)
+- Espagnol (es)
+
+### Gestion des traductions
+1. Les traductions sont stockées dans des fichiers JavaScript par langue
+2. L'interface permet d'exporter et d'importer des traductions via Excel
+3. L'application adapte automatiquement la direction du texte pour l'arabe (RTL)
+
+### Modèle de traduction
+Un modèle Excel est disponible dans `public/assets/templates/translations_template.xlsx` pour faciliter l'ajout de nouvelles traductions.
+
+### Exemple d'utilisation des traductions
 ```javascript
-{
-  'key': {
-    'fr': 'French translation',
-    'en': 'English translation',
-    'es': 'Spanish translation',
-    'ar': 'Arabic translation'
-  }
-}
+import { useTranslation } from 'react-i18next';
+
+const MyComponent = () => {
+  const { t } = useTranslation();
+  
+  return (
+    <div>
+      <h1>{t('myComponent.title')}</h1>
+      <p>{t('myComponent.description')}</p>
+    </div>
+  );
+};
 ```
 
-### Adding New Translations
-1. Use the Excel template to add new translations
-2. Import translations through the admin interface
-3. Translations are automatically synchronized across the application
+## Thème et personnalisation
 
-### Translation Keys
-Common translation keys include:
-- User interface elements
-- Error messages
-- Success messages
-- Form labels
-- Button texts
-- Status messages
+### Système de thème
+L'application implémente un système de thèmes permettant aux utilisateurs de basculer entre les modes clair et sombre.
 
-### Language Switching
-Users can switch languages through:
-1. User settings
-2. Language selector in the header
-3. Browser language detection
+### Composants adaptés au thème
+- Tous les composants réagissent au changement de thème
+- La barre latérale, les formulaires, les tableaux et autres éléments sont stylisés pour les deux modes
+- Les préférences de thème sont sauvegardées pour chaque utilisateur
 
+### Personnalisation de l'interface
+L'interface utilisateur peut être personnalisée de plusieurs façons:
+- Barre latérale rétractable pour maximiser l'espace de travail
+- Adaptation aux différentes tailles d'écran (responsive design)
+- Options d'accessibilité conformes aux normes WCAG
+
+## Notifications système
+
+### Système de notifications
+L'application utilise Notistack pour afficher des notifications contextuelles aux utilisateurs:
+- Messages de succès (opérations réussies)
+- Messages d'erreur (échecs d'opérations)
+- Messages d'information (conseils et informations générales)
+- Messages d'avertissement (actions potentiellement risquées)
+
+### Utilisation des notifications
+```javascript
+import { useSnackbar } from 'notistack';
+
+const MyComponent = () => {
+  const { enqueueSnackbar } = useSnackbar();
+  
+  const handleAction = () => {
+    try {
+      // Effectuer une action
+      enqueueSnackbar('Action réussie', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Erreur: ' + error.message, { variant: 'error' });
+    }
+  };
+  
+  return (
+    <button onClick={handleAction}>Effectuer l'action</button>
+  );
+};
+```
+
+## Documentation technique
+
+### API Postman
+Une documentation détaillée des endpoints API est disponible dans le fichier `POSTMAN_API_TESTING.md`. Cette documentation inclut:
+- Configuration de Postman pour tester l'API
+- Exemples de requêtes pour chaque endpoint
+- Dépannage des erreurs courantes
+
+### Architecture de l'application
+L'application est construite avec une architecture modulaire:
+- **Contextes React** pour la gestion d'état globale
+- **Services** pour l'interaction avec l'API
+- **Composants** pour l'interface utilisateur
+- **Hooks personnalisés** pour la logique réutilisable
+
+### Compatibilité navigateur
+L'application est compatible avec les navigateurs modernes:
+- Chrome (dernières versions)
+- Firefox (dernières versions)
+- Safari (dernières versions)
+- Edge (dernières versions)
+
+### Contribuer au projet
+1. Forker le dépôt
+2. Créer une branche pour vos modifications:
+```bash
+git checkout -b feature/ma-nouvelle-fonctionnalite
+```
+3. Valider vos modifications:
+```bash
+git commit -am 'Ajouter une nouvelle fonctionnalité'
+```
+4. Pousser vers la branche:
+```bash
+git push origin feature/ma-nouvelle-fonctionnalite
+```
+5. Créer une Pull Request
+
+### Bonnes pratiques de développement
+- Suivre les conventions de nommage existantes
+- Ajouter des tests pour les nouvelles fonctionnalités
+- Documenter le code et les API
+- Respecter la structure modulaire du projet
