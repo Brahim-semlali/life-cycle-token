@@ -13,6 +13,7 @@
 10. [Thème et personnalisation](#thème-et-personnalisation)
 11. [Notifications système](#notifications-système)
 12. [Documentation technique](#documentation-technique)
+13. [Documentation des Tests End-to-End (E2E)](#documentation-des-tests-end-to-end-e2e)
 
 ## Vue d'ensemble
 Titrit Technologies est une application web moderne développée avec React.js qui fournit une interface utilisateur complète pour la gestion des tokens, des utilisateurs, des profils, de la sécurité et d'autres fonctionnalités administratives. L'application est conçue avec une approche modulaire permettant d'activer ou de désactiver des fonctionnalités spécifiques en fonction des besoins des utilisateurs.
@@ -345,3 +346,210 @@ git push origin feature/ma-nouvelle-fonctionnalite
 - Ajouter des tests pour les nouvelles fonctionnalités
 - Documenter le code et les API
 - Respecter la structure modulaire du projet
+
+# Documentation des Tests End-to-End (E2E) pour Titrit Technologies
+
+Cette documentation décrit l'architecture, la configuration et l'utilisation des tests end-to-end pour l'application web Titrit Technologies, implémentés avec Playwright.
+
+## Table des matières
+
+1. [Introduction](#introduction)
+2. [Architecture des tests](#architecture-des-tests)
+3. [Configuration](#configuration)
+4. [Exécution des tests](#exécution-des-tests)
+5. [Tests disponibles](#tests-disponibles)
+6. [Mocking d'API](#mocking-dapi)
+7. [Extension des tests](#extension-des-tests)
+8. [Résolution des problèmes](#résolution-des-problèmes)
+
+## Introduction
+
+Les tests end-to-end (E2E) permettent de valider le fonctionnement de l'application du point de vue de l'utilisateur final, en simulant des interactions réelles avec l'interface utilisateur. Cette suite de tests utilise Playwright, un framework moderne de test d'automatisation de navigateur développé par Microsoft.
+
+Ces tests couvrent les fonctionnalités principales de l'application :
+- Authentification (login/logout)
+- Gestion des profils
+- Gestion des utilisateurs  
+- Navigation dans l'application
+
+## Architecture des tests
+
+La structure des tests E2E est organisée comme suit :
+
+```
+├── playwright.config.js           # Configuration principale de Playwright
+├── playwright.mock.config.js      # Configuration pour tests avec API mockée
+├── playwright.noserver.config.js  # Configuration pour tests sans serveur
+├── tests/
+│   ├── api-mocks.js               # Utilitaires pour mocker les API
+│   ├── auth-flow.spec.js          # Tests du flux d'authentification complet
+│   ├── global-setup.js            # Configuration globale avant les tests
+│   ├── global-teardown.js         # Nettoyage global après les tests
+│   ├── login.spec.js              # Tests basiques du formulaire de login
+│   ├── login.mock.spec.js         # Tests du login avec API mockée
+│   ├── login.integration.spec.js  # Tests d'intégration du login
+│   ├── profiles.spec.js           # Tests de la gestion des profils
+│   ├── users.spec.js              # Tests de la gestion des utilisateurs
+│   └── run-tests-without-server.js # Script pour exécuter les tests sans serveur
+```
+
+## Configuration
+
+Trois configurations distinctes sont disponibles pour répondre à différents besoins de test :
+
+### 1. Configuration standard (playwright.config.js)
+
+Cette configuration démarre le serveur frontend React sur le port 3001 avant l'exécution des tests.
+
+```javascript
+webServer: [
+  {
+    command: 'npm start',
+    url: 'https://localhost:3001',
+    reuseExistingServer: !process.env.CI,
+    ignoreHTTPSErrors: true,
+    timeout: 120 * 1000,
+  }
+]
+```
+
+### 2. Configuration pour tests avec API mockée (playwright.mock.config.js)
+
+Cette configuration est optimisée pour les tests utilisant des mocks d'API, sans dépendance au backend réel.
+
+### 3. Configuration sans serveur (playwright.noserver.config.js)
+
+Utilisée lorsque l'application est déjà en cours d'exécution, cette configuration n'essaie pas de démarrer un serveur.
+
+## Exécution des tests
+
+Plusieurs commandes sont disponibles dans le fichier `package.json` pour exécuter les tests :
+
+```bash
+# Exécuter tous les tests E2E
+npm run test:e2e
+
+# Exécuter les tests avec interface utilisateur
+npm run test:e2e:ui
+
+# Exécuter les tests en mode débogage
+npm run test:e2e:debug
+
+# Afficher le rapport des tests
+npm run test:e2e:report
+
+# Exécuter uniquement les tests du formulaire de login
+npm run test:login
+
+# Exécuter les tests de login avec API mockée
+npm run test:login:mock
+
+# Exécuter les tests sans démarrer de serveur
+npm run test:login:mock:no-server
+```
+
+## Tests disponibles
+
+### Tests d'authentification
+
+1. **Tests basiques de login (login.spec.js)**
+   - Vérification du chargement du formulaire
+   - Connexion avec identifiants valides
+   - Tentative de connexion avec identifiants invalides
+   - Test de visibilité du mot de passe
+
+2. **Tests de login avec API mockée (login.mock.spec.js)**
+   - Connexion réussie (API mockée)
+   - Échec de connexion avec mot de passe incorrect
+   - Affichage d'un compte déjà verrouillé
+   - Verrouillage progressif après plusieurs tentatives
+   - Basculement de visibilité du mot de passe
+
+3. **Tests du flux d'authentification (auth-flow.spec.js)**
+   - Connexion et navigation dans le tableau de bord
+   - Tentative de connexion avec identifiants invalides
+   - Redirection vers la connexion si accès au dashboard sans être authentifié
+
+### Tests de gestion des profils (profiles.spec.js)
+
+- Navigation vers la page des profils
+- Création d'un nouveau profil
+- Modification d'un profil existant
+- Suppression d'un profil
+- Vérification des fonctionnalités de filtrage et de recherche
+
+### Tests de gestion des utilisateurs (users.spec.js)
+
+- Navigation vers la page des utilisateurs
+- Création d'un nouvel utilisateur
+- Modification d'un utilisateur existant
+- Suppression d'un utilisateur
+- Gestion des statuts d'utilisateur (actif/inactif)
+
+## Mocking d'API
+
+Le fichier `api-mocks.js` contient des utilitaires pour intercepter les appels API et retourner des réponses simulées. Ces mocks sont utilisés dans les tests pour éviter la dépendance au backend réel.
+
+Exemple d'utilisation :
+
+```javascript
+// Configuration des mocks pour un test de login
+await setupLoginMocks(page);
+
+// Configuration des mocks pour simuler des tentatives échouées
+await setupFailedAttemptsLoginMock(page, 3);
+```
+
+## Extension des tests
+
+Pour ajouter de nouveaux tests :
+
+1. Créez un nouveau fichier `.spec.js` dans le répertoire `tests/`
+2. Importez les utilitaires Playwright nécessaires
+3. Définissez vos cas de test en utilisant la syntaxe `test('description', async ({ page }) => { ... })`
+4. Utilisez les fonctions d'assertion pour vérifier les comportements attendus
+
+Exemple :
+
+```javascript
+// @ts-check
+const { test, expect } = require('@playwright/test');
+
+test.describe('Ma nouvelle fonctionnalité', () => {
+  test('devrait se comporter correctement', async ({ page }) => {
+    // Naviguer vers la page
+    await page.goto('https://localhost:3001/ma-page');
+    
+    // Interagir avec l'interface
+    await page.click('#mon-bouton');
+    
+    // Vérifier le résultat attendu
+    await expect(page.locator('.resultat')).toContainText('Succès');
+  });
+});
+```
+
+## Résolution des problèmes
+
+### Problèmes de démarrage du serveur
+
+Si vous rencontrez des problèmes lors du démarrage du serveur pour les tests :
+
+1. Vérifiez que le port 3001 n'est pas déjà utilisé
+2. Utilisez `playwright.noserver.config.js` si l'application est déjà en cours d'exécution
+3. Augmentez le timeout dans la configuration si nécessaire
+
+### Problèmes d'authentification
+
+Si les tests d'authentification échouent :
+
+1. Vérifiez que les identifiants de test sont corrects dans les fichiers de test
+2. Vérifiez que les sélecteurs CSS utilisés pour les tests correspondent à la structure actuelle du DOM
+
+### Tests instables
+
+Pour les tests qui échouent de manière intermittente :
+
+1. Augmentez les timeouts dans les assertions
+2. Utilisez `page.waitForSelector()` pour attendre que les éléments soient disponibles
+3. Ajoutez des délais supplémentaires avec `page.waitForTimeout()` si nécessaire
