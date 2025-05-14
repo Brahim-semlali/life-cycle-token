@@ -122,7 +122,11 @@ test.describe('Gestion des profils', () => {
     }
     
     // Attendre un peu plus longtemps pour le rafraîchissement de la liste
-    await page.waitForTimeout(2000);
+    try {
+      await page.waitForTimeout(1000); // Réduit de 2000ms à 1000ms
+    } catch (error) {
+      console.log('Timeout pendant l\'attente du rafraîchissement:', error.message);
+    }
     
     // Rechercher le profil créé (cela peut varier selon votre interface)
     try {
