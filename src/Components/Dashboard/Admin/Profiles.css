@@ -5,7 +5,9 @@
 }
 
 .profiles-container {
-    background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #f8fafc;
+    color: #1e293b;
     min-height: 100vh;
     width: 100%;
     box-sizing: border-box;
@@ -13,37 +15,38 @@
 }
 
 .profiles-container.dark-mode {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background-color: #0f172a;
     color: #e2e8f0;
 }
 
 .profiles-container.minimized {
-    margin-left: 5rem;
     width: calc(100% - 5rem);
+    margin-left: 5rem;
 }
 
 /* Enhanced header styles */
 .profiles-header {
-    background: linear-gradient(135deg, #f9faff 0%, #f0f4ff 100%);
+    background-color: white;
     backdrop-filter: blur(10px);
     border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     padding: 20px 24px;
     margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(229, 231, 235, 0.7);
+    border: 1px solid rgba(226, 232, 240, 0.7);
     transition: all 0.3s ease;
 }
 
 .dark-mode .profiles-header {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
+    background-color: rgba(30, 41, 59, 0.9);
     border-color: rgba(51, 65, 85, 0.7);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .profiles-header:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
 }
 
@@ -3235,4 +3238,754 @@
     background-color: rgba(30, 41, 59, 0.7);
     border-color: #475569 !important;
     color: #cbd5e0 !important;
+}
+
+/* Styles généraux modernes pour les profils */
+.profiles-container {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+.profiles-container.dark-mode {
+    background-color: #0f172a;
+    color: #e2e8f0;
+}
+
+.profiles-container.minimized {
+    width: calc(100% - 5rem);
+    margin-left: 5rem;
+}
+
+.profiles-header {
+    background-color: white;
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    transition: all 0.3s ease;
+}
+
+.dark-mode .profiles-header {
+    background-color: rgba(30, 41, 59, 0.9);
+    border-color: rgba(51, 65, 85, 0.7);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.profiles-header:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Styles pour les cartes de profil modernes */
+.modern-profile-card {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 16px;
+    backface-visibility: hidden;
+}
+
+.modern-profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modern-profile-card .card-actions {
+    opacity: 0.7;
+    transform: translateY(5px);
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.modern-profile-card:hover .card-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Embellissement des badges de statut */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #0d9488;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.inactive {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-badge.active .status-dot {
+    background-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactive .status-dot {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Tableau modernisé */
+.modern-table-container {
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.modern-table thead {
+    background-color: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modern-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    white-space: nowrap;
+}
+
+.modern-table td {
+    padding: 16px 20px;
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    color: #334155;
+    vertical-align: middle;
+}
+
+.modern-table tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.modern-table tbody tr:hover {
+    background-color: rgba(248, 250, 252, 0.7);
+}
+
+.modern-table tr.selected-row {
+    background-color: rgba(79, 70, 229, 0.04);
+}
+
+/* Boutons d'action modernisés */
+.modern-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.modern-action-button.edit {
+    color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.modern-action-button.edit:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: scale(1.05);
+}
+
+.modern-action-button.delete {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.modern-action-button.delete:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+}
+
+.modern-action-button.view {
+    color: #4f46e5;
+    background-color: rgba(79, 70, 229, 0.1);
+}
+
+.modern-action-button.view:hover {
+    background-color: rgba(79, 70, 229, 0.2);
+    transform: scale(1.05);
+}
+
+/* État vide modernisé */
+.modern-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    background-color: white;
+    border-radius: 16px;
+    border: 1px dashed rgba(203, 213, 225, 0.8);
+    text-align: center;
+    min-height: 400px;
+}
+
+.modern-empty-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(148, 163, 184, 0.1);
+    border-radius: 50%;
+    margin-bottom: 24px;
+}
+
+.modern-empty-state-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    font-size: 1.5rem;
+}
+
+.modern-empty-state-text {
+    color: #64748b;
+    margin-bottom: 24px;
+    max-width: 500px;
+}
+
+/* Animation pour les cartes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modern-profile-card {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Anim pour les boutons */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Stylisation pour le formulaire de profil */
+.modern-form-content {
+    max-height: calc(100vh - 240px);
+    overflow-y: auto;
+    padding: 16px 24px;
+}
+
+.modern-section-title {
+    position: relative;
+    margin-bottom: 24px;
+    padding-left: 12px;
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: #1e293b;
+}
+
+.modern-section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background-color: #4f46e5;
+    border-radius: 2px;
+}
+
+.modern-form-field {
+    margin-bottom: 24px;
+}
+
+.modern-form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.modern-form-input {
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 10px 14px;
+    width: 100%;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.modern-form-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.modern-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 16px 24px;
+    background-color: #f8fafc;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Suppression du style de Kanban et Timeline */
+.kanban-container,
+.kanban-column,
+.kanban-column-header,
+.kanban-column-content,
+.kanban-card,
+.timeline-container,
+.timeline-header,
+.timeline-events,
+.timeline-item,
+.timeline-node {
+    display: none;
+}
+
+/* Style pour la sélection d'affichage */
+.view-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(244, 244, 248, 0.7);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border: 1px solid rgba(229, 231, 235, 0.7);
+    margin-right: 16px;
+}
+
+.view-button {
+    min-width: 36px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.view-button.active {
+    background-color: #ffffff;
+    color: #7c3aed;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.view-button:not(.active) {
+    background-color: transparent;
+    color: #64748b;
+}
+
+.view-button:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.view-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 15px;
+    height: 2px;
+    background-color: currentColor;
+    border-radius: 2px;
+}
+
+/* Style pour le modal de profil */
+.profile-modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    padding: 24px;
+    position: relative;
+}
+
+.profile-module-card {
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: white;
+    height: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.profile-module-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+}
+
+.profile-module-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: #f8fafc;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.profile-module-header .module-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+    border-radius: 10px;
+    margin-right: 12px;
+}
+
+.profile-module-header .module-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.profile-module-content {
+    padding: 16px;
+}
+
+.profile-module-menu {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: rgba(248, 250, 252, 0.7);
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #4b5563;
+    transition: all 0.2s ease;
+    position: relative;
+    border-left: 3px solid rgba(79, 70, 229, 0.4);
+    padding-left: 16px;
+}
+
+.profile-module-menu:last-child {
+    margin-bottom: 0;
+}
+
+.profile-module-menu:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+    transform: translateX(4px);
+}
+
+.profile-module-empty {
+    padding: 12px;
+    text-align: center;
+    background-color: rgba(241, 245, 249, 0.5);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* Style pour le tableau des utilisateurs dans le modal de profil */
+.profile-users-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 24px;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.profile-users-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: #f8fafc;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.profile-users-table td {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    color: #334155;
+}
+
+.profile-users-table tr:last-child td {
+    border-bottom: none;
+}
+
+.profile-users-table tr:hover {
+    background-color: rgba(248, 250, 252, 0.7);
+}
+
+.profile-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 16px 24px;
+    background-color: #f8fafc;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.profile-edit-button {
+    background: linear-gradient(45deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    text-transform: none;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+}
+
+.profile-edit-button:hover {
+    background: linear-gradient(45deg, #4338ca 0%, #6d28d9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+}
+
+.profile-close-button {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    text-transform: none;
+    background-color: transparent;
+    color: #4b5563;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+.profile-close-button:hover {
+    background-color: rgba(241, 245, 249, 0.8);
+    border-color: rgba(148, 163, 184, 0.8);
+    transform: translateY(-2px);
+}
+
+/* Suppression du style de confirmation de suppression */
+.delete-confirm-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 400px !important;
+}
+
+.delete-dialog-header {
+    background-color: #fef2f2;
+    padding: 24px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.delete-dialog-icon {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-dialog-title {
+    color: #dc2626;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0;
+    padding: 0;
+}
+
+.delete-dialog-content {
+    padding: 16px 24px;
+}
+
+.delete-dialog-description {
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.delete-dialog-warning {
+    color: #ef4444;
+    font-size: 0.875rem;
+    background-color: rgba(239, 68, 68, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 3px solid #ef4444;
+}
+
+.delete-dialog-actions {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    background-color: #f8fafc;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.delete-dialog-cancel-button {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    text-transform: none;
+    background-color: transparent;
+    color: #4b5563;
+    border: 1px solid rgba(203, 213, 225, 0.8);
+}
+
+.delete-dialog-cancel-button:hover {
+    background-color: rgba(241, 245, 249, 0.8);
+    border-color: rgba(148, 163, 184, 0.8);
+}
+
+.delete-dialog-confirm-button {
+    background: linear-gradient(45deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    text-transform: none;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+}
+
+.delete-dialog-confirm-button:hover {
+    background: linear-gradient(45deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+}
+
+/* Style pour les cases à cocher */
+.MuiCheckbox-root {
+    color: #94a3b8;
+    transition: all 0.2s ease;
+}
+
+.MuiCheckbox-root.Mui-checked {
+    color: #4f46e5;
+    animation: pulse 0.3s ease-in-out;
+}
+
+.dark-mode .MuiCheckbox-root {
+    color: #64748b;
+}
+
+.dark-mode .MuiCheckbox-root.Mui-checked {
+    color: #818cf8;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+    .modern-table th,
+    .modern-table td {
+        padding: 12px 16px;
+    }
+    
+    .modern-form-actions {
+        padding: 12px 16px;
+    }
+    
+    .modern-profile-card {
+        margin-bottom: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .view-selector {
+        margin-right: 8px;
+    }
+    
+    .view-button {
+        padding: 0 8px;
+    }
+    
+    .modern-form-content {
+        padding: 12px 16px;
+    }
+    
+    .profile-modal-header {
+        padding: 16px;
+    }
+    
+    .profile-modal-actions {
+        padding: 12px 16px;
+        flex-direction: column-reverse;
+    }
+    
+    .profile-edit-button,
+    .profile-close-button {
+        width: 100%;
+    }
 }

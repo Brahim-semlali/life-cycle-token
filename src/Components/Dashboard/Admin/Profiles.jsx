@@ -14,10 +14,13 @@ import {
   getUsersByProfileId
 } from "../../../services/ProfileService";
 import { 
-  DataGrid, 
-  GridToolbar,
-  GridActionsCellItem 
-} from '@mui/x-data-grid';
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender
+} from '@tanstack/react-table';
 import { 
   Box, 
   Paper, 
@@ -53,7 +56,17 @@ import {
   FormControl,
   InputLabel,
   Stack,
-  Fade
+  Fade,
+  Tab,
+  Tabs,
+  CircularProgress,
+  Slide,
+  Badge,
+  Switch,
+  Radio,
+  RadioGroup,
+  Backdrop,
+  Autocomplete
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -84,9 +97,113 @@ import {
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
   People,
   ArrowDownward as ArrowDownwardIcon,
-  Details as DetailsIcon
+  Details as DetailsIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  MoreHoriz as MoreHorizIcon,
+  Close as CloseIcon,
+  Storage as DatabaseIcon,
+  Dashboard as DashboardIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  PersonOutline as PersonOutlineIcon,
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 import "./Profiles.css";
+
+// Composant moderne pour les status badges
+const StatusBadge = ({ status }) => {
+  const colors = {
+    active: { bg: '#10b981', text: '#ffffff', shadow: 'rgba(16, 185, 129, 0.35)' },
+    inactive: { bg: '#ef4444', text: '#ffffff', shadow: 'rgba(239, 68, 68, 0.35)' },
+    pending: { bg: '#f59e0b', text: '#ffffff', shadow: 'rgba(245, 158, 11, 0.35)' },
+    default: { bg: '#6b7280', text: '#ffffff', shadow: 'rgba(107, 114, 128, 0.35)' }
+  };
+  
+  const statusKey = (status || 'default').toLowerCase();
+  const color = colors[statusKey] || colors.default;
+  
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: '20px',
+        padding: '4px 12px',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        letterSpacing: '0.025em',
+        backgroundColor: color.bg,
+        color: color.text,
+        boxShadow: `0 3px 8px ${color.shadow}`,
+        textTransform: 'capitalize',
+      }}
+    >
+      <Box
+        component="span"
+        sx={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: '#ffffff',
+          marginRight: '8px',
+          boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.4)'
+        }}
+      />
+      {status || 'Unknown'}
+    </Box>
+  );
+};
+
+// Composant moderne pour les modules
+const ModuleChip = ({ moduleTitle, moduleCode, selected }) => {
+  let color = '#4f46e5';
+  let bgColor = 'rgba(79, 70, 229, 0.08)';
+  let borderColor = 'rgba(79, 70, 229, 0.3)';
+  
+  // Différentes couleurs selon le module
+  if (moduleCode?.includes('admin')) {
+    color = '#7c3aed';
+    bgColor = 'rgba(124, 58, 237, 0.08)';
+    borderColor = 'rgba(124, 58, 237, 0.3)';
+  } else if (moduleCode?.includes('token')) {
+    color = '#06b6d4';
+    bgColor = 'rgba(6, 182, 212, 0.08)';
+    borderColor = 'rgba(6, 182, 212, 0.3)';
+  } else if (moduleCode?.includes('client')) {
+    color = '#10b981';
+    bgColor = 'rgba(16, 185, 129, 0.08)';
+    borderColor = 'rgba(16, 185, 129, 0.3)';
+  }
+  
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: '6px',
+        padding: '4px 8px',
+        fontSize: '0.75rem',
+        fontWeight: 500,
+        backgroundColor: selected ? `${bgColor}` : 'transparent',
+        color: color,
+        border: `1px solid ${selected ? borderColor : 'transparent'}`,
+        marginRight: '6px',
+        marginBottom: '6px',
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+        '&:hover': {
+          backgroundColor: bgColor,
+          transform: 'translateY(-2px)',
+          boxShadow: `0 3px 8px rgba(0, 0, 0, 0.08)`
+        }
+      }}
+    >
+      {moduleTitle}
+    </Box>
+  );
+};
 
 const Profiles = () => {
     const { isMinimized } = useMenu();
@@ -506,20 +623,44 @@ const Profiles = () => {
                 if (!params || !params.row) return [];
                 return [
                     <Tooltip title={t('profiles.edit')} arrow placement="top">
-                        <GridActionsCellItem
-                            icon={<EditIcon className="action-icon edit-icon" />}
-                            label={t('profiles.edit')}
+                        <IconButton
+                            size="small"
+                            className="modern-action-button edit"
                             onClick={() => handleEdit(params.id)}
-                            className="grid-action-item"
-                        />
+                            sx={{
+                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                color: '#4f46e5',
+                                borderRadius: '8px',
+                                padding: '6px',
+                                '&:hover': {
+                                    backgroundColor: '#4f46e5',
+                                    color: 'white',
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
                     </Tooltip>,
                     <Tooltip title={t('profiles.delete')} arrow placement="top">
-                        <GridActionsCellItem
-                            icon={<DeleteIcon className="action-icon delete-icon" />}
-                            label={t('profiles.delete')}
+                        <IconButton
+                            size="small"
+                            className="modern-action-button delete"
                             onClick={() => handleDelete(params.id)}
-                            className="grid-action-item"
-                        />
+                            sx={{
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                color: '#ef4444',
+                                borderRadius: '8px',
+                                padding: '6px',
+                                '&:hover': {
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
                     </Tooltip>
                 ];
             }
@@ -889,6 +1030,12 @@ const Profiles = () => {
     };
 
     const handleCancel = () => {
+        // Reset everything without committing the changes made to the profiles array
+        if (editingProfile !== null) {
+            // Reload profiles to restore original data
+            loadProfiles();
+        }
+        
         setEditingProfile(null);
         setNewProfile({
             name: "",
@@ -994,17 +1141,22 @@ const Profiles = () => {
         // Don't open the modal if the click is on a button or inside a button element
         if (event) {
             const targetElement = event.target;
-            // Check if the click is on a button or inside a button
+            // Check if the click is on an edit or delete button
+            const isClickOnActionButton = 
+                (targetElement.closest('button') || targetElement.closest('.MuiButton-root')) && 
+                // Ne pas bloquer le bouton de détails/info
+                !targetElement.closest('[data-action="view-details"]') &&
+                !targetElement.closest('.MuiButton-startIcon[data-action="view-details"]');
+                
             if (
-                targetElement.tagName === 'BUTTON' || 
-                targetElement.closest('button') || 
-                targetElement.closest('.MuiButton-root') ||
+                (targetElement.tagName === 'BUTTON' && !targetElement.hasAttribute('data-action-view-details')) || 
+                isClickOnActionButton ||
                 // Also check for any element with roles that imply interaction
-                targetElement.getAttribute('role') === 'button' ||
-                targetElement.closest('[role="button"]') ||
-                // Check for elements inside buttons
-                targetElement.closest('.MuiButton-startIcon') ||
-                targetElement.closest('.MuiButton-endIcon')
+                (targetElement.getAttribute('role') === 'button' && !targetElement.hasAttribute('data-action-view-details')) ||
+                targetElement.closest('[role="button"]:not([data-action-view-details])') ||
+                // Check for elements inside buttons (sauf pour le bouton de détails)
+                (targetElement.closest('.MuiButton-startIcon') && !targetElement.closest('[data-action="view-details"]')) ||
+                (targetElement.closest('.MuiButton-endIcon') && !targetElement.closest('[data-action="view-details"]'))
             ) {
                 return;
             }
@@ -1551,8 +1703,16 @@ const Profiles = () => {
             </Box>
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                    <Typography variant="h6">Chargement des profils...</Typography>
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '200px',
+                    flexDirection: 'column',
+                    gap: 2 
+                }}>
+                    <CircularProgress size={40} sx={{ color: '#4f46e5' }} />
+                    <Typography variant="body1" sx={{ color: '#6b7280' }}>Loading profiles...</Typography>
                 </Box>
             ) : error ? (
                 <Box sx={{ 
@@ -1561,43 +1721,51 @@ const Profiles = () => {
                     justifyContent: 'center', 
                     alignItems: 'center', 
                     height: '200px',
-                    padding: '20px',
-                    backgroundColor: 'rgba(255, 0, 0, 0.05)',
-                    border: '1px solid rgba(255, 0, 0, 0.2)',
-                    borderRadius: '8px',
+                    padding: '24px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: '16px',
                     margin: '20px 0'
                 }}>
-                    <Typography variant="h6" color="error" gutterBottom>
+                    <Typography variant="h6" color="error" gutterBottom fontWeight={600}>
                         {error}
                     </Typography>
-                    <Typography variant="body1" sx={{ marginBottom: '20px', textAlign: 'center' }}>
-                        Veuillez vérifier la connexion à la base de données et les endpoints de l'API.
+                    <Typography variant="body1" sx={{ marginBottom: '20px', textAlign: 'center', color: '#64748b' }}>
+                        Please check your database connection and API endpoints.
                     </Typography>
                     <Button 
                         variant="contained" 
-                        color="primary" 
                         onClick={loadProfiles}
-                        sx={{ marginTop: '10px' }}
+                        startIcon={<RefreshIcon />}
+                        sx={{
+                            background: 'linear-gradient(45deg, #4f46e5 0%, #7c3aed 100%)',
+                            borderRadius: '12px',
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)',
+                                boxShadow: '0 6px 20px rgba(79, 70, 229, 0.35)',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
                     >
-                        Réessayer
+                        Retry
                     </Button>
                 </Box>
             ) : filteredProfiles.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-state-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            <line x1="11" y1="8" x2="11" y2="14"></line>
-                            <line x1="8" y1="11" x2="14" y2="11"></line>
-                        </svg>
-                    </div>
-                    <h3 className="empty-state-title">No profiles found</h3>
-                    <p className="empty-state-text">
+                <Box className="modern-empty-state">
+                    <Box className="modern-empty-state-icon">
+                        <SearchIcon sx={{ fontSize: 48, color: '#94a3b8' }} />
+                    </Box>
+                    <Typography variant="h5" className="modern-empty-state-title" sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}>
+                        No profiles found
+                    </Typography>
+                    <Typography variant="body1" className="modern-empty-state-text" sx={{ color: '#64748b', mb: 3, textAlign: 'center', maxWidth: '500px' }}>
                         {searchQuery 
                             ? 'No profiles match your search criteria. Try adjusting your filters or search term.' 
                             : 'There are no profiles available. Create a new profile to get started.'}
-                    </p>
+                    </Typography>
                     {!searchQuery && (
                         <Button
                             variant="contained"
@@ -1612,17 +1780,17 @@ const Profiles = () => {
                                 setOpenDialog(true);
                             }}
                             sx={{
-                                background: 'linear-gradient(45deg, #7c3aed 0%, #8b5cf6 100%)',
+                                background: 'linear-gradient(45deg, #4f46e5 0%, #7c3aed 100%)',
                                 borderRadius: '12px',
-                                padding: '10px 20px',
-                                minHeight: '42px',
-                                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+                                padding: '10px 24px',
+                                height: '48px',
+                                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
                                 textTransform: 'none',
-                                fontSize: '0.9rem',
-                                fontWeight: 600,
+                                fontSize: '0.95rem',
+                                fontWeight: 500,
                                 '&:hover': {
-                                    background: 'linear-gradient(45deg, #6d28d9 0%, #7c3aed 100%)',
-                                    boxShadow: '0 6px 20px rgba(124, 58, 237, 0.4)',
+                                    background: 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)',
+                                    boxShadow: '0 6px 20px rgba(79, 70, 229, 0.35)',
                                     transform: 'translateY(-2px)'
                                 }
                             }}
@@ -1631,540 +1799,470 @@ const Profiles = () => {
                             Create your first profile
                         </Button>
                     )}
-                </div>
-            ) : (
-                viewMode === 'grid' ? (
-                    <Grid container spacing={2.5} sx={{ width: '100%', margin: 0 }}>
-                        {filteredProfiles.map(profile => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={profile.id}>
-                                <Box sx={{ position: 'relative' }} className="card-container">
-                                    <Box 
-                                        sx={{
-                                            position: 'absolute', 
-                                            top: '-12px', 
-                                            right: '-12px', 
-                                            zIndex: 5,
-                                            opacity: selectedProfiles.includes(profile.id) ? 1 : 0,
-                                            transition: 'all 0.3s ease',
-                                            transform: selectedProfiles.includes(profile.id) 
-                                                ? 'scale(1)' 
-                                                : 'scale(0.8)',
-                                            '.card-container:hover &': {
-                                                opacity: 1,
-                                                transform: 'scale(1)'
-                                            }
-                                        }}
-                                    >
-                                        <IconButton
-                                            className={`selection-button ${selectedProfiles.includes(profile.id) ? 'selected' : ''}`}
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                if (selectedProfiles.includes(profile.id)) {
-                                                    setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
-                                                } else {
-                                                    setSelectedProfiles(prev => [...prev, profile.id]);
-                                                }
-                                            }}
-                                            sx={{
-                                                backgroundColor: selectedProfiles.includes(profile.id) 
-                                                    ? '#ff0303'
-                                                    : 'white',
-                                                border: selectedProfiles.includes(profile.id) 
-                                                    ? '2px solid #4f46e5' 
-                                                    : '2px solid #e5e7eb',
-                                                color: selectedProfiles.includes(profile.id) 
-                                                    ? 'white' 
-                                                    : '#64748b',
+                </Box>
+            ) : viewMode === 'grid' ? (
+                <Grid container spacing={3}>
+                    {filteredProfiles.map((profile) => (
+                        <Grid item xs={12} sm={6} md={4} lg={3} key={profile.id}>
+                            <Paper 
+                                elevation={0} 
+                                className="modern-profile-card"
+                                onClick={(e) => handleProfileClick(profile, e)}
+                                sx={{
+                                    p: 0,
+                                    borderRadius: '16px',
+                                    overflow: 'hidden',
+                                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                                    backgroundColor: 'white',
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'pointer',
+                                    position: 'relative',
                                     '&:hover': {
-                                                    backgroundColor: selectedProfiles.includes(profile.id) 
-                                                        ? '#4338ca' 
-                                                        : '#f9fafb',
-                                                    transform: 'scale(1.1)'
-                                                },
-                                                transition: 'all 0.2s ease',
-                                                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                                width: '28px',
-                                                height: '28px'
-                                            }}
-                                        >
-                                            {selectedProfiles.includes(profile.id) ? (
-                                                <CheckIcon fontSize="small" />
-                                            ) : (
-                                                <AddIcon fontSize="small" />
-                                            )}
-                                        </IconButton>
-                                    </Box>
-                                    <Card 
-                                        sx={{ 
-                                            position: 'relative',
-                                            borderRadius: '16px',
-                                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
-                                            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                            overflow: 'hidden',
-                                            cursor: 'pointer',
-                                            height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            border: selectedProfiles.includes(profile.id) 
-                                                ? '2px solid #4f46e5' 
-                                                : '1px solid rgba(226, 232, 240, 0.6)',
-                                            backgroundColor: selectedProfiles.includes(profile.id) 
-                                                ? 'rgba(79, 70, 229, 0.03)' 
-                                                : 'white',
-                                            '&::before': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                top: '-50%',
-                                                left: '-50%',
-                                                width: '200%',
-                                                height: '200%',
-                                                background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%)',
-                                                transform: 'rotate(30deg)',
-                                                opacity: 0,
-                                                transition: 'opacity 0.5s ease',
-                                                zIndex: 1,
-                                                pointerEvents: 'none'
-                                            },
-                                            '&:hover': {
-                                                transform: 'translateY(-8px)',
-                                                boxShadow: '0 15px 35px rgba(0, 0, 0, 0.1)'
-                                            },
-                                            '&:hover::before': {
-                                                opacity: 1,
-                                                animation: 'shine 3s infinite linear'
-                                            }
-                                        }}
-                                        className="profile-card"
-                                        onClick={(e) => handleProfileClick(profile, e)}
-                                >
-                                    <Box sx={{ 
-                                        display: 'flex', 
-                                        flexDirection: 'column', 
-                                        alignItems: 'center',
-                                        p: 3,
-                                        flex: 1,
-                                        position: 'relative',
-                                        zIndex: 2
-                                    }}>
+                                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                                        transform: 'translateY(-5px)',
+                                        '& .card-actions': {
+                                            opacity: 1,
+                                            transform: 'translateY(0)'
+                                        }
+                                    }
+                                }}
+                            >
+                                <Box sx={{ 
+                                    position: 'absolute', 
+                                    top: 0, 
+                                    left: 0, 
+                                    right: 0, 
+                                    height: '6px', 
+                                    backgroundColor: profile.status === 'active' ? '#10b981' : '#ef4444',
+                                    opacity: 0.9
+                                }} />
+                                <Box sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                         <Avatar
                                             sx={{
-                                                width: 80,
-                                                height: 80,
-                                                mb: 2,
+                                                width: 56,
+                                                height: 56,
                                                 bgcolor: getAvatarColor(profile.id),
-                                                fontSize: '1.8rem',
+                                                fontSize: '1.5rem',
                                                 fontWeight: 'bold',
-                                                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.12)',
-                                                border: '3px solid white',
-                                                transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                                '&:hover': {
-                                                    transform: 'scale(1.12)',
-                                                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.18)'
-                                                }
+                                                mr: 2,
+                                                boxShadow: '0 3px 8px rgba(0, 0, 0, 0.12)'
                                             }}
                                         >
                                             {getInitials(profile.name)}
                                         </Avatar>
-                                            
-                                        <Typography variant="h6" sx={{ 
-                                            fontWeight: '600', 
-                                            mb: 0.5, 
-                                            textAlign: 'center',
-                                            fontSize: '1.1rem',
-                                            background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
-                                            WebkitBackgroundClip: 'text',
-                                            WebkitTextFillColor: 'transparent',
-                                            backgroundClip: 'text',
-                                            display: 'inline-block'
-                                        }}>
-                                            {profile.name}
-                                        </Typography>
-                                            
-                                        <Typography variant="body2" color="text.secondary" sx={{ 
-                                                mb: 1.5,
-                                            textAlign: 'center',
-                                                fontSize: '0.875rem',
-                                                color: '#666',
-                                                maxHeight: '42px',
+                                        <Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', lineHeight: 1.3 }}>
+                                                {profile.name}
+                                            </Typography>
+                                            <StatusBadge status={profile.status} />
+                                        </Box>
+                                    </Box>
+                                    <Typography 
+                                        variant="body2" 
+                                        color="text.secondary" 
+                                        sx={{ 
+                                            mb: 2,
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: 'vertical',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical'
-                                        }}>
-                                            {profile.description || t('profiles.noDescription')}
-                                        </Typography>
-                                    
-                                    <Box sx={{ 
-                                        width: '100%',
-                                        display: 'flex', 
-                                        justifyContent: 'center', 
-                                        mb: 2
-                                    }}>
-                                        <Chip
-                                            label={profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
-                                            data-status={profile.status?.toLowerCase()}
-                                            sx={{
-                                                bgcolor: profile.status?.toLowerCase() === 'active' 
-                                                    ? 'rgba(16, 185, 129, 0.1)' 
-                                                    : 'rgba(239, 68, 68, 0.1)',
-                                                color: profile.status?.toLowerCase() === 'active' ? '#059669' : '#dc2626',
-                                                fontWeight: '600',
-                                                py: 0.5,
-                                                px: 1.5,
-                                                height: '24px',
-                                                fontSize: '0.75rem',
-                                                borderRadius: '12px',
-                                                border: profile.status?.toLowerCase() === 'active' 
-                                                    ? '1px solid rgba(110, 231, 183, 0.6)' 
-                                                    : '1px solid rgba(252, 165, 165, 0.6)',
-                                                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
-                                                transition: 'all 0.3s ease',
-                                                '&:hover': {
-                                                    transform: 'translateY(-3px)',
-                                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
-                                                }
-                                            }}
-                                        />
-                                    </Box>
-                                    
-                                    <Box sx={{ width: '100%', mb: 3 }}>
-                                        <Typography variant="subtitle2" sx={{ 
-                                            fontWeight: '600', 
-                                            mb: 1, 
-                                            fontSize: '0.8rem',
-                                            color: '#666',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px'
-                                        }}>
-                                            Modules
-                                        </Typography>
-                                                
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            flexWrap: 'wrap', 
-                                            gap: 0.75
-                                        }}>
-                                            {profile.modules && Array.isArray(profile.modules) && profile.modules.length > 0 ? (
-                                                profile.modules.map((moduleId, index) => {
-                                                    if (index > 2 && profile.modules.length > 3) return null;
-                                                    const module = modules.find(m => m.id === moduleId);
-                                                    return (
-                                                        <Chip
-                                                            key={index}
-                                                            label={module ? module.title : `Module ${moduleId}`}
-                                                            size="small"
-                                                            sx={{
-                                                                bgcolor: 'rgba(79, 70, 229, 0.08)',
-                                                                color: '#4f46e5',
-                                                                fontSize: '0.7rem',
-                                                                height: '22px',
-                                                                borderRadius: '6px',
-                                                                my: 0.5,
-                                                                fontWeight: 500,
-                                                                transition: 'all 0.3s ease',
-                                                                border: '1px solid rgba(129, 140, 248, 0.2)',
-                                                                '&:hover': {
-                                                                    bgcolor: 'rgba(79, 70, 229, 0.12)',
-                                                                    transform: 'translateY(-2px)',
-                                                                    boxShadow: '0 4px 8px rgba(79, 70, 229, 0.15)'
-                                                                }
-                                                            }}
-                                                        />
-                                                    );
-                                                })
-                                            ) : (
-                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                                                    {t('profiles.noModules')}
-                                                </Typography>
-                                            )}
-                                            {profile.modules && profile.modules.length > 3 && (
-                                                <Chip
-                                                    label={`+${profile.modules.length - 3}`}
-                                                    size="small"
-                                                    sx={{ 
-                                                        backgroundColor: 'rgba(148, 163, 184, 0.15)', 
-                                                        color: '#64748b',
-                                                        fontSize: '0.7rem',
-                                                        height: '22px',
-                                                        borderRadius: '6px',
-                                                        my: 0.5,
-                                                        fontWeight: 500,
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': {
-                                                            backgroundColor: 'rgba(148, 163, 184, 0.25)',
-                                                            transform: 'translateY(-2px)'
-                                                        }
-                                                    }}
-                                                />
-                                            )}
-                                        </Box>
-                                    </Box>
-                                        
-                                    <Box sx={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        gap: 2, 
-                                        width: '100%', 
-                                        mt: 'auto',
-                                        position: 'relative',
-                                        padding: '12px 16px',
-                                        marginTop: '8px',
-                                        borderTop: '1px solid rgba(229, 231, 235, 0.5)'
-                                    }}>
-                                        <Box sx={{ 
-                                            position: 'absolute',
-                                            left: 0,
-                                            right: 0,
-                                            bottom: 0,
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            gap: 2,
-                                            padding: '10px',
-                                            opacity: 0,
-                                            transform: 'translateY(10px)',
-                                            transition: 'all 0.3s ease',
-                                            background: 'linear-gradient(to top, white 0%, rgba(255, 255, 255, 0.9) 100%)',
-                                            borderTop: '1px solid rgba(229, 231, 235, 0.7)',
-                                            zIndex: 2,
-                                            '.card-container:hover &': {
-                                                opacity: 1,
-                                                transform: 'translateY(0)'
-                                            }
-                                        }} className="action-buttons-container">
-                                            <IconButton
-                                                aria-label="Edit Profile"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handleEdit(profile.id);
-                                                }}
-                                                sx={{
-                                                    background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
-                                                    color: 'white',
-                                                    borderRadius: '8px',
-                                                    padding: '8px',
-                                                    boxShadow: '0 4px 10px rgba(147, 51, 234, 0.25)',
-                                                    '&:hover': {
-                                                        background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
-                                                        boxShadow: '0 6px 15px rgba(147, 51, 234, 0.35)',
-                                                        transform: 'translateY(-3px)'
-                                                    },
-                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                                }}
-                                            >
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton
-                                                aria-label="Delete Profile"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handleDelete(profile.id);
-                                                }}
-                                                sx={{
-                                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                                    color: 'white',
-                                                    borderRadius: '8px',
-                                                    padding: '8px',
-                                                    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.25)',
-                                                    '&:hover': {
-                                                        background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                                                        boxShadow: '0 6px 15px rgba(239, 68, 68, 0.35)',
-                                                        transform: 'translateY(-3px)'
-                                                    },
-                                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                                }}
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                        <Typography variant="body2" color="text.secondary" sx={{ 
-                                            fontSize: '0.75rem',
-                                            color: '#6b7280',
-                                            textAlign: 'center',
-                                            width: '100%',
-                                            zIndex: 1
-                                        }}>
-                                            {t('profiles.clickToView')}
-                                        </Typography>
-                                    </Box>
-                                    </Box>
-                                </Card>
-                                </Box>
-                            </Grid>
-                        ))}
-                    </Grid>
-                ) : (
-                    // Replace this section with a table
-                    <table className="contact-table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '40px' }}>
-                                    <IconButton
-                                        size="small"
-                                        onClick={handleHeaderCheckboxClick}
-                                        sx={{ 
-                                            backgroundColor: profiles.length > 0 && selectedProfiles.length === profiles.length 
-                                                ? 'rgba(79, 70, 229, 0.1)' 
-                                                : 'rgba(255, 255, 255, 0.8)',
-                                            border: selectedProfiles.length > 0 
-                                                ? '1px solid #4f46e5' 
-                                                : '1px solid #e5e7eb',
-                                            color: selectedProfiles.length > 0 
-                                                ? '#4f46e5' 
-                                                : '#64748b',
-                                            padding: '4px',
-                                            width: '24px',
-                                            height: '24px'
+                                            color: '#64748b'
                                         }}
                                     >
-                                        {profiles.length > 0 && selectedProfiles.length === profiles.length ? (
-                                            <CheckIcon fontSize="small" />
-                                        ) : selectedProfiles.length > 0 ? (
-                                            <IndeterminateCheckBoxIcon fontSize="small" />
-                                        ) : (
-                                            <AddIcon fontSize="small" />
+                                        {profile.description || 'No description available'}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                                        {profile.modules?.slice(0, 3).map(moduleId => {
+                                            const module = modules.find(m => m.id === moduleId);
+                                            return module ? (
+                                                <Chip
+                                                    key={module.id}
+                                                    label={module.title}
+                                                    size="small"
+                                                    sx={{ 
+                                                        bgcolor: 'rgba(99, 102, 241, 0.08)',
+                                                        color: '#4f46e5',
+                                                        fontWeight: 500,
+                                                        borderRadius: '6px',
+                                                        border: '1px solid rgba(99, 102, 241, 0.2)'
+                                                    }}
+                                                />
+                                            ) : null;
+                                        })}
+                                        {profile.modules?.length > 3 && (
+                                            <Chip
+                                                label={`+${profile.modules.length - 3}`}
+                                                size="small"
+                                                sx={{ 
+                                                    bgcolor: 'rgba(148, 163, 184, 0.1)',
+                                                    color: '#64748b',
+                                                    fontWeight: 500,
+                                                    borderRadius: '6px',
+                                                    border: '1px solid rgba(148, 163, 184, 0.2)'
+                                                }}
+                                            />
                                         )}
-                                    </IconButton>
-                                </th>
-                                <th>NAME</th>
-                                <th>DESCRIPTION</th>
-                                <th>MODULES</th>
-                                <th>STATUS</th>
-                                <th style={{ textAlign: 'right' }}>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProfiles.map(profile => (
-                                <tr key={profile.id} onClick={(e) => handleProfileClick(profile, e)}>
-                                    <td>
+                                    </Box>
+                                </Box>
+                                <Box 
+                                    className="card-actions"
+                                    sx={{ 
+                                        p: 2, 
+                                        borderTop: '1px solid rgba(226, 232, 240, 0.8)',
+                                        display: 'flex',
+                                        justifyContent: 'flex-end',
+                                        gap: 1,
+                                        opacity: 0.8,
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    <Tooltip title={t('profiles.viewDetails')}>
                                         <IconButton
                                             size="small"
                                             onClick={(e) => {
-                                                e.preventDefault();
                                                 e.stopPropagation();
-                                                if (selectedProfiles.includes(profile.id)) {
-                                                    setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
-                                                } else {
-                                                    setSelectedProfiles(prev => [...prev, profile.id]);
+                                                handleProfileClick(profile, e);
+                                            }}
+                                            data-action="view-details"
+                                            sx={{ 
+                                                color: '#4f46e5',
+                                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                                                    transform: 'scale(1.05)'
                                                 }
                                             }}
-                                                    sx={{ 
-                                                backgroundColor: selectedProfiles.includes(profile.id) 
-                                                    ? '#4f46e5' 
-                                                    : 'white',
-                                                border: selectedProfiles.includes(profile.id) 
-                                                    ? '2px solid #4f46e5' 
-                                                    : '2px solid #e5e7eb',
-                                                color: selectedProfiles.includes(profile.id) 
-                                                    ? 'white' 
-                                                    : '#64748b',
-                                                padding: '4px',
-                                                width: '24px',
-                                                height: '24px'
+                                        >
+                                            <InfoIcon fontSize="small" data-action="view-details" />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title={t('profiles.edit')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEdit(profile.id);
+                                            }}
+                                            sx={{ 
+                                                color: '#3b82f6',
+                                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                                    transform: 'scale(1.05)'
+                                                }
                                             }}
                                         >
-                                            {selectedProfiles.includes(profile.id) ? (
-                                                <CheckIcon fontSize="small" />
-                                            ) : (
-                                                <AddIcon fontSize="small" />
-                                            )}
+                                            <EditIcon fontSize="small" />
                                         </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title={t('profiles.delete')}>
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(profile.id);
+                                            }}
+                                            sx={{ 
+                                                color: '#ef4444',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                                    transform: 'scale(1.05)'
+                                                }
+                                            }}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                            </Paper>
+                        </Grid>
+                    ))}
+                </Grid>
+            ) : (
+                <Box className="modern-table-container" sx={{ 
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                    backgroundColor: 'white'
+                }}>
+                    <table className="modern-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                <th style={{ 
+                                    padding: '16px 20px', 
+                                    textAlign: 'left', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                    fontWeight: 600,
+                                    color: '#1e293b',
+                                    fontSize: '0.875rem',
+                                    position: 'relative'
+                                }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Checkbox
+                                            checked={filteredProfiles.length > 0 && selectedProfiles.length === filteredProfiles.length}
+                                            indeterminate={selectedProfiles.length > 0 && selectedProfiles.length < filteredProfiles.length}
+                                            onChange={handleHeaderCheckboxClick}
+                                            size="small"
+                                            sx={{
+                                                color: '#94a3b8',
+                                                '&.Mui-checked': {
+                                                    color: '#4f46e5',
+                                                },
+                                                '&.MuiCheckbox-indeterminate': {
+                                                    color: '#4f46e5',
+                                                },
+                                            }}
+                                        />
+                                        Profile
+                                    </Box>
+                                </th>
+                                <th style={{ 
+                                    padding: '16px 20px', 
+                                    textAlign: 'left', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                    fontWeight: 600,
+                                    color: '#1e293b',
+                                    fontSize: '0.875rem'
+                                }}>Description</th>
+                                <th style={{ 
+                                    padding: '16px 20px', 
+                                    textAlign: 'left', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                    fontWeight: 600,
+                                    color: '#1e293b',
+                                    fontSize: '0.875rem'
+                                }}>Modules</th>
+                                <th style={{ 
+                                    padding: '16px 20px', 
+                                    textAlign: 'left', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                    fontWeight: 600,
+                                    color: '#1e293b',
+                                    fontSize: '0.875rem'
+                                }}>Status</th>
+                                <th style={{ 
+                                    padding: '16px 20px', 
+                                    textAlign: 'center', 
+                                    backgroundColor: '#f8fafc', 
+                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                    fontWeight: 600,
+                                    color: '#1e293b',
+                                    fontSize: '0.875rem',
+                                    width: '140px'
+                                }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProfiles.map((profile) => (
+                                <tr 
+                                    key={profile.id}
+                                    onClick={(e) => handleProfileClick(profile, e)}
+                                    style={{ 
+                                        cursor: 'pointer',
+                                        backgroundColor: selectedProfiles.includes(profile.id) ? 'rgba(79, 70, 229, 0.04)' : 'transparent',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    className="profile-row"
+                                >
+                                    <td style={{ 
+                                        padding: '16px 20px', 
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                                        fontSize: '0.875rem',
+                                        color: '#334155'
+                                    }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            <Checkbox
+                                                checked={selectedProfiles.includes(profile.id)}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    if (selectedProfiles.includes(profile.id)) {
+                                                        setSelectedProfiles(prev => prev.filter(id => id !== profile.id));
+                                                    } else {
+                                                        setSelectedProfiles(prev => [...prev, profile.id]);
+                                                    }
+                                                }}
+                                                size="small"
+                                                sx={{
+                                                    color: '#94a3b8',
+                                                    '&.Mui-checked': {
+                                                        color: '#4f46e5',
+                                                    },
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <Avatar
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    bgcolor: getAvatarColor(profile.id),
+                                                    fontSize: '1rem',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            >
+                                                {getInitials(profile.name)}
+                                            </Avatar>
+                                            <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e293b' }}>
+                                                {profile.name}
+                                            </Typography>
+                                        </Box>
                                     </td>
-                                    <td>
-                                        <div className="name-cell">
-                                            <div className="user-avatar">
-                                                    {getInitials(profile.name)}
-                                            </div>
-                                            <div>
-                                                <div className="profile-name">{profile.name}</div>
-                                                <div className="profile-title">{profile.title || ''}</div>
-                                            </div>
-                                        </div>
+                                    <td style={{ 
+                                        padding: '16px 20px', 
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                                        fontSize: '0.875rem',
+                                        color: '#64748b'
+                                    }}>
+                                        <Typography 
+                                            variant="body2" 
+                                            sx={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical',
+                                                maxWidth: '250px'
+                                            }}
+                                        >
+                                            {profile.description || 'No description'}
+                                        </Typography>
                                     </td>
-                                    <td>{profile.description || t('profiles.noDescription')}</td>
-                                    <td>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    {profile.modules && Array.isArray(profile.modules) && profile.modules.length > 0 ? (
-                                                        profile.modules.slice(0, 2).map((moduleId, index) => {
-                                                            const module = modules.find(m => m.id === moduleId);
-                                                            return (
-                                                                <Chip
-                                                                    key={index}
-                                                                    label={module ? module.title : `Module ${moduleId}`}
-                                                                    size="small"
-                                                                    sx={{ 
-                                                                bgcolor: 'rgba(79, 70, 229, 0.08)',
-                                                                        color: '#4f46e5',
-                                                                        fontSize: '0.7rem',
-                                                                        height: '22px',
-                                                                borderRadius: '6px',
-                                                                my: 0.5,
-                                                                fontWeight: 500
-                                                                    }}
-                                                                />
-                                                            );
-                                                        })
-                                                    ) : (
-                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                                                    {t('profiles.noModules')}
-                                                        </Typography>
-                                                    )}
-                                                    {profile.modules && profile.modules.length > 2 && (
-                                                        <Chip
-                                                            label={`+${profile.modules.length - 2}`}
-                                                            size="small"
-                                                            sx={{ 
-                                                        backgroundColor: 'rgba(148, 163, 184, 0.15)', 
-                                                                color: '#64748b',
-                                                                fontSize: '0.7rem',
-                                                                height: '22px',
+                                    <td style={{ 
+                                        padding: '16px 20px', 
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {profile.modules?.slice(0, 2).map(moduleId => {
+                                                const module = modules.find(m => m.id === moduleId);
+                                                return module ? (
+                                                    <Chip
+                                                        key={module.id}
+                                                        label={module.title}
+                                                        size="small"
+                                                        sx={{ 
+                                                            bgcolor: 'rgba(99, 102, 241, 0.08)',
+                                                            color: '#4f46e5',
+                                                            fontWeight: 500,
+                                                            borderRadius: '6px',
+                                                            height: '24px',
+                                                            fontSize: '0.75rem'
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })}
+                                            {profile.modules?.length > 2 && (
+                                                <Chip
+                                                    label={`+${profile.modules.length - 2}`}
+                                                    size="small"
+                                                    sx={{ 
+                                                        bgcolor: 'rgba(148, 163, 184, 0.1)',
+                                                        color: '#64748b',
+                                                        fontWeight: 500,
                                                         borderRadius: '6px',
-                                                        my: 0.5,
-                                                        fontWeight: 500
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
+                                                        height: '24px',
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                />
+                                            )}
+                                            {(!profile.modules || profile.modules.length === 0) && (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    No modules
+                                                </Typography>
+                                            )}
+                                        </Box>
                                     </td>
-                                    <td>
-                                        <div className={`status-badge ${profile.status?.toLowerCase() || 'inactive'}`}>
-                                            <span className="status-dot"></span>
-                                            {profile.status?.toLowerCase() === 'active' ? 'Active' : 'Inactive'}
-                                        </div>
+                                    <td style={{ 
+                                        padding: '16px 20px', 
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        <StatusBadge status={profile.status} />
                                     </td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button 
-                                                className="action-button edit"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handleEdit(profile.id);
-                                                        }}
-                                            >
-                                                <EditIcon fontSize="small" />
-                                            </button>
-                                            <button 
-                                                className="action-button delete"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handleDelete(profile.id);
-                                                        }}
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </button>
-                                        </div>
+                                    <td style={{ 
+                                        padding: '16px 20px', 
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
+                                        textAlign: 'center'
+                                    }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                                            <Tooltip title={t('profiles.viewDetails')}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleProfileClick(profile, e);
+                                                    }}
+                                                    data-action="view-details"
+                                                    sx={{ 
+                                                        color: '#4f46e5',
+                                                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        '&:hover': {
+                                                            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                                                            transform: 'scale(1.05)'
+                                                        }
+                                                    }}
+                                                >
+                                                    <InfoIcon fontSize="small" data-action="view-details" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title={t('profiles.edit')}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEdit(profile.id);
+                                                    }}
+                                                    sx={{ 
+                                                        color: '#3b82f6',
+                                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        '&:hover': {
+                                                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                                            transform: 'scale(1.05)'
+                                                        }
+                                                    }}
+                                                >
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title={t('profiles.delete')}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(profile.id);
+                                                    }}
+                                                    sx={{ 
+                                                        color: '#ef4444',
+                                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        '&:hover': {
+                                                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                                            transform: 'scale(1.05)'
+                                                        }
+                                                    }}
+                                                >
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                )
+                </Box>
             )}
 
             {/* Dialogue pour éditer un profil */}
@@ -2175,73 +2273,145 @@ const Profiles = () => {
                 fullWidth
                 PaperProps={{
                     style: {
-                        borderRadius: '12px',
-                        overflow: 'hidden'
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
                     }
                 }}
+                TransitionComponent={Slide}
+                TransitionProps={{ direction: 'up' }}
             >
-                <div className="profile-form-header">
-                    <h2>
-                        <span className="icon">
-                                <AddIcon />
-                        </span>
-                        {editingProfile !== null ? 'Edit Profile' : 'Create Profile'}
-                    </h2>
+                <Box className="modern-profile-form-header">
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar
+                            sx={{
+                                background: 'linear-gradient(45deg, #7c3aed 0%, #4f46e5 100%)',
+                                width: 40,
+                                height: 40,
+                                mr: 2
+                            }}
+                        >
+                            {editingProfile !== null ? <EditIcon /> : <AddIcon />}
+                        </Avatar>
+                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#fff' }}>
+                            {editingProfile !== null ? t('profiles.editProfile', 'Edit Profile') : t('profiles.createProfile', 'Create Profile')}
+                        </Typography>
+                    </Box>
                     <IconButton 
                         onClick={handleCancel} 
                         sx={{
                             color: 'white',
                             bgcolor: 'rgba(255, 255, 255, 0.2)',
                             '&:hover': {
-                                bgcolor: 'rgba(255, 255, 255, 0.3)'
+                                bgcolor: 'rgba(255, 255, 255, 0.3)',
+                                transform: 'rotate(90deg)',
+                                transition: 'transform 0.3s ease'
                             }
                         }}
                     >
-                        <CancelIcon />
+                        <CloseIcon />
                     </IconButton>
-                </div>
+                </Box>
                 
-                <div className="profile-form-nav">
-                    <div 
-                        className={`profile-form-nav-item ${activeNavItem === 'details' ? 'active' : ''}`}
-                        onClick={() => scrollToSection(detailsSectionRef, 'details')}
-                    >
-                        <span className="nav-icon"><DetailsIcon fontSize="small" /></span>
-                        Details
-                    </div>
-                    <div 
-                        className={`profile-form-nav-item ${activeNavItem === 'modules' ? 'active' : ''}`}
-                        onClick={() => scrollToSection(modulesSectionRef, 'modules')}
-                    >
-                        <span className="nav-icon"><SecurityIcon fontSize="small" /></span>
-                        Modules and Permissions
-                    </div>
-                </div>
+                <Tabs
+                    value={activeNavItem}
+                    onChange={(e, newValue) => {
+                        setActiveNavItem(newValue);
+                        scrollToSection(newValue === 'details' ? detailsSectionRef : modulesSectionRef, newValue);
+                    }}
+                    variant="fullWidth"
+                    className="modern-form-tabs"
+                    sx={{
+                        background: '#f8fafc',
+                        borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                        mb: 2
+                    }}
+                >
+                    <Tab 
+                        value="details" 
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <DetailsIcon fontSize="small" />
+                                <span>Details</span>
+                            </Box>
+                        }
+                        sx={{ textTransform: 'none', fontWeight: 500 }}
+                    />
+                    <Tab 
+                        value="modules" 
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <SecurityIcon fontSize="small" />
+                                <span>Modules & Permissions</span>
+                            </Box>
+                        }
+                        sx={{ textTransform: 'none', fontWeight: 500 }}
+                    />
+                </Tabs>
                 
-                <div 
-                    className="profile-form-content profile-form-scrollable" 
+                <Box 
+                    className="modern-form-content" 
                     ref={formScrollRef}
                     onScroll={handleFormScroll}
+                    sx={{
+                        maxHeight: 'calc(100vh - 240px)',
+                        overflowY: 'auto',
+                        px: 3,
+                        py: 2
+                    }}
                 >
                     <form onSubmit={handleSubmit}>
-                        <div className="profile-form-section" ref={detailsSectionRef}>
-                            <div className="profile-form-section-title">Details</div>
-                            <div className="profile-form-field">
-                                <label>
+                        <Box className="modern-form-section" ref={detailsSectionRef}>
+                            <Typography variant="h6" className="modern-section-title" 
+                                sx={{ 
+                                    mb: 3, 
+                                    color: '#1e293b',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    '&::before': {
+                                        content: '""',
+                                        display: 'block',
+                                        width: '4px',
+                                        height: '20px',
+                                        backgroundColor: '#4f46e5',
+                                        borderRadius: '2px',
+                                        marginRight: '12px'
+                                    }
+                                }}
+                            >
+                                Profile Information
+                            </Typography>
+                            
+                            <Grid container spacing={3}>
+                                <Grid item xs={12}>
+                                    <Box className="modern-form-field">
+                                        <Typography 
+                                            component="label" 
+                                            htmlFor="profile-name"
+                                            sx={{ 
+                                                mb: 1, 
+                                                display: 'block',
+                                                fontWeight: 500,
+                                                fontSize: '0.875rem',
+                                                color: '#4b5563'
+                                            }}
+                                        >
                                     Profile Name
-                                    <span className="required">*</span>
-                                </label>
-                                <input
-                                    type="text"
+                                            <Box component="span" sx={{ color: '#ef4444', ml: 0.5 }}>*</Box>
+                                        </Typography>
+                                        <TextField
+                                            id="profile-name"
+                                            variant="outlined"
+                                            fullWidth
                                     value={editingProfile !== null ? profiles[editingProfile]?.name || '' : newProfile.name || ''}
                             onChange={(e) => {
                                         nameInputRef.current = e.target.value;
                                         if (editingProfile !== null) {
+                                            // Use a temporary copy to avoid modifying the real data until save is clicked
+                                            const tempProfile = { ...profiles[editingProfile], name: e.target.value };
                                             const updatedProfiles = [...profiles];
-                                            updatedProfiles[editingProfile] = {
-                                                ...updatedProfiles[editingProfile],
-                                                name: e.target.value
-                                            };
+                                            updatedProfiles[editingProfile] = tempProfile;
                                             setProfiles(updatedProfiles);
                                         } else {
                                             setNewProfile({ ...newProfile, name: e.target.value });
@@ -2252,113 +2422,343 @@ const Profiles = () => {
                                         }
                                     }}
                                     placeholder="Enter profile name"
-                                />
-                                {formErrors.name && (
-                                    <div className="field-error">{formErrors.name}</div>
-                                )}
-                            </div>
-                            
-                            <div className="profile-form-field">
-                                <label>Description</label>
-                                <textarea
+                                            error={!!formErrors.name}
+                                            helperText={formErrors.name}
+                                            InputProps={{
+                                                sx: {
+                                                    borderRadius: '10px',
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: 'rgba(226, 232, 240, 0.8)'
+                                                    },
+                                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#cbd5e1'
+                                                    },
+                                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#4f46e5'
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                
+                                <Grid item xs={12}>
+                                    <Box className="modern-form-field">
+                                        <Typography 
+                                            component="label" 
+                                            htmlFor="profile-description"
+                                            sx={{ 
+                                                mb: 1, 
+                                                display: 'block',
+                                                fontWeight: 500,
+                                                fontSize: '0.875rem',
+                                                color: '#4b5563'
+                                            }}
+                                        >
+                                            Description
+                                        </Typography>
+                                        <TextField
+                                            id="profile-description"
+                                            variant="outlined"
+                                            fullWidth
+                                            multiline
+                                            rows={3}
                                     value={editingProfile !== null ? profiles[editingProfile]?.description || '' : newProfile.description || ''}
                                 onChange={(e) => {
                                         descriptionInputRef.current = e.target.value;
                                         if (editingProfile !== null) {
+                                            // Use a temporary copy to avoid modifying the real data until save is clicked
+                                            const tempProfile = { ...profiles[editingProfile], description: e.target.value };
                                             const updatedProfiles = [...profiles];
-                                            updatedProfiles[editingProfile] = {
-                                                ...updatedProfiles[editingProfile],
-                                                description: e.target.value
-                                            };
+                                            updatedProfiles[editingProfile] = tempProfile;
                                             setProfiles(updatedProfiles);
                                         } else {
                                             setNewProfile({ ...newProfile, description: e.target.value });
                                         }
                                     }}
-                                    placeholder="Enter profile description"
-                                />
-                            </div>
-                        </div>
+                                            placeholder="Describe the profile's purpose and permissions"
+                                            InputProps={{
+                                                sx: {
+                                                    borderRadius: '10px',
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: 'rgba(226, 232, 240, 0.8)'
+                                                    },
+                                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#cbd5e1'
+                                                    },
+                                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#4f46e5'
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                
+                                <Grid item xs={12}>
+                                    <Box className="modern-form-field">
+                                        <Typography 
+                                            component="label"
+                                            sx={{ 
+                                                mb: 1, 
+                                                display: 'block',
+                                                fontWeight: 500,
+                                                fontSize: '0.875rem',
+                                                color: '#4b5563'
+                                            }}
+                                        >
+                                            Status
+                                        </Typography>
+                                        <RadioGroup 
+                                            row
+                                            value={editingProfile !== null ? profiles[editingProfile]?.status || 'active' : newProfile.status || 'active'}
+                                            onChange={(e) => {
+                                                const status = e.target.value;
+                                                if (editingProfile !== null) {
+                                                    // Instead of modifying the profiles array directly, create a temporary copy
+                                                    // This does not affect the real data unless saved
+                                                    const tempProfile = { ...profiles[editingProfile], status };
+                                                    const updatedProfiles = [...profiles];
+                                                    updatedProfiles[editingProfile] = tempProfile;
+                                                    setProfiles(updatedProfiles);
+                                                } else {
+                                                    setNewProfile({ ...newProfile, status });
+                                                }
+                                            }}
+                                        >
+                                            <FormControlLabel 
+                                                value="active" 
+                                                control={<Radio color="primary" />} 
+                                                label={
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: '#10b981',
+                                                                mr: 1
+                                                            }}
+                                                        />
+                                                        Active
+                                                    </Box>
+                                                }
+                                                sx={{ mr: 3 }}
+                                            />
+                                            <FormControlLabel 
+                                                value="inactive" 
+                                                control={<Radio color="error" />} 
+                                                label={
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: '#ef4444',
+                                                                mr: 1
+                                                            }}
+                                                        />
+                                                        Inactive
+                                                    </Box>
+                                                }
+                                            />
+                                        </RadioGroup>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Box>
                         
-                        <div className="profile-form-section" ref={modulesSectionRef}>
-                            <div className="profile-form-section-title">Modules and Permissions</div>
+                        <Box className="modern-form-section" ref={modulesSectionRef} sx={{ mt: 4 }}>
+                            <Typography variant="h6" className="modern-section-title" 
+                                sx={{ 
+                                    mb: 3, 
+                                    color: '#1e293b',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    '&::before': {
+                                        content: '""',
+                                        display: 'block',
+                                        width: '4px',
+                                        height: '20px',
+                                        backgroundColor: '#4f46e5',
+                                        borderRadius: '2px',
+                                        marginRight: '12px'
+                                    }
+                                }}
+                            >
+                                Modules and Permissions
+                            </Typography>
                             
                         {formErrors.modules && (
-                                <div className="field-error" style={{ marginBottom: '16px' }}>
+                                <Box sx={{ 
+                                    p: 2, 
+                                    mb: 3, 
+                                    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    color: '#dc2626',
+                                    fontSize: '0.875rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}>
+                                    <CloseIcon fontSize="small" />
                                     {formErrors.modules}
-                                </div>
+                                </Box>
                             )}
                             
-                            <div className="modules-grid">
+                            <Grid container spacing={3}>
                                 {Object.keys(moduleStructureState).map(moduleName => {
                                     const module = moduleStructureState[moduleName];
                                     const profileData = editingProfile !== null ? profiles[editingProfile] : newProfile;
                                     const moduleAccess = profileData?.modules?.[moduleName]?.access || false;
                                     
                                     return (
-                                        <div className="module-card" key={moduleName}>
-                                            <div className="module-card-header">
-                                                <label className="module-checkbox">
-                                                    <input
-                                                        type="checkbox"
+                                        <Grid item xs={12} md={6} key={moduleName}>
+                                            <Card 
+                                                elevation={0} 
+                                                sx={{ 
+                                                    borderRadius: '16px',
+                                                    border: '1px solid rgba(226, 232, 240, 0.8)',
+                                                    height: '100%',
+                                                    overflow: 'hidden',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': {
+                                                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+                                                        transform: 'translateY(-4px)'
+                                                    }
+                                                }}
+                                                className={moduleAccess ? 'module-card-active' : ''}
+                                            >
+                                                <CardHeader
+                                                    avatar={
+                                                        <Avatar
+                                                            sx={{
+                                                                bgcolor: moduleAccess ? '#4f46e5' : 'rgba(79, 70, 229, 0.1)',
+                                                                color: moduleAccess ? '#fff' : '#4f46e5',
+                                                                transition: 'all 0.3s ease'
+                                                            }}
+                                                        >
+                                                            {getModuleIcon(moduleName)}
+                                                        </Avatar>
+                                                    }
+                                                    title={
+                                                        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                                            {module.title}
+                                                        </Typography>
+                                                    }
+                                                    action={
+                                                        <Switch
                                                         checked={moduleAccess}
                                                 onChange={(e) => handleModuleChange(moduleName, e.target.checked)}
-                                                    />
-                                                </label>
-                                                <span className="module-name">{module.title}</span>
-                                            </div>
-                                            
-                                            <div className="module-card-content">
-                                                <div className="submodule-list">
+                                                            color="primary"
+                                                            inputProps={{ 'aria-label': 'module toggle' }}
+                                                        />
+                                                    }
+                                                    sx={{
+                                                        borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                                                        backgroundColor: moduleAccess ? 'rgba(79, 70, 229, 0.05)' : 'transparent'
+                                                    }}
+                                                />
+                                                <CardContent sx={{ p: 0 }}>
+                                                    <List disablePadding>
                                                     {Object.keys(module.subModules || {}).map(subModuleName => {
                                                         const subModuleChecked = profileData?.modules?.[moduleName]?.subModules?.[subModuleName] || false;
                                                         
                                                         return (
-                                                            <div className="submodule-item" key={subModuleName}>
-                                                                <label className="submodule-checkbox">
-                                                                    <input
-                                                                        type="checkbox"
+                                                                <ListItem
+                                                                    key={subModuleName}
+                                                                    sx={{
+                                                                        py: 1,
+                                                                        px: 2,
+                                                                        borderBottom: '1px solid rgba(226, 232, 240, 0.4)',
+                                                                        '&:last-child': {
+                                                                            borderBottom: 'none'
+                                                                        },
+                                                                        backgroundColor: subModuleChecked ? 'rgba(79, 70, 229, 0.05)' : 'transparent'
+                                                                    }}
+                                                                    secondaryAction={
+                                                                        <Checkbox
+                                                                            edge="end"
                                                                         checked={subModuleChecked}
                                                                         onChange={(e) => handleSubModuleChange(moduleName, subModuleName, e.target.checked)}
+                                                                            disabled={!moduleAccess}
+                                                                            color="primary"
+                                                                        />
+                                                                    }
+                                                                >
+                                                                    <ListItemText
+                                                                        primary={module.subModules[subModuleName]}
+                                                                        primaryTypographyProps={{
+                                                                            sx: {
+                                                                                fontSize: '0.875rem',
+                                                                                fontWeight: subModuleChecked ? 600 : 400,
+                                                                                color: !moduleAccess ? 'rgba(75, 85, 99, 0.6)' : '#4b5563'
+                                                                            }
+                                                                        }}
                                                                     />
-                                                                </label>
-                                                                <span className="submodule-name">
-                                                                    {module.subModules[subModuleName]}
-                                                                </span>
-                                                            </div>
+                                                                </ListItem>
                                                         );
                                                     })}
-                                                </div>
-                                            </div>
-                                        </div>
+                                                    </List>
+                                                </CardContent>
+                                            </Card>
+                                        </Grid>
                                     );
                                 })}
-                            </div>
-                        </div>
+                            </Grid>
+                        </Box>
                     </form>
-                </div>
+                </Box>
                 
-                <div className="profile-form-actions">
-                    <button 
-                        type="button" 
-                        className="cancel-button"
+                <Box className="modern-form-actions" sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    gap: 2, 
+                    p: 3, 
+                    backgroundColor: '#f8fafc',
+                    borderTop: '1px solid rgba(226, 232, 240, 0.8)'
+                }}>
+                    <Button 
+                        variant="outlined" 
                         onClick={handleCancel} 
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            borderRadius: '10px',
+                            px: 3,
+                            '&:hover': {
+                                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                                borderColor: '#ef4444',
+                                color: '#ef4444'
+                            }
+                        }}
                     >
                         Cancel
-                    </button>
-                    <button 
-                        type="button" 
-                        className="submit-button"
+                    </Button>
+                    <Button 
+                        variant="contained" 
                         onClick={handleSubmit} 
+                        sx={{
+                            background: 'linear-gradient(45deg, #4f46e5 0%, #7c3aed 100%)',
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            borderRadius: '10px',
+                            px: 3,
+                            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)',
+                                boxShadow: '0 6px 20px rgba(79, 70, 229, 0.35)',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
+                        startIcon={editingProfile !== null ? <SaveIcon /> : <AddIcon />}
                     >
                         {editingProfile !== null ? 'Update Profile' : 'Create Profile'}
-                    </button>
-                </div>
-                
-                {/* Bouton de défilement vers le bas */}
-                <button className="scroll-button" onClick={scrollToBottom}>
-                    <ArrowDownwardIcon />
-                </button>
+                    </Button>
+                </Box>
             </Dialog>
 
             {/* Profile modal */}
