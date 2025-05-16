@@ -159,10 +159,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
 
     return (
         <Fade in={!loading} timeout={300}>
-            <Paper 
-                elevation={0} 
-                sx={{ 
-                    borderRadius: '16px',
+        <Paper 
+            elevation={0} 
+            sx={{ 
+                borderRadius: '16px',
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
                     border: '1px solid rgba(226, 232, 240, 0.8)',
                     overflow: 'hidden',
@@ -415,12 +415,12 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                 <TableRow>
                                     <TableCell colSpan={9} align="center">
                                         <Box sx={{ py: 5 }}>
-                                            <Typography 
-                                                variant="body1" 
+                                        <Typography 
+                                            variant="body1" 
                                                 sx={{ color: '#6b7280', mb: 1 }}
-                                            >
-                                                {loading ? 'Loading tokens...' : 'No tokens found'}
-                                            </Typography>
+                                        >
+                                            {loading ? 'Loading tokens...' : 'No tokens found'}
+                                        </Typography>
                                             {!loading && (
                                                 <Typography variant="body2" sx={{ color: '#94a3b8' }}>
                                                     Try adjusting your search criteria
@@ -495,7 +495,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                         <ListItemText primary="Refresh status" />
                     </MenuItem>
                 </Menu>
-            </Paper>
+        </Paper>
         </Fade>
     );
 };

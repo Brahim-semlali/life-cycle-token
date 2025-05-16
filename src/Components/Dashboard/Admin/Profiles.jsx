@@ -13,6 +13,7 @@ import {
   convertModulesToApiFormat,
   getUsersByProfileId
 } from "../../../services/ProfileService";
+import userService from '../../../services/UserService';
 import { 
   useReactTable,
   getCoreRowModel,
@@ -76,7 +77,7 @@ import {
   Cancel as CancelIcon,
   Info as InfoIcon,
   ViewModule as GridViewIcon,
-  ViewList as ListViewIcon,
+  List as ListIcon,
   MoreVert as MoreVertIcon,
   // Ajout des nouvelles icônes pour les modules
   Security as SecurityIcon,
@@ -95,7 +96,6 @@ import {
   FilterList as FilterListIcon,
   Check as CheckIcon,
   IndeterminateCheckBox as IndeterminateCheckBoxIcon,
-  People,
   ArrowDownward as ArrowDownwardIcon,
   Details as DetailsIcon,
   Search as SearchIcon,
@@ -108,7 +108,15 @@ import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
   PersonOutline as PersonOutlineIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  // Add these new imports for the dashboard view
+  CalendarToday as CalendarTodayIcon,
+  BarChart as BarChartIcon,
+  People as PeopleIcon,
+  ViewModule as ViewModuleIcon,
+  Description as DescriptionIcon,
+  Extension as ExtensionIcon,
+  SearchOff as SearchOffIcon
 } from '@mui/icons-material';
 import "./Profiles.css";
 
@@ -220,12 +228,13 @@ const Profiles = () => {
     const [error, setError] = useState(null);
     const [modules, setModules] = useState([]);
     const [menus, setMenus] = useState([]);
-    // Modifier l'état par défaut pour afficher la vue liste par défaut au lieu de la grille
-    const [viewMode, setViewMode] = useState('list'); // Changé de 'grid' à 'list'
+    const [viewMode, setViewMode] = useState('list'); // Changé de 'dashboard' à 'list'
     const [searchQuery, setSearchQuery] = useState('');
     // Ajout des états pour le filtrage
     const [statusFilter, setStatusFilter] = useState('all');
     const [moduleFilter, setModuleFilter] = useState('all');
+    // Add state for users associated with profiles
+    const [users, setUsers] = useState([]);
     
     // État pour afficher les détails d'un profil
     const [detailsDialog, setDetailsDialog] = useState(false);
@@ -759,8 +768,51 @@ const Profiles = () => {
         }
     };
 
+    // Add function to load users
+    const loadUsers = async () => {
+        try {
+            const allUsers = await userService.getAllUsers();
+            const processedUsers = allUsers.map(user => {
+                // Extract profileId from different possible sources
+                let profileId = null;
+                if (user.profile_id) {
+                    profileId = typeof user.profile_id === 'string' 
+                        ? parseInt(user.profile_id, 10) 
+                        : user.profile_id;
+                } else if (user.profile && typeof user.profile === 'number') {
+                    profileId = user.profile;
+                } else if (user.profile && typeof user.profile === 'object' && user.profile.id) {
+                    profileId = user.profile.id;
+                }
+                
+                return {
+                    ...user,
+                    id: user.id || user.email,
+                    profileId: profileId
+                };
+            });
+            
+            setUsers(processedUsers);
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    };
+    
     useEffect(() => {
-        loadProfiles();
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                await loadProfiles();
+                await loadUsers();  // Load users after profiles
+            } catch (err) {
+                console.error("Error loading data:", err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchData();
     }, []);
 
     const validateForm = (profile) => {
@@ -966,9 +1018,74 @@ const Profiles = () => {
 
     const handleEdit = (id) => {
         const index = profiles.findIndex(p => p.id === id);
-        setEditingProfile(index);
-        setNewProfile(profiles[index]);
-        setOpenDialog(true);
+        if (index !== -1) {
+            const profileToEdit = profiles[index];
+            
+            // Créer une copie du profil avec les modules et sous-modules correctement initialisés
+            const initializedModules = {};
+            
+            // Parcourir la structure des modules disponibles
+            Object.keys(moduleStructureState).forEach(moduleKey => {
+                initializedModules[moduleKey] = {
+                    access: false,
+                    subModules: {}
+                };
+                
+                // Initialiser les sous-modules
+                if (moduleStructureState[moduleKey].subModules) {
+                    Object.keys(moduleStructureState[moduleKey].subModules).forEach(subModuleKey => {
+                        initializedModules[moduleKey].subModules[subModuleKey] = false;
+                    });
+                }
+            });
+
+            // Mettre à jour les valeurs en fonction des modules du profil
+            try {
+                if (profileToEdit.modules && Array.isArray(profileToEdit.modules)) {
+                    profileToEdit.modules.forEach(moduleId => {
+                        try {
+                            // Si moduleId est un objet
+                            if (typeof moduleId === 'object' && moduleId !== null) {
+                                const moduleName = moduleId.id || moduleId.name || moduleId.code;
+                                if (moduleName && initializedModules[moduleName]) {
+                                    initializedModules[moduleName].access = true;
+                                }
+                                return;
+                            }
+                            
+                            // Si moduleId est une chaîne
+                            if (typeof moduleId === 'string') {
+                                if (moduleId.includes('.')) {
+                                    const [moduleName, subModuleName] = moduleId.split('.');
+                                    if (initializedModules[moduleName] && initializedModules[moduleName].subModules) {
+                                        initializedModules[moduleName].subModules[subModuleName] = true;
+                                        initializedModules[moduleName].access = true;
+                                    }
+                                } else {
+                                    if (initializedModules[moduleId]) {
+                                        initializedModules[moduleId].access = true;
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Error processing module:', moduleId, err);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error processing modules:', err);
+            }
+
+            // Mettre à jour le profil avec les modules initialisés
+            const updatedProfile = {
+                ...profileToEdit,
+                modules: initializedModules
+            };
+
+            setEditingProfile(index);
+            setNewProfile(updatedProfile);
+            setOpenDialog(true);
+        }
     };
 
     // Modifier la fonction handleDelete pour ouvrir la boîte de dialogue de confirmation
@@ -1141,22 +1258,27 @@ const Profiles = () => {
         // Don't open the modal if the click is on a button or inside a button element
         if (event) {
             const targetElement = event.target;
+            
+            // Check if targetElement is an HTML Element that supports closest method
+            const hasClosestMethod = targetElement && typeof targetElement.closest === 'function';
+            
             // Check if the click is on an edit or delete button
-            const isClickOnActionButton = 
+            const isClickOnActionButton = hasClosestMethod && (
                 (targetElement.closest('button') || targetElement.closest('.MuiButton-root')) && 
                 // Ne pas bloquer le bouton de détails/info
                 !targetElement.closest('[data-action="view-details"]') &&
-                !targetElement.closest('.MuiButton-startIcon[data-action="view-details"]');
+                !targetElement.closest('.MuiButton-startIcon[data-action="view-details"]')
+            );
                 
             if (
                 (targetElement.tagName === 'BUTTON' && !targetElement.hasAttribute('data-action-view-details')) || 
                 isClickOnActionButton ||
                 // Also check for any element with roles that imply interaction
-                (targetElement.getAttribute('role') === 'button' && !targetElement.hasAttribute('data-action-view-details')) ||
-                targetElement.closest('[role="button"]:not([data-action-view-details])') ||
+                (hasClosestMethod && targetElement.getAttribute('role') === 'button' && !targetElement.hasAttribute('data-action-view-details')) ||
+                (hasClosestMethod && targetElement.closest('[role="button"]:not([data-action-view-details])')) ||
                 // Check for elements inside buttons (sauf pour le bouton de détails)
-                (targetElement.closest('.MuiButton-startIcon') && !targetElement.closest('[data-action="view-details"]')) ||
-                (targetElement.closest('.MuiButton-endIcon') && !targetElement.closest('[data-action="view-details"]'))
+                (hasClosestMethod && targetElement.closest('.MuiButton-startIcon') && !targetElement.closest('[data-action="view-details"]')) ||
+                (hasClosestMethod && targetElement.closest('.MuiButton-endIcon') && !targetElement.closest('[data-action="view-details"]'))
             ) {
                 return;
             }
@@ -1252,6 +1374,155 @@ const Profiles = () => {
             });
         }
     };
+
+    // Add a function to count users by profile
+    const getUserCountByProfile = (profileId) => {
+        const profileUsers = users.filter(user => user.profileId === profileId);
+        return profileUsers.length;
+    };
+    
+    // Add a function to get module display names
+    const getModuleDisplayName = (moduleId) => {
+        const module = modules.find(m => m.id === moduleId);
+        return module ? module.title : moduleId;
+    };
+    
+    // Add new function to render dashboard view
+    const renderDashboardView = () => (
+        <div className="dashboard-view">
+            {filteredProfiles.length === 0 ? (
+                <Box className="no-results-container" sx={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    p: 5
+                }}>
+                    <Box className="no-results-icon">
+                        <SearchOffIcon sx={{ fontSize: 60 }} />
+                    </Box>
+                    <Typography variant="h5" sx={{ mt: 2, fontWeight: 600 }}>No profiles found</Typography>
+                    <Typography sx={{ mt: 1, color: 'text.secondary' }}>Try adjusting your search or filters</Typography>
+                </Box>
+            ) : (
+                filteredProfiles.map((profile, index) => (
+                    <div 
+                        className="dashboard-profile-item" 
+                        key={profile.id} 
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                    >
+                        <div className="dashboard-profile-header">
+                            <div className="dashboard-profile-avatar">
+                                {getInitials(profile.name)}
+                            </div>
+                            <div className="dashboard-profile-info">
+                                <h3 className="dashboard-profile-name">{profile.name}</h3>
+                                <div 
+                                    className={`dashboard-profile-status ${profile.status ? profile.status.toLowerCase() : 'inactive'}`}
+                                >
+                                    {profile.status ? profile.status.charAt(0).toUpperCase() + profile.status.slice(1).toLowerCase() : 'Inactive'}
+                                </div>
+                            </div>
+                            <Checkbox
+                                checked={selectedProfiles.includes(profile.id)}
+                                onChange={(e) => {
+                                    e.stopPropagation();
+                                    const newSelected = selectedProfiles.includes(profile.id)
+                                        ? selectedProfiles.filter(id => id !== profile.id)
+                                        : [...selectedProfiles, profile.id];
+                                    setSelectedProfiles(newSelected);
+                                }}
+                                size="small"
+                                edge="end"
+                            />
+                        </div>
+                        
+                        <div className="dashboard-profile-content">
+                            <div className="dashboard-profile-section">
+                                <div className="dashboard-profile-section-title">
+                                    <DescriptionIcon fontSize="small" /> Description
+                                </div>
+                                <div className="dashboard-profile-description">
+                                    {profile.description || 'No description provided.'}
+                                </div>
+                            </div>
+                            
+                            <div className="dashboard-profile-section">
+                                <div className="dashboard-profile-section-title">
+                                    <ExtensionIcon fontSize="small" /> Modules
+                                </div>
+                                <div className="dashboard-profile-modules">
+                                    {profile.modules && profile.modules.length > 0 ? (
+                                        profile.modules.slice(0, 4).map(moduleId => (
+                                            <span className="dashboard-profile-module" key={moduleId}>
+                                                {getModuleDisplayName(moduleId)}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                            No modules assigned
+                                        </span>
+                                    )}
+                                    {profile.modules && profile.modules.length > 4 && (
+                                        <span className="dashboard-profile-module">
+                                            +{profile.modules.length - 4} more
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="dashboard-profile-stats">
+                                <div className="dashboard-profile-stat">
+                                    <span className="dashboard-profile-stat-value">{getUserCountByProfile(profile.id)}</span>
+                                    <span className="dashboard-profile-stat-label">Users</span>
+                                </div>
+                                <div className="dashboard-profile-stat">
+                                    <span className="dashboard-profile-stat-value">{profile.permissions?.length || 0}</span>
+                                    <span className="dashboard-profile-stat-label">Permissions</span>
+                                </div>
+                                <div className="dashboard-profile-stat">
+                                    <span className="dashboard-profile-stat-value">{profile.modules?.length || 0}</span>
+                                    <span className="dashboard-profile-stat-label">Modules</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="dashboard-profile-actions">
+                            <button 
+                                className="dashboard-profile-btn primary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleProfileClick(profile, { target: { dataset: { action: 'view-details' }}});
+                                }}
+                                data-action="view-details"
+                            >
+                                <InfoIcon fontSize="small" /> View
+                            </button>
+                            <button 
+                                className="dashboard-profile-btn primary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(profile.id);
+                                }}
+                            >
+                                <EditIcon fontSize="small" /> Edit
+                            </button>
+                            <button 
+                                className="dashboard-profile-btn secondary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(profile.id);
+                                }}
+                            >
+                                <DeleteIcon fontSize="small" /> Delete
+                            </button>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
 
     return (
         <Box className={`profiles-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
@@ -1500,87 +1771,39 @@ const Profiles = () => {
                             }}
                         >
                         <Button
-                                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
-                            onClick={() => setViewMode('grid')}
-                            sx={{
-                                    minWidth: '36px',
-                                    height: '32px',
-                                    padding: '0 12px',
-                                    borderRadius: '20px',
-                                    backgroundColor: viewMode === 'grid' ? '#ffffff' : 'transparent',
-                                    color: viewMode === 'grid' ? '#7c3aed' : '#64748b',
-                                    fontSize: '13px',
-                                    fontWeight: viewMode === 'grid' ? 600 : 500,
-                                    transition: 'all 0.2s ease',
-                                    zIndex: 2,
-                                    boxShadow: viewMode === 'grid' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
-                                '&:hover': {
-                                        backgroundColor: viewMode === 'grid' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
-                                    },
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    position: 'relative'
-                            }}
-                        >
-                                <GridViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
-                                <span>Grid</span>
-                                {viewMode === 'grid' && (
-                                    <Box 
-                                        sx={{
-                                            position: 'absolute',
-                                            bottom: '5px',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            width: '15px',
-                                            height: '2px',
-                                            backgroundColor: 'currentColor',
-                                            borderRadius: '2px'
-                                        }}
-                                    />
-                                )}
-                        </Button>
+                                className={`view-button ${viewMode === 'dashboard' ? 'active' : ''}`}
+                                onClick={() => setViewMode('dashboard')}
+                                sx={{
+                                    minWidth: 'unset',
+                                    py: 1,
+                                    px: 1.5,
+                                    borderRadius: '8px',
+                                    color: viewMode === 'dashboard' ? 'white' : '#64748b',
+                                    bgcolor: viewMode === 'dashboard' ? 'primary.main' : 'transparent',
+                                    '&:hover': {
+                                        bgcolor: viewMode === 'dashboard' ? 'primary.dark' : 'rgba(0, 0, 0, 0.04)'
+                                    }
+                                }}
+                            >
+                                <ViewModuleIcon fontSize="small" />
+                            </Button>
                         <Button
                                 className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
-                            onClick={() => setViewMode('list')}
-                            sx={{
-                                    minWidth: '36px',
-                                    height: '32px',
-                                    padding: '0 12px',
-                                    borderRadius: '20px',
-                                    backgroundColor: viewMode === 'list' ? '#ffffff' : 'transparent',
-                                    color: viewMode === 'list' ? '#7c3aed' : '#64748b',
-                                    fontSize: '13px',
-                                    fontWeight: viewMode === 'list' ? 600 : 500,
-                                    transition: 'all 0.2s ease',
-                                    zIndex: 2,
-                                    boxShadow: viewMode === 'list' ? '0 2px 4px rgba(0, 0, 0, 0.08)' : 'none',
-                                '&:hover': {
-                                        backgroundColor: viewMode === 'list' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
-                                    },
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    position: 'relative'
-                            }}
-                        >
-                                <ListViewIcon fontSize="small" sx={{ fontSize: '16px' }} />
-                                <span>List</span>
-                                {viewMode === 'list' && (
-                                    <Box 
-                                        sx={{
-                                            position: 'absolute',
-                                            bottom: '5px',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            width: '15px',
-                                            height: '2px',
-                                            backgroundColor: 'currentColor',
-                                            borderRadius: '2px'
-                                        }}
-                                    />
-                                )}
-                        </Button>
+                                onClick={() => setViewMode('list')}
+                                sx={{
+                                    minWidth: 'unset',
+                                    py: 1,
+                                    px: 1.5,
+                                    borderRadius: '8px',
+                                    color: viewMode === 'list' ? 'white' : '#64748b',
+                                    bgcolor: viewMode === 'list' ? 'primary.main' : 'transparent',
+                                    '&:hover': {
+                                        bgcolor: viewMode === 'list' ? 'primary.dark' : 'rgba(0, 0, 0, 0.04)'
+                                    }
+                                }}
+                            >
+                                <ListIcon fontSize="small" />
+                            </Button>
                     </Box>
                     )}
                     
@@ -1800,187 +2023,8 @@ const Profiles = () => {
                         </Button>
                     )}
                 </Box>
-            ) : viewMode === 'grid' ? (
-                <Grid container spacing={3}>
-                    {filteredProfiles.map((profile) => (
-                        <Grid item xs={12} sm={6} md={4} lg={3} key={profile.id}>
-                            <Paper 
-                                elevation={0} 
-                                className="modern-profile-card"
-                                onClick={(e) => handleProfileClick(profile, e)}
-                                sx={{
-                                    p: 0,
-                                    borderRadius: '16px',
-                                    overflow: 'hidden',
-                                    border: '1px solid rgba(226, 232, 240, 0.8)',
-                                    backgroundColor: 'white',
-                                    transition: 'all 0.3s ease',
-                                    cursor: 'pointer',
-                                    position: 'relative',
-                                    '&:hover': {
-                                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                                        transform: 'translateY(-5px)',
-                                        '& .card-actions': {
-                                            opacity: 1,
-                                            transform: 'translateY(0)'
-                                        }
-                                    }
-                                }}
-                            >
-                                <Box sx={{ 
-                                    position: 'absolute', 
-                                    top: 0, 
-                                    left: 0, 
-                                    right: 0, 
-                                    height: '6px', 
-                                    backgroundColor: profile.status === 'active' ? '#10b981' : '#ef4444',
-                                    opacity: 0.9
-                                }} />
-                                <Box sx={{ p: 3 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                        <Avatar
-                                            sx={{
-                                                width: 56,
-                                                height: 56,
-                                                bgcolor: getAvatarColor(profile.id),
-                                                fontSize: '1.5rem',
-                                                fontWeight: 'bold',
-                                                mr: 2,
-                                                boxShadow: '0 3px 8px rgba(0, 0, 0, 0.12)'
-                                            }}
-                                        >
-                                            {getInitials(profile.name)}
-                                        </Avatar>
-                                        <Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', lineHeight: 1.3 }}>
-                                                {profile.name}
-                                            </Typography>
-                                            <StatusBadge status={profile.status} />
-                                        </Box>
-                                    </Box>
-                                    <Typography 
-                                        variant="body2" 
-                                        color="text.secondary" 
-                                        sx={{ 
-                                            mb: 2,
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 2,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            color: '#64748b'
-                                        }}
-                                    >
-                                        {profile.description || 'No description available'}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                                        {profile.modules?.slice(0, 3).map(moduleId => {
-                                            const module = modules.find(m => m.id === moduleId);
-                                            return module ? (
-                                                <Chip
-                                                    key={module.id}
-                                                    label={module.title}
-                                                    size="small"
-                                                    sx={{ 
-                                                        bgcolor: 'rgba(99, 102, 241, 0.08)',
-                                                        color: '#4f46e5',
-                                                        fontWeight: 500,
-                                                        borderRadius: '6px',
-                                                        border: '1px solid rgba(99, 102, 241, 0.2)'
-                                                    }}
-                                                />
-                                            ) : null;
-                                        })}
-                                        {profile.modules?.length > 3 && (
-                                            <Chip
-                                                label={`+${profile.modules.length - 3}`}
-                                                size="small"
-                                                sx={{ 
-                                                    bgcolor: 'rgba(148, 163, 184, 0.1)',
-                                                    color: '#64748b',
-                                                    fontWeight: 500,
-                                                    borderRadius: '6px',
-                                                    border: '1px solid rgba(148, 163, 184, 0.2)'
-                                                }}
-                                            />
-                                        )}
-                                    </Box>
-                                </Box>
-                                <Box 
-                                    className="card-actions"
-                                    sx={{ 
-                                        p: 2, 
-                                        borderTop: '1px solid rgba(226, 232, 240, 0.8)',
-                                        display: 'flex',
-                                        justifyContent: 'flex-end',
-                                        gap: 1,
-                                        opacity: 0.8,
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    <Tooltip title={t('profiles.viewDetails')}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleProfileClick(profile, e);
-                                            }}
-                                            data-action="view-details"
-                                            sx={{ 
-                                                color: '#4f46e5',
-                                                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(79, 70, 229, 0.2)',
-                                                    transform: 'scale(1.05)'
-                                                }
-                                            }}
-                                        >
-                                            <InfoIcon fontSize="small" data-action="view-details" />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title={t('profiles.edit')}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEdit(profile.id);
-                                            }}
-                                            sx={{ 
-                                                color: '#3b82f6',
-                                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                                                    transform: 'scale(1.05)'
-                                                }
-                                            }}
-                                        >
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title={t('profiles.delete')}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDelete(profile.id);
-                                            }}
-                                            sx={{ 
-                                                color: '#ef4444',
-                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                                                    transform: 'scale(1.05)'
-                                                }
-                                            }}
-                                        >
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Box>
-                            </Paper>
-                        </Grid>
-                    ))}
-                </Grid>
+            ) : viewMode === 'dashboard' ? (
+                renderDashboardView()
             ) : (
                 <Box className="modern-table-container" sx={{ 
                     borderRadius: '16px',

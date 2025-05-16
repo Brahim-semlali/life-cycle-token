@@ -909,12 +909,160 @@ const Users = () => {
         setSelectedUsers([]);
     };
 
-    return (
-        <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+    // Modifier le rendu du tableau pour ajouter des classes modernes et des animations
+    const renderUserTable = () => (
+        <div className="table-container">
+            <table className="contact-table">
+                <thead>
+                    <tr>
+                        <th style={{ width: '40px' }}>
+                            <IconButton
+                                size="small"
+                                onClick={handleHeaderCheckboxClick}
+                                className={`selection-button ${users.length > 0 && selectedUsers.length === users.length ? 'selected' : ''}`}
+                            >
+                                {users.length > 0 && selectedUsers.length === users.length ? (
+                                    <CheckIcon fontSize="small" />
+                                ) : selectedUsers.length > 0 ? (
+                                    <IndeterminateCheckBoxIcon fontSize="small" />
+                                ) : (
+                                    <AddIcon fontSize="small" />
+                                )}
+                            </IconButton>
+                        </th>
+                        <th>FULL NAME</th>
+                        <th>EMAIL</th>
+                        <th>PHONE</th>
+                        <th>PROFILE</th>
+                        <th>STATUS</th>
+                        <th style={{ textAlign: 'right' }}>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {filteredUsers.map((user, index) => (
+                        <tr 
+                            key={user.id} 
+                            onClick={() => handleRowClick({ id: user.id })}
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                            <td>
+                                <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (selectedUsers.includes(user.id)) {
+                                            setSelectedUsers(prev => prev.filter(id => id !== user.id));
+                                        } else {
+                                            setSelectedUsers(prev => [...prev, user.id]);
+                                        }
+                                    }}
+                                    className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                                >
+                                    {selectedUsers.includes(user.id) ? (
+                                        <CheckIcon fontSize="small" />
+                                    ) : (
+                                        <AddIcon fontSize="small" />
+                                    )}
+                                </IconButton>
+                            </td>
+                            <td>
+                                <div className="name-cell">
+                                    <div className="user-avatar" style={{ backgroundColor: getAvatarColor(user.id) }}>
+                                        {getInitials(user.firstName, user.lastName)}
+                                    </div>
+                                    <div>
+                                        <div className="profile-name">{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
+                                        {user.title && <div className="profile-title">{user.title}</div>}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{user.email}</td>
+                            <td>
+                                <Box className="phone-cell">
+                                    {user.phone ? (
+                                        <>
+                                            <PhoneIcon className="phone-icon" />
+                                            <span>{user.phone}</span>
+                                        </>
+                                    ) : (
+                                        <IconButton disabled size="small">
+                                            <PhoneIcon className="phone-icon" sx={{ opacity: 0.3 }} />
+                                        </IconButton>
+                                    )}
+                                </Box>
+                            </td>
+                            <td>
+                                {user.profile ? user.profile.name : ''}
+                            </td>
+                            <td>
+                                <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`}>
+                                    <span className="status-dot"></span>
+                                    {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
+                                </div>
+                            </td>
+                            <td>
+                                <div className="action-buttons">
+                                    <button 
+                                        className="action-button edit"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleEdit(user.id);
+                                        }}
+                                    >
+                                        <EditIcon fontSize="small" />
+                                    </button>
+                                    {user.status?.toLowerCase() === 'active' && (
+                                        <button 
+                                            className="action-button block"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleToggleUserStatus(user.id, user.status);
+                                            }}
+                                        >
+                                            <LockPersonIcon fontSize="small" />
+                                        </button>
+                                    )}
+                                    {user.status?.toLowerCase() === 'blocked' && (
+                                        <button 
+                                            className="action-button unblock"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleToggleUserStatus(user.id, user.status);
+                                            }}
+                                        >
+                                            <LockOpenIcon fontSize="small" />
+                                        </button>
+                                    )}
+                                    <button 
+                                        className="action-button delete"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleDelete(user.id);
+                                        }}
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    // Modifier le rendu de l'en-tête pour un design plus moderne
+    const renderHeader = () => (
+        <>
             {selectedUsers.length > 0 ? (
-                <Box className="users-header selection-header">
+                <Box className="selection-header">
                     <Typography variant="h4" component="h1">
-                        {selectedUsers.length} {t('users.selected')}
+                        <span className="selected-count">{selectedUsers.length}</span> {t('users.selected')}
                     </Typography>
                     <Box className="users-actions">
                         <Button
@@ -939,7 +1087,7 @@ const Users = () => {
             ) : (
                 <Box className="users-header">
                     <Typography variant="h4" component="h1">
-                        {filteredUsers.length} {t('users.title')}
+                        <span className="users-count">{filteredUsers.length}</span> {t('users.title')}
                     </Typography>
                     <Box className="users-actions">
                         <div className="search-container">
@@ -969,11 +1117,11 @@ const Users = () => {
                             </ToggleButton>
                         </ToggleButtonGroup>
                         
-                        <IconButton onClick={() => setShowFilters(!showFilters)}>
+                        <IconButton onClick={() => setShowFilters(!showFilters)} className="filter-button">
                             <FilterListIcon />
                         </IconButton>
                         <Button
-                            variant="outlined"
+                            variant="contained"
                             startIcon={<FileDownloadIcon />}
                             onClick={() => handleExport('csv')}
                             className="export-button"
@@ -995,47 +1143,14 @@ const Users = () => {
                     </Box>
                 </Box>
             )}
+        </>
+    );
 
-            <Collapse in={showFilters}>
-                <Paper sx={{ p: 2, mb: 2 }}>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <FormControl size="small" sx={{ minWidth: 200 }}>
-                            <InputLabel>{t('users.filterByStatus')}</InputLabel>
-                            <Select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                label={t('users.filterByStatus')}
-                            >
-                                <MenuItem value="all">{t('users.allStatuses')}</MenuItem>
-                                <MenuItem value="active">{t('users.statusActive')}</MenuItem>
-                                <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
-                                <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
-                                <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ minWidth: 200 }}>
-                            <InputLabel>{t('users.filterByProfile')}</InputLabel>
-                            <Select
-                                value={filterProfile}
-                                onChange={(e) => setFilterProfile(e.target.value)}
-                                label={t('users.filterByProfile')}
-                            >
-                                <MenuItem value="all">{t('users.allProfiles')}</MenuItem>
-                                {profiles.map((profile) => (
-                                    <MenuItem key={profile.id} value={profile.id}>
-                                        {profile.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </Paper>
-            </Collapse>
-
-            {viewMode === 'grid' ? (
+    // Modifier le rendu de la grille pour un design plus moderne
+    const renderUserGrid = () => (
                 <Grid container spacing={3}>
-                    {filteredUsers.map(user => (
-                        <Grid item xs={12} sm={6} md={4} lg={4} key={user.id}>
+            {filteredUsers.map((user, index) => (
+                <Grid item xs={12} sm={6} md={4} lg={4} key={user.id} style={{ animationDelay: `${index * 0.05}s` }}>
                             <Card 
                                 className={selectedUsers.includes(user.id) ? 'selected' : ''}
                                 onClick={() => {
@@ -1061,22 +1176,7 @@ const Users = () => {
                                         position: 'absolute',
                                         top: 10,
                                         right: 10,
-                                        zIndex: 10,
-                                        backgroundColor: selectedUsers.includes(user.id) 
-                                            ? '#4f46e5' 
-                                            : 'white',
-                                        border: selectedUsers.includes(user.id) 
-                                            ? '2px solid #4f46e5' 
-                                            : '2px solid #e5e7eb',
-                                        color: selectedUsers.includes(user.id) 
-                                            ? 'white' 
-                                            : '#64748b',
-                                        width: 36,
-                                        height: 36,
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                        '& .MuiSvgIcon-root': {
-                                            fontSize: '1.1rem',
-                                        }
+                                zIndex: 10
                                     }}
                                 >
                                     {selectedUsers.includes(user.id) ? (
@@ -1097,64 +1197,53 @@ const Users = () => {
                                 >
                                     <Avatar
                                         sx={{
-                                            width: 80,
-                                            height: 80,
+                                    width: 90,
+                                    height: 90,
                                             mb: 2,
                                             bgcolor: getAvatarColor(user.id),
-                                            fontSize: '1.5rem',
+                                    fontSize: '1.8rem',
                                             fontWeight: 'bold'
                                         }}
+                                className="user-card-avatar"
                                     >
                                         {getInitials(user.firstName, user.lastName)}
                                     </Avatar>
-                                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                            <Typography variant="h6" className="card-user-name">
                                         {user.fullName}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            <Typography variant="body2" className="card-user-profile">
                                         {user.profile ? user.profile.name : 'No Profile'}
                                     </Typography>
                                     
                                     <Chip
                                         label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
                                         className={`status-badge ${user.status}`}
-                                        sx={{ mb: 2 }}
+                                sx={{ mb: 2, mt: 2 }}
                                     />
                                     
                                     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                                            <EmailIcon sx={{ fontSize: 16, mr: 1 }} />
+                                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-email">
+                                    <EmailIcon sx={{ fontSize: 18, mr: 1 }} />
                                             <Typography variant="body2">{user.email}</Typography>
                                         </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                                            <PhoneIcon sx={{ fontSize: 16, mr: 1 }} />
-                                            <Typography variant="body2">{user.phone || '(555) 555-0109'}</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-phone">
+                                    <PhoneIcon sx={{ fontSize: 18, mr: 1 }} />
+                                    <Typography variant="body2">{user.phone || '(Not provided)'}</Typography>
                                         </Box>
                                     </Box>
                                     
-                                    <Box className="action-buttons-container" sx={{ 
+                            <Box className="card-actions" sx={{ 
                                         display: 'flex', 
                                         justifyContent: 'center', 
                                         gap: 2, 
                                         mt: 3, 
                                         width: '100%',
-                                        position: 'absolute',
-                                        bottom: 0,
-                                        left: 0,
-                                        right: 0,
-                                        p: 2,
-                                        background: 'linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.8), rgba(255,255,255,0))'
+                                position: 'relative',
+                                p: 2
                                     }}>
                                         <IconButton
                                             onClick={() => handleEdit(user.id)}
                                             className="action-button edit"
-                                            sx={{ 
-                                                bgcolor: '#9333ea',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    bgcolor: '#7e22ce',
-                                                    boxShadow: '0 4px 8px rgba(147, 51, 234, 0.3)'
-                                                }
-                                            }}
                                         >
                                             <EditIcon />
                                         </IconButton>
@@ -1165,14 +1254,6 @@ const Users = () => {
                                                     handleToggleUserStatus(user.id, user.status);
                                                 }}
                                                 className="action-button block"
-                                                sx={{ 
-                                                    bgcolor: '#f59e0b',
-                                                    color: 'white',
-                                                    '&:hover': {
-                                                        bgcolor: '#d97706',
-                                                        boxShadow: '0 4px 8px rgba(245, 158, 11, 0.3)'
-                                                    }
-                                                }}
                                             >
                                                 <LockPersonIcon />
                                             </IconButton>
@@ -1184,14 +1265,6 @@ const Users = () => {
                                                     handleToggleUserStatus(user.id, user.status);
                                                 }}
                                                 className="action-button unblock"
-                                                sx={{ 
-                                                    bgcolor: '#10b981',
-                                                    color: 'white',
-                                                    '&:hover': {
-                                                        bgcolor: '#059669',
-                                                        boxShadow: '0 4px 8px rgba(16, 185, 129, 0.3)'
-                                                    }
-                                                }}
                                             >
                                                 <LockOpenIcon />
                                             </IconButton>
@@ -1199,14 +1272,6 @@ const Users = () => {
                                         <IconButton
                                             onClick={() => handleDelete(user.id)}
                                             className="action-button delete"
-                                            sx={{ 
-                                                bgcolor: '#ef4444',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    bgcolor: '#dc2626',
-                                                    boxShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
-                                                }
-                                            }}
                                         >
                                             <DeleteIcon />
                                         </IconButton>
@@ -1216,171 +1281,81 @@ const Users = () => {
                         </Grid>
                     ))}
                 </Grid>
-            ) : (
-                <table className="contact-table">
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40px' }}>
-                                <IconButton
-                                    size="small"
-                                    onClick={handleHeaderCheckboxClick}
-                                    sx={{ 
-                                        backgroundColor: users.length > 0 && selectedUsers.length === users.length 
-                                            ? 'rgba(79, 70, 229, 0.1)' 
-                                            : 'rgba(255, 255, 255, 0.8)',
-                                        border: selectedUsers.length > 0 
-                                            ? '1px solid #4f46e5' 
-                                            : '1px solid #e5e7eb',
-                                        color: selectedUsers.length > 0 
-                                            ? '#4f46e5' 
-                                            : '#64748b',
-                                        padding: '4px',
-                                        width: '24px',
-                                        height: '24px'
-                                    }}
-                                >
-                                    {users.length > 0 && selectedUsers.length === users.length ? (
-                                        <CheckIcon fontSize="small" />
-                                    ) : selectedUsers.length > 0 ? (
-                                        <IndeterminateCheckBoxIcon fontSize="small" />
-                                    ) : (
-                                        <AddIcon fontSize="small" />
-                                    )}
-                                </IconButton>
-                            </th>
-                            <th>FULL NAME</th>
-                            <th>EMAIL</th>
-                            <th>PHONE</th>
-                            <th>PROFILE</th>
-                            <th>STATUS</th>
-                            <th style={{ textAlign: 'right' }}>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredUsers.map(user => (
-                            <tr key={user.id} onClick={() => handleRowClick({ id: user.id })}>
-                                <td>
-                                    <IconButton
-                                        size="small"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (selectedUsers.includes(user.id)) {
-                                                setSelectedUsers(prev => prev.filter(id => id !== user.id));
-                                            } else {
-                                                setSelectedUsers(prev => [...prev, user.id]);
-                                            }
-                                        }}
-                                        sx={{ 
-                                            backgroundColor: selectedUsers.includes(user.id) 
-                                                ? '#4f46e5' 
-                                                : 'white',
-                                            border: selectedUsers.includes(user.id) 
-                                                ? '2px solid #4f46e5' 
-                                                : '2px solid #e5e7eb',
-                                            color: selectedUsers.includes(user.id) 
-                                                ? 'white' 
-                                                : '#64748b',
-                                            padding: '4px',
-                                            width: '24px',
-                                            height: '24px'
-                                        }}
-                                    >
-                                        {selectedUsers.includes(user.id) ? (
-                                            <CheckIcon fontSize="small" />
-                                        ) : (
-                                            <AddIcon fontSize="small" />
-                                        )}
-                                    </IconButton>
-                                </td>
-                                <td>
-                                    <div className="name-cell">
-                                        <div className="user-avatar" style={{ backgroundColor: getAvatarColor(user.id) }}>
-                                            {getInitials(user.firstName, user.lastName)}
-                                        </div>
-                                        <div>
-                                            <div className="profile-name">{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
-                                            {user.title && <div className="profile-title">{user.title}</div>}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{user.email}</td>
-                                <td>
-                                    <Box className="phone-cell">
-                                        {user.phone ? (
-                                            <>
-                                                <PhoneIcon className="phone-icon" />
-                                                <span>{user.phone}</span>
-                                            </>
-                                        ) : (
-                                            <IconButton disabled size="small">
-                                                <PhoneIcon className="phone-icon" sx={{ opacity: 0.3 }} />
-                                            </IconButton>
-                                        )}
+    );
+
+    return (
+        <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+            {renderHeader()}
+
+            <Collapse in={showFilters}>
+                <Paper sx={{ p: 3, mb: 3, borderRadius: '16px' }} className="filters-panel">
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <FormControl size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+                            <InputLabel>{t('users.filterByStatus')}</InputLabel>
+                            <Select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                label={t('users.filterByStatus')}
+                                className="filter-select"
+                            >
+                                <MenuItem value="all">{t('users.allStatuses')}</MenuItem>
+                                <MenuItem value="active">{t('users.statusActive')}</MenuItem>
+                                <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
+                                <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
+                                <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+                            <InputLabel>{t('users.filterByProfile')}</InputLabel>
+                            <Select
+                                value={filterProfile}
+                                onChange={(e) => setFilterProfile(e.target.value)}
+                                label={t('users.filterByProfile')}
+                                className="filter-select"
+                            >
+                                <MenuItem value="all">{t('users.allProfiles')}</MenuItem>
+                                {profiles.map((profile) => (
+                                    <MenuItem key={profile.id} value={profile.id}>
+                                        {profile.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                                     </Box>
-                                </td>
-                                <td>
-                                    {user.profile ? user.profile.name : ''}
-                                </td>
-                                <td>
-                                    <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`}>
-                                        <span className="status-dot"></span>
-                                        {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="action-buttons">
-                                        <button 
-                                            className="action-button edit"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleEdit(user.id);
-                                            }}
-                                        >
-                                            <EditIcon fontSize="small" />
-                                        </button>
-                                        {user.status?.toLowerCase() === 'active' && (
-                                            <button 
-                                                className="action-button block"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handleToggleUserStatus(user.id, user.status);
-                                                }}
-                                            >
-                                                <LockPersonIcon fontSize="small" />
-                                            </button>
-                                        )}
-                                        {user.status?.toLowerCase() === 'blocked' && (
-                                            <button 
-                                                className="action-button unblock"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    handleToggleUserStatus(user.id, user.status);
-                                                }}
-                                            >
-                                                <LockOpenIcon fontSize="small" />
-                                            </button>
-                                        )}
-                                        <button 
-                                            className="action-button delete"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleDelete(user.id);
-                                            }}
-                                        >
-                                            <DeleteIcon fontSize="small" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            )}
+                </Paper>
+            </Collapse>
+
+            {filteredUsers.length === 0 ? (
+                <Box className="empty-state" sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    p: 5,
+                    textAlign: 'center',
+                    height: '50vh'
+                }}>
+                    <PersonIcon sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }} />
+                    <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        {t('users.noUsersFound')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+                        {t('users.tryDifferentFilters')}
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => {
+                            setEditingUser(null);
+                            setNewUser(emptyUser);
+                            setOpenDialog(true);
+                        }}
+                        className="create-button"
+                    >
+                        {t('users.createFirst')}
+                    </Button>
+                </Box>
+            ) : viewMode === 'grid' ? renderUserGrid() : renderUserTable()}
 
             <Menu
                 anchorEl={anchorEl}
@@ -1388,32 +1363,45 @@ const Users = () => {
                 onClose={handleMenuClose}
                 PaperProps={{
                     elevation: 3,
-                    sx: { borderRadius: 2, minWidth: 150 }
+                    sx: { borderRadius: 3, minWidth: 180 }
                 }}
+                className="user-menu"
             >
                 <MenuItem onClick={() => {
                     handleEdit(menuUser?.id);
                     handleMenuClose();
-                }}>
+                }} className="menu-item">
                     <EditIcon fontSize="small" sx={{ mr: 1 }} />
                     {t('users.edit')}
                 </MenuItem>
                 <MenuItem onClick={() => {
                     handleDelete(menuUser?.id);
                     handleMenuClose();
-                }}>
+                }} className="menu-item">
                     <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
                     {t('users.delete')}
                 </MenuItem>
             </Menu>
 
-            <Dialog open={openDialog} onClose={handleCancel} maxWidth="md" fullWidth>
-                <DialogTitle>
+            <Dialog 
+                open={openDialog} 
+                onClose={handleCancel} 
+                maxWidth="md" 
+                fullWidth
+                className="user-dialog"
+                PaperProps={{
+                    sx: {
+                        borderRadius: '24px',
+                        overflow: 'hidden'
+                    }
+                }}
+            >
+                <DialogTitle className="dialog-title">
                     {editingUser !== null ? t('users.edit') : t('users.create')}
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent className="dialog-content">
                     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <Box className="form-row">
                             <TextField
                                 fullWidth
                                 label={t('users.firstName')}
@@ -1422,6 +1410,7 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.firstName}
                                 helperText={formErrors.firstName}
+                                className="form-field"
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -1438,6 +1427,7 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.lastName}
                                 helperText={formErrors.lastName}
+                                className="form-field"
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -1448,7 +1438,7 @@ const Users = () => {
                             />
                         </Box>
 
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <Box className="form-row">
                             <TextField
                                 fullWidth
                                 label={t('users.email')}
@@ -1457,6 +1447,7 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.email}
                                 helperText={formErrors.email}
+                                className="form-field"
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -1473,6 +1464,7 @@ const Users = () => {
                                 onChange={handleInputChange}
                                 error={!!formErrors.phone}
                                 helperText={formErrors.phone}
+                                className="form-field"
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -1481,7 +1473,10 @@ const Users = () => {
                                     ),
                                 }}
                             />
-                            <FormControl fullWidth error={!!formErrors.profileId}>
+                        </Box>
+
+                        <Box className="form-row">
+                            <FormControl fullWidth error={!!formErrors.profileId} className="form-field">
                                 <InputLabel>{t('users.profile')}</InputLabel>
                                 <Select
                                     name="profileId"
@@ -1507,9 +1502,24 @@ const Users = () => {
                                     </Typography>
                                 )}
                             </FormControl>
+                            
+                            <FormControl fullWidth className="form-field">
+                                <InputLabel>{t('users.status')}</InputLabel>
+                                <Select
+                                    name="status"
+                                    value={newUser.status}
+                                    onChange={handleInputChange}
+                                    label={t('users.status')}
+                                >
+                                    <MenuItem value="active">{t('users.statusActive')}</MenuItem>
+                                    <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
+                                    <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
+                                    <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Box>
 
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <Box className="form-row">
                             <TextField
                                 fullWidth
                                 label={t('users.password')}
@@ -1520,6 +1530,7 @@ const Users = () => {
                                 error={!!formErrors.password}
                                 helperText={formErrors.password}
                                 required={!editingUser}
+                                className="form-field"
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
@@ -1544,6 +1555,7 @@ const Users = () => {
                                 error={!!formErrors.confirmPassword}
                                 helperText={formErrors.confirmPassword}
                                 required={!editingUser}
+                                className="form-field"
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
@@ -1560,58 +1572,12 @@ const Users = () => {
                             />
                         </Box>
 
-                        <Typography 
-                            variant="caption" 
-                            color="text.secondary" 
-                                        sx={{ 
-                                mb: 2, 
-                                display: 'block',
-                                backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.9)',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                border: '1px solid',
-                                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                            }}
-                        >
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1, 
-                                mb: 1,
-                                color: isDarkMode ? '#e2e8f0' : '#1a202c',
-                                fontWeight: 600
-                            }}>
+                        <Box className="password-rules-container">
+                            <Box className="password-rules-header">
                                 <LockOutlined sx={{ fontSize: 18 }} />
                                 {t('security.passwordRules.help')}
                             </Box>
-                            <Box component="ul" sx={{ 
-                                listStyle: 'none', 
-                                p: 0, 
-                                m: 0,
-                                '& li': {
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                    mb: 1,
-                                    color: isDarkMode ? '#cbd5e0' : '#4a5568',
-                                    fontSize: '0.875rem',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover': {
-                                        transform: 'translateX(5px)',
-                                        color: isDarkMode ? '#7c3aed' : '#6d28d9'
-                                    },
-                                    '&::before': {
-                                        content: '""',
-                                        display: 'block',
-                                        width: '6px',
-                                        height: '6px',
-                                        borderRadius: '50%',
-                                        backgroundColor: isDarkMode ? '#7c3aed' : '#6d28d9',
-                                        flexShrink: 0
-                                    }
-                                }
-                            }}>
+                            <Box component="ul" className="password-rules-list">
                                 {passwordRules.minLength > 0 && (
                                     <li>{t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength })}</li>
                                 )}
@@ -1628,26 +1594,11 @@ const Users = () => {
                                     <li>{t('security.passwordRules.specialInfo')}</li>
                                 )}
                             </Box>
-                        </Typography>
-
-                        <FormControl fullWidth>
-                            <InputLabel>{t('users.status')}</InputLabel>
-                            <Select
-                                name="status"
-                                value={newUser.status}
-                                onChange={handleInputChange}
-                                label={t('users.status')}
-                            >
-                                <MenuItem value="active">{t('users.statusActive')}</MenuItem>
-                                <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
-                                <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
-                                <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
-                            </Select>
-                        </FormControl>
+                        </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancel} startIcon={<CancelIcon />}>
+                <DialogActions className="dialog-actions">
+                    <Button onClick={handleCancel} startIcon={<CancelIcon />} className="cancel-button">
                         {t('users.cancel')}
                     </Button>
                     <Button 
@@ -1669,15 +1620,13 @@ const Users = () => {
                 PaperProps={{
                     className: "delete-confirm-dialog",
                     style: {
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
-                        margin: '0'
+                        borderRadius: '20px',
+                        overflow: 'hidden'
                     }
                 }}
                 BackdropProps={{
                     style: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
                     }
                 }}
                 maxWidth="xs"
@@ -1710,7 +1659,7 @@ const Users = () => {
                         {t('users.cancel', 'Annuler')}
                     </Button>
                     <Button 
-                        onClick={handleDeleteSelected} 
+                        onClick={confirmDeleteSelected} 
                         variant="contained"
                         color="error"
                         className="delete-dialog-confirm-button"
@@ -1728,15 +1677,13 @@ const Users = () => {
                 PaperProps={{
                     className: "delete-confirm-dialog",
                     style: {
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
-                        margin: '0'
+                        borderRadius: '20px',
+                        overflow: 'hidden'
                     }
                 }}
                 BackdropProps={{
                     style: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
                     }
                 }}
                 maxWidth="xs"
