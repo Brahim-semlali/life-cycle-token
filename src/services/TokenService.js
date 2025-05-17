@@ -715,7 +715,7 @@ const TokenService = {
      * @returns {Promise<Object>} - Success status with table metadata or error
      */
     async getTableMetadata() {
-        console.log('Fetching table metadata from API');
+        console.log('Fetching table metadata');
         
         // Vérifier si nous avons déjà récupéré les métadonnées (mise en cache)
         if (this.tableMetadataCache) {
@@ -724,32 +724,7 @@ const TokenService = {
         }
         
         try {
-            // Essayer d'abord de récupérer le schéma directement depuis l'API
-            try {
-                console.log('Attempting to fetch schema from API endpoint');
-                const response = await apiClient.get('/token/schema/');
-                
-                if (response.data) {
-                    console.log('Schema received from API:', response.data);
-                    
-                    // Mettre en cache les métadonnées
-                    this.tableMetadataCache = {
-                        tableName: response.data.table_name || 'token',
-                        columns: this.convertApiSchemaToColumns(response.data),
-                        source: 'api'
-                    };
-                    
-                    return this.tableMetadataCache;
-                }
-            } catch (error) {
-                // Si l'endpoint n'existe pas (404) ou autre erreur, on log et on continue
-                console.log('Schema endpoint not available:', error.message);
-                
-                // Stocker l'erreur pour éviter de réessayer pendant cette session
-                this.schemaEndpointFailed = true;
-            }
-            
-            // Si l'API a échoué ou n'est pas disponible, générer le schéma à partir des données
+            // Générer le schéma à partir des données des tokens
             console.log('Generating schema from token data');
             
             // Récupérer tous les tokens pour analyser leur structure

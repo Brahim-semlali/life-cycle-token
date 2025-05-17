@@ -1144,6 +1144,7 @@ const TokenList = () => {
                     }}
                 >
                     <DialogTitle 
+                        component="div"
                         sx={{ 
                             bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : '#6366f1',
                             color: '#fff',
@@ -1241,7 +1242,7 @@ const TokenList = () => {
                                             <Grid container spacing={2}>
                                                 {['id', 'token_value', 'token_type', 'type_display', 'token_status', 'status_display', 'token_assurance_method'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} sm={6} md={4} key={key}>
+                                                        <Grid item xs={12} small={6} md={4} key={key}>
                                                             <Typography variant="caption" sx={{ 
                                                                 color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
                                                                 textTransform: 'uppercase',
@@ -1285,7 +1286,7 @@ const TokenList = () => {
                                             <Grid container spacing={2}>
                                                 {['creation_date', 'activation_date', 'last_status_update', 'expiration_month', 'expiration_year', 'deleted_at'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} sm={6} md={4} key={key}>
+                                                        <Grid item xs={12} small={6} md={4} key={key}>
                                                             <Typography variant="caption" sx={{ 
                                                                 color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
                                                                 textTransform: 'uppercase',
@@ -1347,7 +1348,7 @@ const TokenList = () => {
                                             <Grid container spacing={2}>
                                                 {['device_id', 'device_name', 'device_type', 'device_number'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} sm={6} md={4} key={key}>
+                                                        <Grid item xs={12} small={6} md={4} key={key}>
                                                             <Typography variant="caption" sx={{ 
                                                                 color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
                                                                 textTransform: 'uppercase',
@@ -1418,7 +1419,7 @@ const TokenList = () => {
                                             <Grid container spacing={2}>
                                                 {['wallet_account_score', 'wallet_device_score', 'wallet_reason_codes', 'visa_token_score', 'visa_decisioning', 'risk_assessment_score'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} sm={6} md={4} key={key}>
+                                                        <Grid item xs={12} small={6} md={4} key={key}>
                                                             <Typography variant="caption" sx={{ 
                                                                 color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
                                                                 textTransform: 'uppercase',
@@ -1536,7 +1537,7 @@ const TokenList = () => {
                                             <Grid container spacing={2}>
                                                 {['is_deleted'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} sm={6} key={key}>
+                                                        <Grid item xs={12} small={6} key={key}>
                                                             <Typography variant="caption" sx={{ 
                                                                 color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
                                                                 textTransform: 'uppercase',
@@ -1628,16 +1629,19 @@ const TokenList = () => {
                         }
                     }}
                 >
-                    <DialogTitle sx={{ 
-                        fontWeight: 600, 
-                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : '#f8fafc',
-                        borderBottom: '1px solid',
-                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
-                        p: 3,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1
-                    }}>
+                    <DialogTitle 
+                        component="div"
+                        sx={{ 
+                            fontWeight: 600, 
+                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : '#f8fafc',
+                            borderBottom: '1px solid',
+                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
+                            p: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
                         <EditIcon sx={{ color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#6366f1' }} />
                         Edit Token
                         {editDialog.token && (
@@ -1676,7 +1680,7 @@ const TokenList = () => {
                                     <Divider sx={{ mb: 2 }} />
                                 </Grid>
                                 
-                                <Grid item xs={12} sm={6}>
+                                <Grid item xs={12} small={6}>
                                     <TextField
                                         fullWidth
                                         label="Token Value"
@@ -1688,7 +1692,7 @@ const TokenList = () => {
                                         InputProps={readOnlyInputProps}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid item xs={12} small={6}>
                                     <TextField
                                         fullWidth
                                         label="Token Type"
