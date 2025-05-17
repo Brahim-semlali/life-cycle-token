@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Box, 
     Paper, 
@@ -18,10 +18,10 @@ import {
     Menu,
     MenuItem,
     ListItemIcon,
-    ListItemText
+    ListItemText,
+    useTheme
 } from '@mui/material';
 import { 
-    PhoneAndroid as DeviceIcon,
     Visibility as ViewIcon,
     Edit as EditIcon,
     MoreVert as MoreIcon,
@@ -30,13 +30,22 @@ import {
     Block as BlockIcon
 } from '@mui/icons-material';
 
-const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPerPageChange }) => {
+const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPerPageChange, onViewDetails, onEditToken, onDeleteToken, onUpdateStatus, tableMetadata }) => {
+    // MUI theme for consistent styling
+    const theme = useTheme();
+    
     // Determine which rows to display based on pagination
     const displayedTokens = tokens.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     
     // Menu state for action buttons
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const [selectedToken, setSelectedToken] = React.useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedToken, setSelectedToken] = useState(null);
+    const [columns, setColumns] = useState([]);
+    
+    useEffect(() => {
+        // Generate columns whenever tokens or tableMetadata changes
+        setColumns(getTableColumns());
+    }, [tokens, tableMetadata]);
     
     const handleMenuOpen = (event, token) => {
         setAnchorEl(event.currentTarget);
@@ -48,59 +57,179 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         setSelectedToken(null);
     };
 
+    // Get table columns dynamically from the token data and database metadata
+    const getTableColumns = () => {
+        // Si aucune donnée n'est disponible, renvoyer un tableau vide
+        if ((!tokens || tokens.length === 0) && !tableMetadata) return [];
+        
+        // Colonnes à exclure de l'affichage
+        const excludedColumns = ['_id', '__v']; 
+        
+        let availableKeys = [];
+        
+        // Priorité 1: Obtenir les colonnes à partir des métadonnées de la table PostgreSQL
+        if (tableMetadata && tableMetadata.columns) {
+            availableKeys = tableMetadata.columns
+                .map(col => col.name || col.column_name)
+                .filter(key => !excludedColumns.includes(key));
+                
+            console.log('Available columns from metadata:', availableKeys);
+        }
+        
+        // Priorité 2: Si pas de métadonnées ou pour compléter, utiliser les clés des données réelles
+        if (tokens && tokens.length > 0) {
+            // Collecter toutes les clés uniques de tous les tokens
+            const allKeys = new Set();
+            tokens.forEach(token => {
+                Object.keys(token).forEach(key => {
+                    if (!excludedColumns.includes(key)) {
+                        allKeys.add(key);
+                    }
+                });
+            });
+            
+            // Log the keys we found in the tokens
+            console.log('Keys from token data:', Array.from(allKeys));
+            
+            // Convertir le Set en array et ajouter les clés qui ne sont pas déjà présentes
+            Array.from(allKeys).forEach(key => {
+                if (!availableKeys.includes(key)) {
+                    availableKeys.push(key);
+                }
+            });
+        }
+        
+        // Définir un ordre préférentiel pour les colonnes les plus importantes
+        // Celles-ci seront affichées en premier, puis les autres colonnes suivront
+        const preferredOrder = [
+            'id',
+            'status_display',
+            'type_display', 
+            'token_value',
+            'token_type',
+            'token_status'
+        ];
+        
+        // Trier les colonnes disponibles selon l'ordre préférentiel
+        const sortedKeys = [...availableKeys].sort((a, b) => {
+            const indexA = preferredOrder.indexOf(a);
+            const indexB = preferredOrder.indexOf(b);
+            
+            // Si les deux clés sont dans l'ordre préférentiel, respecter cet ordre
+            if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+            }
+            
+            // Si seulement une clé est dans l'ordre préférentiel, la mettre en premier
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            
+            // Sinon, trier par ordre alphabétique
+            return a.localeCompare(b);
+        });
+        
+        // Convertir les clés en objets de colonne
+        const finalColumns = sortedKeys.map(key => ({
+            id: key,
+            label: formatColumnLabel(key),
+            isDate: key.toLowerCase().includes('date'),
+            isStatus: key === 'token_status' || key.toLowerCase().includes('status'),
+            isDisplay: key.toLowerCase().includes('display'),
+            isAssurance: key.includes('assurance'),
+            isScore: key.toLowerCase().includes('score'),
+            isBoolean: key === 'is_deleted' || (tokens.length > 0 && typeof tokens.find(t => t[key] !== undefined)?.[key] === 'boolean')
+        }));
+        
+        console.log('Final columns for table:', finalColumns.map(c => c.id));
+        return finalColumns;
+    };
+    
+    // Format column label for display (snake_case to Title Case)
+    const formatColumnLabel = (key) => {
+        return key
+            .replace(/_/g, ' ')
+            .replace(/^\w|\s\w/g, c => c.toUpperCase());
+    };
+
     // Status style handler
     const getStatusStyle = (status) => {
         if (!status) return getDefaultStyle();
         
-        switch (status.toLowerCase()) {
+        const statusStr = String(status).toLowerCase();
+        
+        switch (statusStr) {
             case 'active':
+            case 'ac':
                 return {
-                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                    backgroundColor: 'rgba(52, 211, 153, 0.12)',
                     color: '#10b981',
-                    borderColor: 'rgba(16, 185, 129, 0.2)'
+                    borderColor: 'rgba(16, 185, 129, 0.25)',
+                    fontWeight: 600
+                };
+            case 'suspended':
+            case 'su':
+                return {
+                    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                    color: '#f59e0b',
+                    borderColor: 'rgba(245, 158, 11, 0.25)',
+                    fontWeight: 600
                 };
             case 'inactive':
+            case 'in':
                 return {
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
                     color: '#ef4444',
-                    borderColor: 'rgba(239, 68, 68, 0.2)'
+                    borderColor: 'rgba(239, 68, 68, 0.25)',
+                    fontWeight: 600
                 };
             default:
                 return getDefaultStyle();
         }
     };
 
-    // Decision style handler
-    const getDecisionStyle = (decision) => {
-        if (!decision) return getDefaultStyle();
+    // Score style handler
+    const getScoreStyle = (score) => {
+        if (score === undefined || score === null) return getDefaultStyle();
         
-        switch (decision.toLowerCase()) {
-            case 'approved':
+        let numScore;
+        try {
+            numScore = typeof score === 'string' ? parseInt(score, 10) : score;
+        } catch (e) {
+            return getDefaultStyle();
+        }
+        
+        if (isNaN(numScore)) return getDefaultStyle();
+        
+        if (numScore >= 80) {
                 return {
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    backgroundColor: 'rgba(52, 211, 153, 0.12)',
                     color: '#10b981',
-                    borderColor: 'rgba(16, 185, 129, 0.2)'
+                    borderColor: 'rgba(16, 185, 129, 0.25)',
+                    fontWeight: 600
                 };
-            case 'rejected':
+        } else if (numScore >= 50) {
+            return {
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                color: '#f59e0b',
+                borderColor: 'rgba(245, 158, 11, 0.25)',
+                fontWeight: 600
+            };
+        } else {
                 return {
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
                     color: '#ef4444',
-                    borderColor: 'rgba(239, 68, 68, 0.2)'
-                };
-            default: // Unknown
-                return {
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    color: '#f59e0b',
-                    borderColor: 'rgba(245, 158, 11, 0.2)'
+                    borderColor: 'rgba(239, 68, 68, 0.25)',
+                    fontWeight: 600
                 };
         }
     };
     
     const getDefaultStyle = () => {
         return {
-            backgroundColor: 'rgba(107, 114, 128, 0.1)',
+            backgroundColor: 'rgba(107, 114, 128, 0.12)',
             color: '#6b7280',
-            borderColor: 'rgba(107, 114, 128, 0.2)'
+            borderColor: 'rgba(107, 114, 128, 0.25)',
+            fontWeight: 500
         };
     };
 
@@ -114,14 +243,15 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                 return 'Invalid date';
             }
             
-            // Format as dd/mm/yyyy HH:MM
+            // Format as dd/MM/yyyy HH:MM:SS
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
             
-            return `${day}/${month}/${year} ${hours}:${minutes}`;
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
         } catch (error) {
             console.error('Error formatting date:', error);
             return 'Invalid date';
@@ -130,329 +260,321 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     
     // Handle token actions
     const handleViewDetails = (token) => {
-        console.log('View details for token:', token);
-        // Implement view details functionality
+        if (onViewDetails) onViewDetails(token);
     };
     
     const handleEditToken = (token) => {
-        console.log('Edit token:', token);
-        // Implement edit token functionality
+        if (onEditToken) onEditToken(token);
     };
     
     const handleDeleteToken = (token) => {
-        console.log('Delete token:', token);
-        // Implement delete token functionality
+        if (onDeleteToken) onDeleteToken(token);
         handleMenuClose();
     };
     
-    const handleSuspendToken = (token) => {
-        console.log('Suspend token:', token);
-        // Implement suspend token functionality
+    const handleUpdateStatus = (token, action) => {
+        if (onUpdateStatus) onUpdateStatus(token, action);
         handleMenuClose();
     };
     
-    const handleRefreshToken = (token) => {
-        console.log('Refresh token status:', token);
-        // Implement refresh token functionality
-        handleMenuClose();
+    // Function to render cell content based on column type
+    const renderCellContent = (token, column) => {
+        // Check if the property exists in the token object
+        if (!(column.id in token)) {
+            console.log(`Property ${column.id} not found in token:`, token);
+            return 'N/A';
+        }
+        
+        const value = token[column.id];
+        
+        // Handle null or undefined values
+        if (value === null || value === undefined) {
+            return 'N/A';
+        }
+        
+        // Format based on column type
+        if (column.isDate) {
+            return formatDate(value);
+        } else if (column.isBoolean) {
+            return value === true ? 'Yes' : 'No';
+        } else if (column.isStatus) {
+            return (
+                <Chip 
+                    label={value || 'Unknown'} 
+                    size="small"
+                    sx={{
+                        ...getStatusStyle(value),
+                        fontSize: '0.75rem',
+                        height: '24px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                />
+            );
+        } else if (column.isScore) {
+            return (
+                <Chip 
+                    label={value} 
+                    size="small"
+                    sx={{
+                        ...getScoreStyle(value),
+                        fontSize: '0.75rem',
+                        height: '24px',
+                        borderRadius: '4px',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                />
+            );
+        } else if (column.id === 'token_value' || column.id === 'id') {
+            return (
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        fontWeight: 600,
+                        color: theme.palette.primary.main
+                    }}
+                >
+                    {value}
+                </Typography>
+            );
+        } else if (column.id === 'device_name' || column.id === 'device_id' || column.id === 'device_type') {
+            // Special handling for device fields to ensure they display correctly
+            return (
+                <Typography 
+                    variant="body2"
+                    sx={{
+                        color: value ? theme.palette.text.primary : theme.palette.text.secondary,
+                        fontWeight: value ? 500 : 400
+                    }}
+                >
+                    {value || 'N/A'}
+                </Typography>
+            );
+        } else {
+            // For string values, handle empty strings
+            if (typeof value === 'string' && value.trim() === '') {
+                return 'N/A';
+            }
+            return String(value);
+        }
     };
+
+    // Check if we have any data to display
+    const hasNoDataToDisplay = (!tokens || tokens.length === 0);
 
     return (
         <Fade in={!loading} timeout={300}>
-        <Paper 
-            elevation={0} 
-            sx={{ 
-                borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-                    border: '1px solid rgba(226, 232, 240, 0.8)',
-                    overflow: 'hidden',
-                    position: 'relative'
-                }}
-                className="token-table-paper"
-            >
+            <Box sx={{ mt: 2, overflowX: 'auto' }}>
                 {loading && (
                     <Box 
                         sx={{ 
                             position: 'absolute', 
-                            top: 0, 
-                            left: 0, 
-                            right: 0, 
-                            bottom: 0, 
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                            zIndex: 10,
-                            borderRadius: '16px'
+                            zIndex: 10
                         }}
                     >
-                        <CircularProgress sx={{ color: '#4f46e5' }} />
+                        <CircularProgress sx={{ color: theme.palette.primary.main }} />
                     </Box>
                 )}
                 
-                <TableContainer sx={{ maxHeight: 600 }}>
-                    <Table stickyHeader aria-label="tokens table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Internal token ref
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    TSP
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    TSP token ref
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Token requestor
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Status
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Decision
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Device
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Creation date
-                                </TableCell>
-                                <TableCell sx={{ 
-                                    fontWeight: 600, 
-                                    color: '#4f46e5', 
-                                    backgroundColor: '#f8fafc',
-                                    borderBottom: '2px solid rgba(226, 232, 240, 0.8)'
-                                }}>
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {displayedTokens.length > 0 ? (
-                                displayedTokens.map((token) => (
-                                    <TableRow
-                                        key={token.id || token._id}
-                                        hover
-                                        sx={{ 
-                                            '&:last-child td, &:last-child th': { border: 0 },
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(243, 244, 246, 0.7)',
-                                                transition: 'background-color 0.2s ease'
-                                            },
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                        className="token-table-row"
-                                    >
-                                        <TableCell>
-                                            <Typography 
-                                                variant="body2" 
-                                                sx={{ 
-                                                    fontWeight: 600,
-                                                    color: '#4f46e5'
-                                                }}
-                                            >
-                                                {token.internalTokenRef || 'N/A'}
-                                            </Typography>
+                <Paper 
+                    elevation={0}
+                    sx={{
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: theme.palette.mode === 'dark' 
+                            ? 'rgba(255, 255, 255, 0.12)' 
+                            : 'rgba(0, 0, 0, 0.08)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+                    }}
+                >
+                    <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+                        <Table stickyHeader aria-label="tokens table">
+                            <TableHead>
+                                <TableRow>
+                                    {columns.map((column) => (
+                                        <TableCell 
+                                            key={column.id}
+                                            sx={{ 
+                                                fontWeight: 600, 
+                                                color: theme.palette.primary.main, 
+                                                borderBottom: '2px solid',
+                                                borderBottomColor: theme.palette.primary.light,
+                                                backgroundColor: theme.palette.mode === 'dark' 
+                                                    ? 'rgba(0, 0, 0, 0.2)' 
+                                                    : 'rgba(249, 250, 252, 0.9)',
+                                                whiteSpace: 'nowrap',
+                                                padding: '16px'
+                                            }}
+                                        >
+                                            {column.label}
                                         </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">
-                                                {token.tsp || 'N/A'}
-                                            </Typography>
+                                    ))}
+                                    {!hasNoDataToDisplay && (
+                                        <TableCell 
+                                            align="center"
+                                            sx={{ 
+                                                fontWeight: 600, 
+                                                color: theme.palette.primary.main, 
+                                                borderBottom: '2px solid',
+                                                borderBottomColor: theme.palette.primary.light,
+                                                backgroundColor: theme.palette.mode === 'dark' 
+                                                    ? 'rgba(0, 0, 0, 0.2)' 
+                                                    : 'rgba(249, 250, 252, 0.9)',
+                                                padding: '16px'
+                                            }}
+                                        >
+                                            Actions
                                         </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">
-                                                {token.tspTokenRef || 'N/A'}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">
-                                                {token.tokenRequestor || 'N/A'}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip 
-                                                label={token.status || 'Unknown'} 
-                                                size="small"
-                                                sx={{
-                                                    ...getStatusStyle(token.status),
-                                                    fontWeight: 500,
-                                                    fontSize: '0.75rem',
-                                                    height: '24px',
-                                                    borderRadius: '12px'
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip 
-                                                label={token.decision || 'Unknown'} 
-                                                size="small"
-                                                sx={{
-                                                    ...getDecisionStyle(token.decision),
-                                                    fontWeight: 500,
-                                                    fontSize: '0.75rem',
-                                                    height: '24px',
-                                                    borderRadius: '12px'
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <DeviceIcon fontSize="small" sx={{ color: '#6b7280' }} />
-                                                <Typography variant="body2">{token.device || 'N/A'}</Typography>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                                                {formatDate(token.creationDate)}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title="View details">
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={() => handleViewDetails(token)}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                                                            color: '#4f46e5',
-                                                            '&:hover': {
-                                                                backgroundColor: '#4f46e5',
-                                                                color: 'white'
-                                                            },
-                                                            transition: 'all 0.2s ease',
-                                                            width: '28px',
-                                                            height: '28px'
-                                                        }}
-                                                    >
-                                                        <ViewIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Edit token">
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={() => handleEditToken(token)}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                                            color: '#3b82f6',
-                                                            '&:hover': {
-                                                                backgroundColor: '#3b82f6',
-                                                                color: 'white'
-                                                            },
-                                                            transition: 'all 0.2s ease',
-                                                            width: '28px',
-                                                            height: '28px'
-                                                        }}
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="More options">
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={(e) => handleMenuOpen(e, token)}
-                                                        sx={{
-                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                                                            color: '#6b7280',
-                                                            '&:hover': {
-                                                                backgroundColor: '#6b7280',
-                                                                color: 'white'
-                                                            },
-                                                            transition: 'all 0.2s ease',
-                                                            width: '28px',
-                                                            height: '28px'
-                                                        }}
-                                                    >
-                                                        <MoreIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
+                                    )}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {displayedTokens.length > 0 ? (
+                                    displayedTokens.map((token) => (
+                                        <TableRow
+                                            key={token.id || token._id}
+                                            hover
+                                            sx={{ 
+                                                '&:last-child td, &:last-child th': { border: 0 },
+                                                '&:hover': {
+                                                    backgroundColor: theme.palette.mode === 'dark' 
+                                                        ? 'rgba(255, 255, 255, 0.05)' 
+                                                        : 'rgba(243, 244, 246, 0.7)',
+                                                },
+                                                borderBottom: '1px solid',
+                                                borderBottomColor: theme.palette.mode === 'dark' 
+                                                    ? 'rgba(255, 255, 255, 0.08)' 
+                                                    : 'rgba(0, 0, 0, 0.06)',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            {columns.map((column) => (
+                                                <TableCell 
+                                                    key={`${token.id || token._id}-${column.id}`}
+                                                    sx={{
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem'
+                                                    }}
+                                                >
+                                                    {renderCellContent(token, column)}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell align="center">
+                                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                                    <Tooltip title="View details">
+                                                        <IconButton 
+                                                            size="small"
+                                                            onClick={() => handleViewDetails(token)}
+                                                            sx={{
+                                                                color: theme.palette.primary.main,
+                                                                '&:hover': {
+                                                                    backgroundColor: `${theme.palette.primary.main}15`
+                                                                }
+                                                            }}
+                                                        >
+                                                            <ViewIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Edit token">
+                                                        <IconButton 
+                                                            size="small"
+                                                            onClick={() => handleEditToken(token)}
+                                                            sx={{
+                                                                color: theme.palette.primary.main,
+                                                                '&:hover': {
+                                                                    backgroundColor: `${theme.palette.primary.main}15`
+                                                                }
+                                                            }}
+                                                        >
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="More options">
+                                                        <IconButton 
+                                                            size="small"
+                                                            onClick={(e) => handleMenuOpen(e, token)}
+                                                            sx={{
+                                                                color: theme.palette.text.secondary,
+                                                                '&:hover': {
+                                                                    backgroundColor: theme.palette.mode === 'dark' 
+                                                                        ? 'rgba(255, 255, 255, 0.08)' 
+                                                                        : 'rgba(0, 0, 0, 0.04)'
+                                                                }
+                                                            }}
+                                                        >
+                                                            <MoreIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={columns.length + 1} align="center">
+                                            <Box sx={{ py: 5 }}>
+                                                <Typography 
+                                                    variant="body1" 
+                                                    sx={{ color: theme.palette.text.secondary, mb: 1 }}
+                                                >
+                                                    {loading ? 'Loading tokens...' : 'No tokens found in database'}
+                                                </Typography>
+                                                {!loading && (
+                                                    <Typography variant="body2" sx={{ color: theme.palette.text.disabled }}>
+                                                        Please check database connection or try adjusting your search criteria
+                                                    </Typography>
+                                                )}
                                             </Box>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={9} align="center">
-                                        <Box sx={{ py: 5 }}>
-                                        <Typography 
-                                            variant="body1" 
-                                                sx={{ color: '#6b7280', mb: 1 }}
-                                        >
-                                            {loading ? 'Loading tokens...' : 'No tokens found'}
-                                        </Typography>
-                                            {!loading && (
-                                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                    Try adjusting your search criteria
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    component="div"
-                    count={tokens.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={onPageChange}
-                    onRowsPerPageChange={onRowsPerPageChange}
-                    sx={{
-                        borderTop: '1px solid rgba(226, 232, 240, 0.8)',
-                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                            fontSize: '0.875rem',
-                            color: '#64748b'
-                        },
-                        '.MuiTablePagination-select': {
-                            fontSize: '0.875rem'
-                        }
-                    }}
-                />
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    
+                    <Box 
+                        sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'flex-end', 
+                            alignItems: 'center',
+                            backgroundColor: theme.palette.mode === 'dark' 
+                                ? 'rgba(0, 0, 0, 0.2)' 
+                                : 'rgba(249, 250, 252, 0.9)',
+                            borderTop: '1px solid',
+                            borderTopColor: theme.palette.mode === 'dark' 
+                                ? 'rgba(255, 255, 255, 0.08)' 
+                                : 'rgba(0, 0, 0, 0.06)',
+                            padding: '8px 16px'
+                        }}
+                    >
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25, 50]}
+                            component="div"
+                            count={tokens.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={onPageChange}
+                            onRowsPerPageChange={onRowsPerPageChange}
+                            sx={{
+                                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                                    fontSize: '0.875rem',
+                                    color: theme.palette.text.secondary
+                                },
+                                '.MuiTablePagination-select': {
+                                    fontSize: '0.875rem'
+                                }
+                            }}
+                        />
+                    </Box>
+                </Paper>
                 
                 {/* Action menu */}
                 <Menu
@@ -463,7 +585,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                         elevation: 3,
                         sx: {
                             overflow: 'visible',
-                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
                             mt: 1.5,
                             borderRadius: '8px',
                             '& .MuiMenuItem-root': {
@@ -482,20 +604,20 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                         </ListItemIcon>
                         <ListItemText primary="Delete token" />
                     </MenuItem>
-                    <MenuItem onClick={() => handleSuspendToken(selectedToken)}>
+                    <MenuItem onClick={() => handleUpdateStatus(selectedToken, 'suspend')}>
                         <ListItemIcon>
                             <BlockIcon fontSize="small" sx={{ color: '#f59e0b' }} />
                         </ListItemIcon>
                         <ListItemText primary="Suspend token" />
                     </MenuItem>
-                    <MenuItem onClick={() => handleRefreshToken(selectedToken)}>
+                    <MenuItem onClick={() => handleUpdateStatus(selectedToken, 'refresh')}>
                         <ListItemIcon>
                             <RefreshIcon fontSize="small" sx={{ color: '#3b82f6' }} />
                         </ListItemIcon>
                         <ListItemText primary="Refresh status" />
                     </MenuItem>
                 </Menu>
-        </Paper>
+            </Box>
         </Fade>
     );
 };
