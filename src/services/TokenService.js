@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // API Endpoints - Mise à jour en fonction des routes disponibles dans Django
 const API_ENDPOINTS = {
-    LIST_TOKENS: '/token/list/',
+    LIST_TOKENS: '/token/infos/',
     GET_TOKEN_DETAILS: '/token/detail/',
     CREATE_TOKEN: '/token/create/',
     UPDATE_TOKEN_STATUS: '/token/status/update/',
@@ -285,6 +285,8 @@ const TokenService = {
         const expectedFields = {
             id: null,
             token_value: '',
+            tokenReferenceId: '',
+            tokenRequestorId: '',
             token_type: '',
             type_display: '',
             token_status: 'INACTIVE',
@@ -309,6 +311,12 @@ const TokenService = {
             deleted_at: null
         };
         
+        // Define mapping from snake_case DB fields to camelCase API fields
+        const fieldMapping = {
+            'token_reference_id': 'tokenReferenceId',
+            'token_requestor_id': 'tokenRequestorId'
+        };
+        
         // Collect all unique keys from the tokens for logging
         const allKeys = new Set();
         tokens.forEach(token => {
@@ -318,6 +326,10 @@ const TokenService = {
         });
         
         console.log('Keys found in tokens:', Array.from(allKeys));
+        // Log the first token to check its structure
+        if (tokens.length > 0) {
+            console.log('First token structure:', tokens[0]);
+        }
         
         // Normalize each token
         return tokens.map(token => {
@@ -325,7 +337,8 @@ const TokenService = {
             
             // Copy existing values from the token
             Object.keys(token).forEach(key => {
-                normalizedToken[key] = token[key];
+                const mappedKey = fieldMapping[key] || key;
+                normalizedToken[mappedKey] = token[key];
             });
             
             // Special handling for device fields - log them for debugging

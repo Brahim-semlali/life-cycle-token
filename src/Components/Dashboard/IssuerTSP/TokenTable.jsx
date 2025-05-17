@@ -63,7 +63,21 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         if ((!tokens || tokens.length === 0) && !tableMetadata) return [];
         
         // Colonnes à exclure de l'affichage
-        const excludedColumns = ['_id', '__v']; 
+        const excludedColumns = ['_id', '__v', 'id', 'id']; 
+        
+        // Définir les colonnes que nous voulons spécifiquement afficher
+        // en se basant sur le schéma PostgreSQL
+        const columnsToDisplay = [
+            'token',
+            'tokenReferenceId',
+            'tokenRequestorId',
+            'tokenType',
+            'tokenStatus',
+            'tokenAssuranceMethod',
+            'tokenActivationDate',
+            'tokenExpirationDate',
+            'lastTokenStatusUpdatedTime'
+        ];
         
         let availableKeys = [];
         
@@ -71,9 +85,11 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         if (tableMetadata && tableMetadata.columns) {
             availableKeys = tableMetadata.columns
                 .map(col => col.name || col.column_name)
-                .filter(key => !excludedColumns.includes(key));
+                .filter(key => !excludedColumns.includes(key))
+                // Filtrer pour n'inclure que les colonnes que nous voulons afficher
+                .filter(key => columnsToDisplay.includes(key));
                 
-            console.log('Available columns from metadata:', availableKeys);
+            console.log('Available columns from metadata (filtered):', availableKeys);
         }
         
         // Priorité 2: Si pas de métadonnées ou pour compléter, utiliser les clés des données réelles
@@ -82,14 +98,14 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             const allKeys = new Set();
             tokens.forEach(token => {
                 Object.keys(token).forEach(key => {
-                    if (!excludedColumns.includes(key)) {
+                    if (!excludedColumns.includes(key) && columnsToDisplay.includes(key)) {
                         allKeys.add(key);
                     }
                 });
             });
             
             // Log the keys we found in the tokens
-            console.log('Keys from token data:', Array.from(allKeys));
+            console.log('Keys from token data (filtered):', Array.from(allKeys));
             
             // Convertir le Set en array et ajouter les clés qui ne sont pas déjà présentes
             Array.from(allKeys).forEach(key => {
@@ -100,14 +116,17 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         }
         
         // Définir un ordre préférentiel pour les colonnes les plus importantes
-        // Celles-ci seront affichées en premier, puis les autres colonnes suivront
+        // Celles-ci seront affichées dans l'ordre du schéma PostgreSQL
         const preferredOrder = [
-            'id',
-            'status_display',
-            'type_display', 
-            'token_value',
-            'token_type',
-            'token_status'
+            'token',
+            'tokenReferenceId',
+            'tokenRequestorId',
+            'tokenType',
+            'tokenStatus',
+            'tokenAssuranceMethod',
+            'tokenActivationDate',
+            'tokenExpirationDate',
+            'lastTokenStatusUpdatedTime'
         ];
         
         // Trier les colonnes disponibles selon l'ordre préférentiel
@@ -132,10 +151,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         const finalColumns = sortedKeys.map(key => ({
             id: key,
             label: formatColumnLabel(key),
-            isDate: key.toLowerCase().includes('date'),
-            isStatus: key === 'token_status' || key.toLowerCase().includes('status'),
+            isDate: key.includes('Date') || key.includes('Time'),
+            isStatus: key === 'tokenStatus',
             isDisplay: key.toLowerCase().includes('display'),
-            isAssurance: key.includes('assurance'),
+            isAssurance: key.includes('Assurance'),
             isScore: key.toLowerCase().includes('score'),
             isBoolean: key === 'is_deleted' || (tokens.length > 0 && typeof tokens.find(t => t[key] !== undefined)?.[key] === 'boolean')
         }));
@@ -144,11 +163,48 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         return finalColumns;
     };
     
-    // Format column label for display (snake_case to Title Case)
+    // Format column label for display (camelCase to Title Case)
     const formatColumnLabel = (key) => {
+        // Custom labels for specific columns
+        const customLabels = {
+            'token': 'Token',
+            'tokenReferenceId': 'Reference ID',
+            'tokenRequestorId': 'Requestor ID',
+            'tokenStatus': 'Status',
+            'tokenType': 'Type',
+            'tokenAssuranceMethod': 'Assurance Method',
+            'tokenActivationDate': 'Activation Date',
+            'tokenExpirationDate': 'Expiration Date',
+            'lastTokenStatusUpdatedTime': 'Last Status Update'
+        };
+        
+        // If we have a custom label for this key, use it
+        if (customLabels[key]) {
+            return customLabels[key];
+        }
+        
+        // Otherwise split camelCase and capitalize first letters
         return key
-            .replace(/_/g, ' ')
-            .replace(/^\w|\s\w/g, c => c.toUpperCase());
+            // Insert a space before all uppercase letters
+            .replace(/([A-Z])/g, ' $1')
+            // Capitalize the first letter
+            .replace(/^./, str => str.toUpperCase());
+    };
+
+    // Get descriptive text for token assurance method codes
+    const getAssuranceMethodDescription = (code) => {
+        if (!code) return 'Unknown';
+        
+        const descriptions = {
+            '00': 'D&V Not Performed',
+            '10': 'Card Issuer Account Verification',
+            '11': 'Card Issuer Interactive Cardholder Verification - 1 Factor',
+            '12': 'Card Issuer Interactive Cardholder Verification - 2 Factor',
+            '13': 'Card Issuer Risk Oriented Non-Interactive Cardholder Authentication',
+            '14': 'Card Issuer Asserted Authentication'
+        };
+        
+        return descriptions[code] || `Code ${code}`;
     };
 
     // Status style handler
@@ -180,6 +236,13 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                     backgroundColor: 'rgba(239, 68, 68, 0.12)',
                     color: '#ef4444',
                     borderColor: 'rgba(239, 68, 68, 0.25)',
+                    fontWeight: 600
+                };
+            case 'deactivated':
+                return {
+                    backgroundColor: 'rgba(107, 114, 128, 0.15)',
+                    color: '#6b7280',
+                    borderColor: 'rgba(107, 114, 128, 0.3)',
                     fontWeight: 600
                 };
             default:
@@ -326,7 +389,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                     }}
                 />
             );
-        } else if (column.id === 'token_value' || column.id === 'id') {
+        } else if (column.id === 'token' || column.id === 'id') {
             return (
                 <Typography 
                     variant="body2" 
@@ -337,6 +400,35 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                 >
                     {value}
                 </Typography>
+            );
+        } else if (column.id === 'tokenReferenceId' || column.id === 'tokenRequestorId') {
+            return (
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        fontWeight: 500,
+                        color: theme.palette.info.main,
+                        fontSize: '0.875rem'
+                    }}
+                >
+                    {value}
+                </Typography>
+            );
+        } else if (column.id === 'tokenAssuranceMethod') {
+            // Special handling for assurance method to display only the description
+            return (
+                <Tooltip title={`Code: ${value}`}>
+                    <Typography 
+                        variant="body2"
+                        sx={{
+                            color: theme.palette.text.primary,
+                            fontWeight: 500,
+                            cursor: 'help'
+                        }}
+                    >
+                        {value ? getAssuranceMethodDescription(value) : 'N/A'}
+                    </Typography>
+                </Tooltip>
             );
         } else if (column.id === 'device_name' || column.id === 'device_id' || column.id === 'device_type') {
             // Special handling for device fields to ensure they display correctly
@@ -396,14 +488,14 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                     }}
                 >
                     <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-                        <Table stickyHeader aria-label="tokens table">
-                            <TableHead>
-                                <TableRow>
+                    <Table stickyHeader aria-label="tokens table">
+                        <TableHead>
+                            <TableRow>
                                     {columns.map((column) => (
                                         <TableCell 
                                             key={column.id}
                                             sx={{ 
-                                                fontWeight: 600, 
+                                    fontWeight: 600, 
                                                 color: theme.palette.primary.main, 
                                                 borderBottom: '2px solid',
                                                 borderBottomColor: theme.palette.primary.light,
@@ -415,13 +507,13 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                             }}
                                         >
                                             {column.label}
-                                        </TableCell>
+                                </TableCell>
                                     ))}
                                     {!hasNoDataToDisplay && (
                                         <TableCell 
                                             align="center"
                                             sx={{ 
-                                                fontWeight: 600, 
+                                    fontWeight: 600, 
                                                 color: theme.palette.primary.main, 
                                                 borderBottom: '2px solid',
                                                 borderBottomColor: theme.palette.primary.light,
@@ -431,115 +523,115 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                 padding: '16px'
                                             }}
                                         >
-                                            Actions
-                                        </TableCell>
+                                    Actions
+                                </TableCell>
                                     )}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {displayedTokens.length > 0 ? (
-                                    displayedTokens.map((token) => (
-                                        <TableRow
-                                            key={token.id || token._id}
-                                            hover
-                                            sx={{ 
-                                                '&:last-child td, &:last-child th': { border: 0 },
-                                                '&:hover': {
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {displayedTokens.length > 0 ? (
+                                displayedTokens.map((token) => (
+                                    <TableRow
+                                        key={token.id || token._id}
+                                        hover
+                                        sx={{ 
+                                            '&:last-child td, &:last-child th': { border: 0 },
+                                            '&:hover': {
                                                     backgroundColor: theme.palette.mode === 'dark' 
                                                         ? 'rgba(255, 255, 255, 0.05)' 
                                                         : 'rgba(243, 244, 246, 0.7)',
-                                                },
+                                            },
                                                 borderBottom: '1px solid',
                                                 borderBottomColor: theme.palette.mode === 'dark' 
                                                     ? 'rgba(255, 255, 255, 0.08)' 
                                                     : 'rgba(0, 0, 0, 0.06)',
-                                                transition: 'all 0.2s ease'
-                                            }}
+                                            transition: 'all 0.2s ease'
+                                        }}
                                         >
                                             {columns.map((column) => (
                                                 <TableCell 
                                                     key={`${token.id || token._id}-${column.id}`}
-                                                    sx={{
+                                                sx={{ 
                                                         padding: '12px 16px',
                                                         fontSize: '0.875rem'
-                                                    }}
-                                                >
+                                                }}
+                                            >
                                                     {renderCellContent(token, column)}
-                                                </TableCell>
+                                        </TableCell>
                                             ))}
                                             <TableCell align="center">
                                                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                                    <Tooltip title="View details">
-                                                        <IconButton 
-                                                            size="small"
-                                                            onClick={() => handleViewDetails(token)}
-                                                            sx={{
+                                                <Tooltip title="View details">
+                                                    <IconButton 
+                                                        size="small"
+                                                        onClick={() => handleViewDetails(token)}
+                                                        sx={{
                                                                 color: theme.palette.primary.main,
-                                                                '&:hover': {
+                                                            '&:hover': {
                                                                     backgroundColor: `${theme.palette.primary.main}15`
                                                                 }
-                                                            }}
-                                                        >
-                                                            <ViewIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Edit token">
-                                                        <IconButton 
-                                                            size="small"
-                                                            onClick={() => handleEditToken(token)}
-                                                            sx={{
+                                                        }}
+                                                    >
+                                                        <ViewIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Edit token">
+                                                    <IconButton 
+                                                        size="small"
+                                                        onClick={() => handleEditToken(token)}
+                                                        sx={{
                                                                 color: theme.palette.primary.main,
-                                                                '&:hover': {
+                                                            '&:hover': {
                                                                     backgroundColor: `${theme.palette.primary.main}15`
                                                                 }
-                                                            }}
-                                                        >
-                                                            <EditIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="More options">
-                                                        <IconButton 
-                                                            size="small"
-                                                            onClick={(e) => handleMenuOpen(e, token)}
-                                                            sx={{
+                                                        }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="More options">
+                                                    <IconButton 
+                                                        size="small"
+                                                        onClick={(e) => handleMenuOpen(e, token)}
+                                                        sx={{
                                                                 color: theme.palette.text.secondary,
-                                                                '&:hover': {
+                                                            '&:hover': {
                                                                     backgroundColor: theme.palette.mode === 'dark' 
                                                                         ? 'rgba(255, 255, 255, 0.08)' 
                                                                         : 'rgba(0, 0, 0, 0.04)'
                                                                 }
-                                                            }}
-                                                        >
-                                                            <MoreIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={columns.length + 1} align="center">
-                                            <Box sx={{ py: 5 }}>
-                                                <Typography 
-                                                    variant="body1" 
-                                                    sx={{ color: theme.palette.text.secondary, mb: 1 }}
-                                                >
-                                                    {loading ? 'Loading tokens...' : 'No tokens found in database'}
-                                                </Typography>
-                                                {!loading && (
-                                                    <Typography variant="body2" sx={{ color: theme.palette.text.disabled }}>
-                                                        Please check database connection or try adjusting your search criteria
-                                                    </Typography>
-                                                )}
+                                                        }}
+                                                    >
+                                                        <MoreIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
                                             </Box>
                                         </TableCell>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    
+                                ))
+                            ) : (
+                                <TableRow>
+                                        <TableCell colSpan={columns.length + 1} align="center">
+                                        <Box sx={{ py: 5 }}>
+                                        <Typography 
+                                            variant="body1" 
+                                                    sx={{ color: theme.palette.text.secondary, mb: 1 }}
+                                        >
+                                                    {loading ? 'Loading tokens...' : 'No tokens found in database'}
+                                        </Typography>
+                                            {!loading && (
+                                                    <Typography variant="body2" sx={{ color: theme.palette.text.disabled }}>
+                                                        Please check database connection or try adjusting your search criteria
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                
                     <Box 
                         sx={{ 
                             display: 'flex', 
@@ -555,24 +647,24 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                             padding: '8px 16px'
                         }}
                     >
-                        <TablePagination
-                            rowsPerPageOptions={[5, 10, 25, 50]}
-                            component="div"
-                            count={tokens.length}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={onPageChange}
-                            onRowsPerPageChange={onRowsPerPageChange}
-                            sx={{
-                                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                                    fontSize: '0.875rem',
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    component="div"
+                    count={tokens.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={onPageChange}
+                    onRowsPerPageChange={onRowsPerPageChange}
+                    sx={{
+                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                            fontSize: '0.875rem',
                                     color: theme.palette.text.secondary
-                                },
-                                '.MuiTablePagination-select': {
-                                    fontSize: '0.875rem'
-                                }
-                            }}
-                        />
+                        },
+                        '.MuiTablePagination-select': {
+                            fontSize: '0.875rem'
+                        }
+                    }}
+                />
                     </Box>
                 </Paper>
                 

@@ -28,7 +28,8 @@ import {
     DialogActions,
     CircularProgress,
     Tab,
-    Tabs
+    Tabs,
+    Tooltip
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -595,6 +596,22 @@ const TokenList = () => {
         });
     };
 
+    // Conversion des codes de méthode d'assurance en libellés
+    const getAssuranceMethodDescription = (code) => {
+        if (!code) return 'Unknown';
+        
+        const descriptions = {
+            '00': 'D&V Not Performed',
+            '10': 'Card Issuer Account Verification',
+            '11': 'Card Issuer Interactive Cardholder Verification - 1 Factor',
+            '12': 'Card Issuer Interactive Cardholder Verification - 2 Factor',
+            '13': 'Card Issuer Risk Oriented Non-Interactive Cardholder Authentication',
+            '14': 'Card Issuer Asserted Authentication'
+        };
+        
+        return descriptions[code] || `Code ${code}`;
+    };
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
             <Box sx={{ padding: '1rem' }}>
@@ -685,66 +702,6 @@ const TokenList = () => {
                                     />
                                 </Grid>
                             <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                    label="Assurance method"
-                                    name="token_assurance_method"
-                                    value={searchParams.token_assurance_method}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                            <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                    label="Expiration month"
-                                    name="expiration_month"
-                                    value={searchParams.expiration_month}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                            <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                    label="Expiration year"
-                                    name="expiration_year"
-                                    value={searchParams.expiration_year}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                            <Grid item xs={12} md={4}>
                                     <FormControl 
                                         variant="outlined" 
                                         size="small"
@@ -774,6 +731,7 @@ const TokenList = () => {
                                         <MenuItem value="ACTIVE">Active</MenuItem>
                                         <MenuItem value="INACTIVE">Inactive</MenuItem>
                                         <MenuItem value="SUSPENDED">Suspended</MenuItem>
+                                        <MenuItem value="DEACTIVATED">Deactivated</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Grid>
@@ -1216,7 +1174,7 @@ const TokenList = () => {
                                         />
                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                             {detailDialog.token.type_display || detailDialog.token.token_type} • 
-                                            {detailDialog.token.token_assurance_method && ` Method: ${detailDialog.token.token_assurance_method} •`}
+                                            {detailDialog.token.token_assurance_method && ` Method: ${getAssuranceMethodDescription(detailDialog.token.token_assurance_method)} •`}
                                             {detailDialog.token.expiration_month && detailDialog.token.expiration_year && 
                                              ` Expires: ${detailDialog.token.expiration_month}/${detailDialog.token.expiration_year}`}
                                         </Typography>
@@ -1240,7 +1198,7 @@ const TokenList = () => {
                                                 Token Information
                                             </Typography>
                                             <Grid container spacing={2}>
-                                                {['id', 'token_value', 'token_type', 'type_display', 'token_status', 'status_display', 'token_assurance_method'].map(key => (
+                                                {['id', 'token_value', 'tokenReferenceId', 'tokenRequestorId', 'token_type', 'type_display', 'token_status', 'status_display', 'token_assurance_method'].map(key => (
                                                     detailDialog.token[key] !== undefined && (
                                                         <Grid item xs={12} small={6} md={4} key={key}>
                                                             <Typography variant="caption" sx={{ 
@@ -1258,7 +1216,11 @@ const TokenList = () => {
                                                                 fontWeight: 500,
                                                                 color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
                                                             }}>
-                                                                {detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
+                                                                {key === 'token_assurance_method' 
+                                                                    ? detailDialog.token[key] !== null 
+                                                                        ? getAssuranceMethodDescription(detailDialog.token[key]) 
+                                                                        : 'N/A'
+                                                                    : detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
                                                             </Typography>
                                                         </Grid>
                                                     )
@@ -1729,6 +1691,7 @@ const TokenList = () => {
                                             <MenuItem value="ACTIVE">Active</MenuItem>
                                             <MenuItem value="INACTIVE">Inactive</MenuItem>
                                             <MenuItem value="SUSPENDED">Suspended</MenuItem>
+                                            <MenuItem value="DEACTIVATED">Deactivated</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Grid>
@@ -1744,15 +1707,23 @@ const TokenList = () => {
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Token Assurance Method"
-                                        name="token_assurance_method"
-                                        value={editDialog.formData.token_assurance_method || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                    />
+                                    <FormControl fullWidth margin="normal">
+                                        <InputLabel id="token-assurance-method-label">Token Assurance Method</InputLabel>
+                                        <Select
+                                            labelId="token-assurance-method-label"
+                                            name="token_assurance_method"
+                                            value={editDialog.formData.token_assurance_method || ''}
+                                            onChange={handleEditFormChange}
+                                            label="Token Assurance Method"
+                                        >
+                                            <MenuItem value="00">D&V Not Performed</MenuItem>
+                                            <MenuItem value="10">Card Issuer Account Verification</MenuItem>
+                                            <MenuItem value="11">Card Issuer Interactive Cardholder Verification - 1 Factor</MenuItem>
+                                            <MenuItem value="12">Card Issuer Interactive Cardholder Verification - 2 Factor</MenuItem>
+                                            <MenuItem value="13">Card Issuer Risk Oriented Non-Interactive Cardholder Authentication</MenuItem>
+                                            <MenuItem value="14">Card Issuer Asserted Authentication</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </Grid>
 
                                 {/* Dates */}
