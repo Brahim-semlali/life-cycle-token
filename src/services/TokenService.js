@@ -33,6 +33,20 @@ apiClient.interceptors.response.use(
     }
 );
 
+// // Ensure request interceptor to handle Safari cross-origin cookie issues
+apiClient.interceptors.request.use(
+    config => {
+        console.log('Request with cookies:', config.withCredentials);
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+
+// // Export the axios instance to reuse in other services if needed
+export const axiosInstance = apiClient;
+
 const TokenService = {
     /**
      * Lists tokens with optional filters

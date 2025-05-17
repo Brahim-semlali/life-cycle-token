@@ -178,6 +178,7 @@ const api = {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest', // Add this to help with CORS preflight
         };
 
         // Configuration de la requête fetch avec les cookies
@@ -187,6 +188,7 @@ const api = {
             body: data ? JSON.stringify(data) : null,  // Corps de la requête si des données sont fournies
             credentials: 'include',    // Important: inclut les cookies dans la requête
             mode: 'cors',             // Active le mode CORS pour les requêtes cross-origin
+            cache: 'no-cache',       // Ensures fresh responses
         };
 
         try {
@@ -246,10 +248,14 @@ const api = {
                 baseURL: this.baseURL,
                 options: {
                     method,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                     body: data ? JSON.stringify(data) : null,
                     credentials: 'include',
-                    mode: 'cors'
+                    mode: 'cors',
+                    cache: 'no-cache',
                 }
             },
             // Essai avec HTTP au lieu de HTTPS
@@ -257,10 +263,14 @@ const api = {
                 baseURL: this.baseURL.replace('https:', 'http:'),
                 options: {
                     method,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                     body: data ? JSON.stringify(data) : null,
                     credentials: 'include',
-                    mode: 'cors'
+                    mode: 'cors',
+                    cache: 'no-cache',
                 }
             },
             // Essai avec no-cors (pour les problèmes CORS)
@@ -268,10 +278,14 @@ const api = {
                 baseURL: this.baseURL,
                 options: {
                     method: method === 'GET' ? 'GET' : 'POST', // no-cors ne supporte que GET/POST
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                     body: data ? JSON.stringify(data) : null,
                     credentials: 'include',
-                    mode: 'no-cors'
+                    mode: 'no-cors',
+                    cache: 'no-cache',
                 }
             },
             // Essai avec no-cors et HTTP
@@ -279,10 +293,14 @@ const api = {
                 baseURL: this.baseURL.replace('https:', 'http:'),
                 options: {
                     method: method === 'GET' ? 'GET' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                     body: data ? JSON.stringify(data) : null,
                     credentials: 'include',
-                    mode: 'no-cors'
+                    mode: 'no-cors',
+                    cache: 'no-cache',
                 }
             }
         ];

@@ -4,6 +4,11 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './i18n';
+import axios from 'axios';
+
+// Global axios configuration for cross-browser cookie handling
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
