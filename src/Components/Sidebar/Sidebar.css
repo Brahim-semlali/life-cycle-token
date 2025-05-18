@@ -523,20 +523,46 @@
     }
 }
 
-/* Responsive */
+/* Responsive pour les anciennes implémentations - Remplacé par une approche plus avancée */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 0;
-        margin: 0;
-        border-radius: 0;
+    /* Support des anciens composants qui utilisent .open et .minimized */
+    body {
+        --sidebar-width: 0px; /* Variable pour gérer l'espace pris par la sidebar */
     }
     
-    .sidebar.minimized {
-        width: 0;
+    body.sidebar-open {
+        --sidebar-width: 280px;
+        overflow: hidden; /* Empêcher le défilement du body quand la sidebar est ouverte */
     }
     
-    .sidebar.open {
-        width: 280px;
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        transition: margin-left 0.3s ease, width 0.3s ease;
+    }
+    
+    body.sidebar-open .main-content {
+        filter: blur(3px);
+        pointer-events: none;
+    }
+    
+    /* Reset any default margins or paddings for main content containers */
+    .users-container, 
+    .profiles-container,
+    .dashboard-container,
+    .security-container,
+    .customer-container,
+    .token-container,
+    .chargeback-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Add specific padding when sidebar is closed to account for the menu button */
+    .mobile-sidebar-toggle:not(.hidden) + div [class$="-container"] {
+        padding-top: 70px !important;
     }
 }
 
@@ -692,4 +718,251 @@
 .sidebar.dark-mode.minimized .module-submenu {
     background: #1f2937;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive design amélioré */
+/* Mobile sidebar toggle button */
+.mobile-sidebar-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 999; /* Juste en dessous de l'overlay */
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    transition: all 0.3s ease;
+}
+
+.mobile-sidebar-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+}
+
+.mobile-sidebar-toggle.dark-mode {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.mobile-sidebar-toggle .material-icons {
+    font-size: 28px;
+}
+
+/* Overlay pour fermer la sidebar sur mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000; /* Inférieur à la sidebar mais supérieur au contenu */
+    animation: fadeIn 0.2s ease-in-out;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+}
+
+.sidebar-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Button to close sidebar on mobile */
+.close-button {
+    background: transparent;
+    border: none;
+    color: #6b7a99;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.dark-mode .close-button {
+    color: #9ca3af;
+}
+
+.close-button:hover {
+    color: #7c3aed;
+    transform: scale(1.1);
+}
+
+.dark-mode .close-button:hover {
+    color: #a78bfa;
+}
+
+/* Mobile styles for sidebar */
+.sidebar.mobile {
+    width: 280px;
+    left: -300px; /* Cacher complètement en dehors de l'écran */
+    transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 0;
+    padding-top: 12px;
+    height: 100%;
+    overflow-y: auto;
+    z-index: 1001; /* Plus élevé que l'overlay */
+    position: fixed;
+}
+
+.sidebar.mobile.open {
+    left: 0; /* Afficher lorsque ouvert */
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.mobile .sidebar-header {
+    padding: 16px 24px;
+    margin-bottom: 8px;
+}
+
+.sidebar.mobile .module-item {
+    padding: 14px 22px;
+}
+
+.sidebar.mobile .module-submenu a {
+    padding: 12px 22px 12px 42px;
+}
+
+.sidebar.mobile .sidebar-footer {
+    padding-bottom: 40px; /* Extra padding on mobile for better scrolling */
+}
+
+/* Styles spécifiques pour les tablettes */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .sidebar {
+        width: 80px;
+    }
+    
+    .sidebar .module-item {
+        padding: 12px;
+        justify-content: center;
+    }
+    
+    .sidebar .module-icon {
+        margin-right: 0;
+    }
+    
+    .sidebar .module-text,
+    .sidebar .module-toggle {
+        display: none;
+    }
+    
+    .sidebar-header {
+        padding: 20px 10px;
+        justify-content: center;
+    }
+    
+    .logo-full {
+        display: none;
+    }
+    
+    .logo-icon {
+        display: flex;
+    }
+    
+    /* Module hover effect on tablet */
+    .sidebar .module-item:hover {
+        background-color: rgba(124, 58, 237, 0.08);
+    }
+    
+    .sidebar .module-item:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+/* Styles pour desktop avancés */
+@media (min-width: 1024px) {
+    .sidebar {
+        /* Les styles desktop sont déjà définis dans le CSS principal */
+    }
+    
+    /* Amélioration des transitions pour desktop */
+    .sidebar.minimized {
+        transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    /* Animation de sous-menu améliorée pour desktop */
+    .module-submenu.open {
+        transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), 
+                    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+/* Animations supplémentaires */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Animation de déplacement pour l'ouverture de la sidebar mobile */
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+/* Gestion des overflow */
+.sidebar.mobile .sidebar-content {
+    overflow-y: auto;
+    height: calc(100% - 70px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 58, 237, 0.3) transparent;
+    padding-bottom: 20px;
+}
+
+.sidebar.mobile .sidebar-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar.mobile .sidebar-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar.mobile .sidebar-content::-webkit-scrollbar-thumb {
+    background-color: rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+}
+
+/* Body styling when sidebar is open on mobile */
+body.sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* Main content styling for mobile */
+@media (max-width: 768px) {
+    /* Reset any default margins or paddings for main content containers */
+    .users-container, 
+    .profiles-container,
+    .dashboard-container,
+    .security-container,
+    .customer-container,
+    .token-container,
+    .chargeback-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Add specific padding when sidebar is closed to account for the menu button */
+    .mobile-sidebar-toggle:not(.hidden) + div [class$="-container"] {
+        padding-top: 70px !important;
+    }
 }

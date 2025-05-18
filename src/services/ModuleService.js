@@ -1,4 +1,5 @@
 import api from './api';
+import TokenStorage from './TokenStorage';
 
 // Cache pour les modules et menus
 let cachedModules = [];
@@ -10,12 +11,18 @@ let cachedMenus = [];
  */
 export const loadModules = async () => {
     try {
+        // Vérifier si l'utilisateur est authentifié
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Utilisateur non authentifié - pas de chargement des modules');
+            return [];
+        }
+
         // Utiliser l'API pour récupérer les modules
         const modules = await api.getModules();
         
         if (modules && Array.isArray(modules)) {
             console.log(`${modules.length} modules chargés avec succès`);
-            cachedModules = modules;
+            cachedModules = modules; // Stocker en cache uniquement les modules provenant de l'API
             return modules;
         }
         
@@ -23,6 +30,9 @@ export const loadModules = async () => {
         return [];
     } catch (error) {
         console.error('Erreur lors du chargement des modules:', error);
+        // Ne pas retourner de données fictives en cas d'erreur
+        // pour éviter l'utilisation de fausses données
+        cachedModules = [];
         return [];
     }
 };
@@ -33,12 +43,18 @@ export const loadModules = async () => {
  */
 export const loadMenus = async () => {
     try {
+        // Vérifier si l'utilisateur est authentifié
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Utilisateur non authentifié - pas de chargement des menus');
+            return [];
+        }
+
         // Utiliser l'API pour récupérer les menus
         const menus = await api.getMenus();
         
         if (menus && Array.isArray(menus)) {
             console.log(`${menus.length} menus chargés avec succès`);
-            cachedMenus = menus;
+            cachedMenus = menus; // Stocker en cache uniquement les menus provenant de l'API
             return menus;
         }
         
@@ -46,6 +62,9 @@ export const loadMenus = async () => {
         return [];
     } catch (error) {
         console.error('Erreur lors du chargement des menus:', error);
+        // Ne pas retourner de données fictives en cas d'erreur
+        // pour éviter l'utilisation de fausses données
+        cachedMenus = [];
         return [];
     }
 };

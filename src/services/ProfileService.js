@@ -228,69 +228,74 @@ export const deleteProfile = async (id) => {
     try {
         console.log("Deleting profile with ID:", id);
         
-        // Essayer plusieurs formats pour la suppression
-        const formats = [
-            { id: id },
-            { id: String(id) },
-            { profile_id: id },
-            { profile_id: String(id) },
-            { profileId: id }
-        ];
+        // Check if profile is associated with any users first
+        const associatedUsers = await getUsersByProfileId(id);
         
-        // Essayer chaque format avec la méthode requestWithFallbacks
-        for (const format of formats) {
-            try {
-                console.log("Trying delete format:", format);
-                // Utiliser la nouvelle méthode améliorée qui gère les erreurs CORS et les problèmes de connexion
-                const response = await api.requestWithFallbacks('/profile/delete/', 'POST', format);
-                
-                // Vérifier si la réponse indique un succès
-                const success = response && (
-                    response.success === true || 
-                    response.silentSuccess === true ||
-                    response.message === "Profile deleted successfully" || 
-                    (typeof response === 'object' && Object.keys(response).length > 0)
-                );
-                
-                if (success) {
-                    console.log("Profile deleted successfully:", response);
-                    const index = profiles.findIndex(p => p.id === id);
-                    if (index !== -1) {
-                        profiles.splice(index, 1);
-                    }
-                    return true;
-                }
-            } catch (error) {
-                console.warn("Delete attempt failed with format:", format, error);
-                // Continuer avec le format suivant
-            }
+        if (associatedUsers && associatedUsers.length > 0) {
+            console.log(`Profile ${id} is associated with ${associatedUsers.length} users and cannot be deleted`);
+            return {
+                success: false,
+                message: `This profile cannot be deleted because it is associated with ${associatedUsers.length} user(s).`,
+                users: associatedUsers
+            };
         }
         
-        // Si tous les formats échouent, supprimer quand même localement
-        console.warn("All delete attempts failed. Removing profile from local cache only.");
-        const index = profiles.findIndex(p => p.id === id);
-        if (index !== -1) {
-            profiles.splice(index, 1);
-            return true; // Retourner true pour que l'UI se mette à jour
-        }
+        // Use the dedicated API method that handles the proper format and fallbacks
+        const result = await api.deleteProfile(id);
         
-        return false;
-    } catch (error) {
-        console.error('Erreur lors de la suppression du profil:', error);
-        
-        // Même en cas d'erreur, on peut supprimer le profil localement
-        try {
+        if (result.success) {
+            // Remove profile from local cache after successful server deletion
             const index = profiles.findIndex(p => p.id === id);
             if (index !== -1) {
-                console.log("Removing profile from local cache after error");
                 profiles.splice(index, 1);
-                return true; // Retourner true pour que l'UI se mette à jour
             }
-        } catch (localError) {
-            console.error("Error removing profile from local cache:", localError);
+            return { 
+                success: true,
+                message: `Profile deleted successfully`
+            };
+        } else {
+            // Server deletion failed but we're in development mode - remove locally
+            if (process.env.NODE_ENV === 'development') {
+                console.log("Development mode: Removing profile locally despite server error");
+                const index = profiles.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    profiles.splice(index, 1);
+                }
+                return { 
+                    success: true,
+                    message: `Profile removed locally only. Server sync failed. The API endpoint is not properly implemented on the server.`
+                };
+            }
+            
+            // Return error information
+            const errorDetails = result.error 
+                ? (typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+                : 'Unknown server error';
+                
+            return {
+                success: false,
+                message: `Could not delete the profile on the server: ${errorDetails}. Please ensure the API endpoint is correctly implemented.`
+            };
+        }
+    } catch (error) {
+        console.error('Error in deleteProfile function:', error);
+        
+        // In development mode, still allow local deletion for better UX
+        if (process.env.NODE_ENV === 'development') {
+            const index = profiles.findIndex(p => p.id === id);
+            if (index !== -1) {
+                profiles.splice(index, 1);
+                return {
+                    success: true,
+                    message: `Profile removed locally only. An error occurred while communicating with the server.`
+                };
+            }
         }
         
-        return false;
+        return { 
+            success: false, 
+            message: 'An unexpected error occurred while deleting the profile.'
+        };
     }
 };
 

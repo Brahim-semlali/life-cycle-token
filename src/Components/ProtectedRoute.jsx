@@ -1,9 +1,10 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import TokenStorage from '../services/TokenStorage';
 
 /**
- * Composant de protection pour les routes qui vérifie les permissions de l'utilisateur
+ * Composant de protection pour les routes qui vérifie les permissions de l'utilisateur et la validité du token JWT
  * @param {Object} props - Les propriétés du composant
  * @param {React.ReactNode} props.children - Les enfants du composant
  * @param {string} props.moduleName - Le nom du module requis pour accéder à la route
@@ -17,7 +18,19 @@ const ProtectedRoute = ({
   subModuleName = null, 
   redirectTo = '/login' 
 }) => {
-  const { isAuthenticated, checkModuleAccess, checkSubModuleAccess } = useAuth();
+  const { isAuthenticated, checkModuleAccess, checkSubModuleAccess, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  // Vérifie la validité du token à chaque rendu de la route protégée
+  useEffect(() => {
+    // Si le token existe mais est expiré, déconnecter l'utilisateur automatiquement
+    if (TokenStorage.getToken() && !TokenStorage.isTokenValid()) {
+      console.log('Token expiré détecté, déconnexion automatique');
+      logout().then(() => {
+        navigate(redirectTo);
+      });
+    }
+  }, [logout, navigate, redirectTo]);
   
   // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
   if (!isAuthenticated()) {
@@ -34,7 +47,7 @@ const ProtectedRoute = ({
   
   // Si l'utilisateur n'a pas les permissions nécessaires, rediriger
   if (!hasModulePermission || !hasSubModulePermission) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   // Si l'utilisateur a les permissions nécessaires, afficher le contenu

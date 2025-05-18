@@ -4869,3 +4869,82 @@
   padding: 4px 12px;
   font-size: 0.8rem;
 }
+
+/* Mobile view specific styles */
+.mobile-view {
+  width: 100%;
+  padding: 8px;
+}
+
+.mobile-view .MuiTableCell-root {
+  padding: 8px 6px;
+  font-size: 0.8rem;
+}
+
+.mobile-view .MuiTableCell-head {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.mobile-view .MuiTableRow-root:hover {
+  background-color: rgba(79, 70, 229, 0.04);
+}
+
+.mobile-view .MuiCheckbox-root {
+  padding: 4px;
+}
+
+.mobile-view .MuiTableCell-body {
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-view .MuiTableCell-body.actions-cell {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.mobile-view .action-button {
+  padding: 4px;
+  min-width: unset;
+  border-radius: 4px;
+}
+
+.mobile-view .action-button .MuiSvgIcon-root {
+  font-size: 1rem;
+}
+
+.mobile-view .status-badge {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
+/* Responsive adaptations for very small screens */
+@media (max-width: 380px) {
+  .mobile-view .MuiTableCell-root {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+  
+  .mobile-view .MuiTableCell-head {
+    max-width: 60px;
+  }
+  
+  .mobile-view .MuiTableCell-body {
+    max-width: 80px;
+  }
+  
+  .mobile-view .action-button {
+    padding: 2px;
+  }
+  
+  .mobile-view .action-button .MuiSvgIcon-root {
+    font-size: 0.9rem;
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useMediaQuery } from 'react-responsive';
 import { useMenu } from "../../context/MenuContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
@@ -60,10 +61,35 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Media queries pour le responsive design
+    const isMobile = useMediaQuery({ maxWidth: 767 });
+    const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
+    const isDesktop = useMediaQuery({ minWidth: 1024 });
+
+    // État pour gérer la visibilité de la sidebar sur mobile
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
     // Structure des modules et sous-modules accessibles à l'utilisateur
     const [userModuleStructure, setUserModuleStructure] = useState([]);
     const [userAccessData, setUserAccessData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Fermer automatiquement le sidebar en mode mobile lors d'un changement de route
+    useEffect(() => {
+        if (isMobile && isMobileSidebarOpen) {
+            setIsMobileSidebarOpen(false);
+        }
+    }, [location.pathname, isMobile]);
+
+    // Gérer le mode minimisé automatiquement sur tablette
+    useEffect(() => {
+        if (isTablet && !isMinimized) {
+            setIsMinimized(true);
+        } else if (isDesktop && isMinimized && !isMobile) {
+            // Sur desktop, revenir au mode complet si ce n'est pas explicitement minimisé par l'utilisateur
+            setIsMinimized(false);
+        }
+    }, [isTablet, isDesktop, isMinimized, setIsMinimized, isMobile]);
 
     // Fetch user-specific access data
     useEffect(() => {
@@ -330,130 +356,203 @@ const Sidebar = () => {
         navigate("/");
     };
 
+    // Fonction pour basculer l'affichage de la sidebar sur mobile
+    const toggleMobileSidebar = () => {
+        const newState = !isMobileSidebarOpen;
+        setIsMobileSidebarOpen(newState);
+        
+        // Add or remove body class to control main content appearance
+        if (newState) {
+            document.body.classList.add('sidebar-open');
+        } else {
+            document.body.classList.remove('sidebar-open');
+        }
+    };
+
+    // Ensure body class is cleaned up when component unmounts
+    useEffect(() => {
+        return () => {
+            document.body.classList.remove('sidebar-open');
+        };
+    }, []);
+
+    // Déterminer les classes CSS pour le sidebar
+    const sidebarClasses = [
+        'sidebar',
+        isMinimized ? 'minimized' : '',
+        isDarkMode ? 'dark-mode' : '',
+        isMobile ? 'mobile' : '',
+        isMobileSidebarOpen ? 'open' : '',
+    ].filter(Boolean).join(' ');
+
     return (
-        <div className={`sidebar ${isMinimized ? "minimized" : ""} ${isDarkMode ? "dark-mode" : ""}`}>
-            <div className="sidebar-header">
-                <div className="logo">
-                    {!isMinimized ? (
-                        <div className="logo-full">
-                            <h2>Titrit</h2>
-                            <span>Technologies</span>
-                        </div>
-                    ) : (
-                        <div className="logo-icon">
-                            <span>T</span>
-                        </div>
-                    )}
-                </div>
-                <button
-                    className="toggle-button"
-                    onClick={() => setIsMinimized(!isMinimized)}
-                    title={isMinimized ? t('common.expand') : t('common.collapse')}
+        <>
+            {/* Bouton pour afficher/masquer la sidebar sur mobile */}
+            {isMobile && (
+                <button 
+                    className={`mobile-sidebar-toggle ${isDarkMode ? 'dark-mode' : ''}`}
+                    onClick={toggleMobileSidebar}
+                    aria-label={isMobileSidebarOpen ? 'Close menu' : 'Open menu'}
                 >
                     <span className="material-icons">
-                        {isMinimized ? "chevron_right" : "chevron_left"}
+                        {isMobileSidebarOpen ? 'close' : 'menu'}
                     </span>
                 </button>
-            </div>
-            <div className="sidebar-content">
-                {userModuleStructure.map((module, moduleIndex) => (
-                    <div key={module.id} className="module-section" style={{"--module-index": moduleIndex}}>
-                        {/* Module principal - Cliquer pour ouvrir ou pour accéder directement si pas de sous-menus */}
-                        {module.submodules && module.submodules.length > 0 ? (
-                            // Module avec sous-menus
-                            <div
-                                className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
-                                onClick={(e) => toggleModule(module.code, e)}
-                            >
-                                <span className="material-icons module-icon">
-                                    {module.icon}
-                                </span>
-                                {!isMinimized && (
-                                    <>
-                                        <div className="module-text">{module.title}</div>
-                                        <span className={`material-icons module-toggle ${isModuleOpen[module.code] ? 'open' : ''}`}>
-                                            expand_more
-                                        </span>
-                                    </>
-                                )}
-                                {isMinimized && (
-                                    <>
-                                        <span className="tooltip-text">{module.title}</span>
-                                        
-                                        {/* Sous-menus immédiats en mode minimisé */}
-                                        <div className="module-submenu">
-                                            {module.submodules.map((submodule, index) => (
-                                                <Link
-                                                    key={submodule.id}
-                                                    to={ROUTE_MAPPING[submodule.path] || submodule.path}
-                                                    className={isSubmoduleActive(submodule.path) ? "active" : ""}
-                                                    style={{"--item-index": index}}
-                                                >
-                                                    <span className="material-icons submenu-icon">
-                                                        {submodule.icon}
-                                                    </span>
-                                                    <span className="submenu-text">{submodule.title}</span>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+            )}
+
+            {/* Overlay pour fermer la sidebar sur mobile en cliquant en dehors */}
+            {isMobile && (
+                <div 
+                    className={`sidebar-overlay ${isMobileSidebarOpen ? 'visible' : ''}`} 
+                    onClick={toggleMobileSidebar}
+                    aria-hidden="true"
+                ></div>
+            )}
+
+            <div className={sidebarClasses}>
+                <div className="sidebar-header">
+                    <div className="logo">
+                        {(!isMinimized || isMobile) ? (
+                            <div className="logo-full">
+                                <h2>Titrit</h2>
+                                <span>Technologies</span>
                             </div>
                         ) : (
-                            // Module sans sous-menus - lien direct
-                            <Link 
-                                to={ROUTE_MAPPING[module.path] || module.path}
-                                className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
-                            >
-                                <span className="material-icons module-icon">
-                                    {module.icon}
-                                </span>
-                                {!isMinimized && (
-                                    <div className="module-text">{module.title}</div>
-                                )}
-                                {isMinimized && (
-                                    <span className="tooltip-text">{module.title}</span>
-                                )}
-                            </Link>
-                        )}
-                        
-                        {/* Sous-menus (si présents) - Visible seulement en mode non-minimisé */}
-                        {!isMinimized && module.submodules && module.submodules.length > 0 && isModuleOpen[module.code] && (
-                            <div className="module-submenu open">
-                                {module.submodules.map((submodule, index) => (
-                                    <Link
-                                        key={submodule.id}
-                                        to={ROUTE_MAPPING[submodule.path] || submodule.path}
-                                        className={isSubmoduleActive(submodule.path) ? "active" : ""}
-                                        style={{"--item-index": index}}
-                                    >
-                                        <span className="material-icons submenu-icon">
-                                            {submodule.icon}
-                                        </span>
-                                        <span className="submenu-text">{submodule.title}</span>
-                                    </Link>
-                                ))}
+                            <div className="logo-icon">
+                                <span>T</span>
                             </div>
                         )}
                     </div>
-                ))}
+                    {!isMobile && (
+                        <button
+                            className="toggle-button"
+                            onClick={() => setIsMinimized(!isMinimized)}
+                            title={isMinimized ? t('common.expand') : t('common.collapse')}
+                        >
+                            <span className="material-icons">
+                                {isMinimized ? "chevron_right" : "chevron_left"}
+                            </span>
+                        </button>
+                    )}
+                    {isMobile && (
+                        <button
+                            className="close-button"
+                            onClick={toggleMobileSidebar}
+                            title={t('common.close')}
+                        >
+                            <span className="material-icons">close</span>
+                        </button>
+                    )}
+                </div>
+                <div className="sidebar-content">
+                    {userModuleStructure.map((module, moduleIndex) => (
+                        <div key={module.id} className="module-section" style={{"--module-index": moduleIndex}}>
+                            {/* Module principal - Cliquer pour ouvrir ou pour accéder directement si pas de sous-menus */}
+                            {module.submodules && module.submodules.length > 0 ? (
+                                // Module avec sous-menus
+                                <div
+                                    className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
+                                    onClick={(e) => toggleModule(module.code, e)}
+                                >
+                                    <span className="material-icons module-icon">
+                                        {module.icon}
+                                    </span>
+                                    {(!isMinimized || isMobile) && (
+                                        <>
+                                            <div className="module-text">{module.title}</div>
+                                            <span className={`material-icons module-toggle ${isModuleOpen[module.code] ? 'open' : ''}`}>
+                                                expand_more
+                                            </span>
+                                        </>
+                                    )}
+                                    {isMinimized && !isMobile && (
+                                        <>
+                                            <span className="tooltip-text">{module.title}</span>
+                                            
+                                            {/* Sous-menus immédiats en mode minimisé */}
+                                            <div className="module-submenu">
+                                                {module.submodules.map((submodule, index) => (
+                                                    <Link
+                                                        key={submodule.id}
+                                                        to={ROUTE_MAPPING[submodule.path] || submodule.path}
+                                                        className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                                        style={{"--item-index": index}}
+                                                    >
+                                                        <span className="material-icons submenu-icon">
+                                                            {submodule.icon}
+                                                        </span>
+                                                        <span className="submenu-text">{submodule.title}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                // Module sans sous-menus - lien direct
+                                <Link 
+                                    to={ROUTE_MAPPING[module.path] || module.path}
+                                    className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
+                                >
+                                    <span className="material-icons module-icon">
+                                        {module.icon}
+                                    </span>
+                                    {(!isMinimized || isMobile) && (
+                                        <div className="module-text">{module.title}</div>
+                                    )}
+                                    {isMinimized && !isMobile && (
+                                        <span className="tooltip-text">{module.title}</span>
+                                    )}
+                                </Link>
+                            )}
+                            
+                            {/* Sous-menus (si présents) - Visible en mode non-minimisé ou sur mobile */}
+                            {((!isMinimized || isMobile) && module.submodules && module.submodules.length > 0 && isModuleOpen[module.code]) && (
+                                <div className="module-submenu open">
+                                    {module.submodules.map((submodule, index) => (
+                                        <Link
+                                            key={submodule.id}
+                                            to={ROUTE_MAPPING[submodule.path] || submodule.path}
+                                            className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                            style={{"--item-index": index}}
+                                            onClick={(e) => {
+                                                if (isMobile) {
+                                                    toggleMobileSidebar();
+                                                }
+                                            }}
+                                        >
+                                            <span className="material-icons submenu-icon">
+                                                {submodule.icon}
+                                            </span>
+                                            <span className="submenu-text">{submodule.title}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
 
-                <div className="sidebar-footer">
-                    <div className="settings-link">
-                        <Link to="/dashboard/settings" className={location.pathname === "/dashboard/settings" ? "active" : ""}>
-                            <span className="material-icons">settings</span>
-                            {!isMinimized && <span>Settings</span>}
-                            {isMinimized && <span className="tooltip-text">Settings</span>}
-                        </Link>
-                    </div>
-                    <div className="logout-button" onClick={handleLogout}>
-                        <span className="material-icons">logout</span>
-                        {!isMinimized && <span>{t('common.logout')}</span>}
-                        {isMinimized && <span className="tooltip-text">{t('common.logout')}</span>}
+                    <div className="sidebar-footer">
+                        <div className="settings-link">
+                            <Link 
+                                to="/dashboard/settings" 
+                                className={location.pathname === "/dashboard/settings" ? "active" : ""}
+                                onClick={() => isMobile && toggleMobileSidebar()}
+                            >
+                                <span className="material-icons">settings</span>
+                                {(!isMinimized || isMobile) && <span>Settings</span>}
+                                {isMinimized && !isMobile && <span className="tooltip-text">Settings</span>}
+                            </Link>
+                        </div>
+                        <div className="logout-button" onClick={handleLogout}>
+                            <span className="material-icons">logout</span>
+                            {(!isMinimized || isMobile) && <span>{t('common.logout')}</span>}
+                            {isMinimized && !isMobile && <span className="tooltip-text">{t('common.logout')}</span>}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

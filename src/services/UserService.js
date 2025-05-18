@@ -90,265 +90,144 @@ class UserService {
             }
 
             console.log('Profile ID for user creation:', profileId);
-
-            // Série de formats à essayer
-            const formats = [
-                // Format brut sans transformation - exactement comme vu dans les sérialiseurs Django
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    profile: profileId,  // Utiliser 'profile' au lieu de 'profile_id' comme vu dans les logs
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    phone: userData.phone || ''
-                },
-                // Format basé sur la structure Django REST Framework
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    profile: profileId,
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    language: 'EN',  // Par défaut comme vu dans la DB
-                    phone: userData.phone || ''
-                },
-                // Format standard avec profile_id numérique
-                {
+            
+            // Format adapté au backend - d'après les erreurs de validation du backend
+            const userDataFormatted = {
                 email: userData.email,
                 password: userData.password || 'defaultPassword123',
-                first_name: userData.firstName,
-                last_name: userData.lastName,
-                profile_id: profileId,
+                first_name: userData.firstName || '',
+                last_name: userData.lastName || '',
                 status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
-                phone: userData.phone || ''
-                },
-                // Format avec profile_id en chaîne
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    profile_id: profileId ? String(profileId) : null,
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
-                    phone: userData.phone || ''
-                },
-                // Format avec 'profile' comme clé au lieu de profile_id
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    profile: profileId,
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
-                    phone: userData.phone || ''
-                },
-                // Format sans attributs de profil
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
-                    phone: userData.phone || ''
-                },
-                // Format avec firstName/lastName au lieu de first_name/last_name
-                {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    profile_id: profileId,
-                    status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
-                    is_active: userData.status ? userData.status.toLowerCase() === 'active' : true,
-                    phone: userData.phone || ''
-                }
-            ];
-
-            // Essayer chaque format jusqu'à ce qu'un fonctionne
-            for (let i = 0; i < formats.length; i++) {
-                try {
-                    const formatData = formats[i];
-                    console.log(`Trying format ${i + 1}:`, formatData);
+                phone: userData.phone || null, // Envoyer null au lieu de chaîne vide pour éviter l'erreur de validation
+                profile: profileId // Utiliser le champ "profile" au lieu de "profile_id"
+            };
+            
+            console.log('Sending create user request with format:', userDataFormatted);
+            
+            try {
+                // Faire la requête API
+                const response = await api.request('/user/create/', 'POST', userDataFormatted);
+                console.log('User created successfully:', response);
+                return response;
+            } catch (error) {
+                console.error('Create user request failed:', error);
+                
+                // Récupérer les détails d'erreur pour le diagnostic
+                if (error.response && error.response.data) {
+                    console.error('API error details:', error.response.data);
+                    errorDetails = { ...errorDetails, ...error.response.data };
                     
-                    let createdUser = await api.request('/user/create/', 'POST', formatData);
-                    console.log('User created successfully with format', i + 1, createdUser);
-                    
-                    // Mise à jour du profil si nécessaire
-                    if (profileId && (!createdUser.profile_id || createdUser.profile_id != profileId) && (!createdUser.profile || createdUser.profile != profileId)) {
-                        try {
-                            console.log('Updating profile_id after creation');
-                            
-                            // Attendre un peu avant de tenter la mise à jour pour laisser le temps au backend
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                            
-                            // Essayer différents formats pour la mise à jour aussi
-                            const updateFormats = [
-                                { id: createdUser.id, profile: profileId },
-                                { id: createdUser.id, profile_id: profileId },
-                                { id: createdUser.id, profile_id: String(profileId) },
-                                { user_id: createdUser.id, profile_id: profileId }
-                            ];
-                            
-                            let updateSuccess = false;
-                            for (const updateData of updateFormats) {
-                                try {
-                                    console.log('Trying update format:', updateData);
-                                    const updateResponse = await api.request('/user/update/', 'POST', updateData);
-                                    console.log('Update response:', updateResponse);
-                                    updateSuccess = true;
-                                    console.log('Profile ID updated with:', updateData);
-                                    break;
-                                } catch (err) {
-                                    console.warn('Update format failed:', err);
-                                    // Capturer les détails de l'erreur pour diagnostic
-                                    if (err.response && err.response.data) {
-                                        errorDetails = { ...errorDetails, ...err.response.data };
-                                    }
-                                }
-                            }
-                            
-                            // Si la mise à jour directe échoue, essayer un autre endpoint
-                            if (!updateSuccess) {
-                                try {
-                                    console.log('Trying alternative profile association endpoint');
-                                    const associateData = { 
-                                        user_id: createdUser.id, 
+                    // Essayer différents formats selon les erreurs
+                    if (errorDetails.profile) {
+                        // Format alternatif avec profile_id au lieu de profile
+                        const alternativeFormat = {
+                            email: userData.email,
+                            password: userData.password || 'defaultPassword123',
+                            first_name: userData.firstName || '',
+                            last_name: userData.lastName || '',
+                            status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
+                            phone: null, // Envoyer null pour éviter l'erreur de validation du téléphone
                             profile_id: profileId
                         };
-                                    await api.request('/user/profile/associate/', 'POST', associateData);
-                                    console.log('Profile associated using alternative endpoint');
-                                    updateSuccess = true;
-                                } catch (altError) {
-                                    console.warn('Alternative association endpoint failed:', altError);
-                                    // Capturer les détails de l'erreur pour diagnostic
-                                    if (altError.response && altError.response.data) {
-                                        errorDetails = { ...errorDetails, ...altError.response.data };
-                                    }
-                                }
-                            }
                         
-                        // Récupérer l'utilisateur mis à jour
-                            if (updateSuccess) {
-                        const updatedUsers = await this.getAllUsers();
-                        const updatedUser = updatedUsers.find(u => u.id === createdUser.id);
+                        console.log('Trying alternative format with profile_id:', alternativeFormat);
                         
-                        if (updatedUser) {
-                                    console.log('Retrieved updated user:', updatedUser);
-                            return updatedUser;
-                        }
+                        try {
+                            const response = await api.request('/user/create/', 'POST', alternativeFormat);
+                            console.log('User created with alternative format:', response);
+                            return response;
+                        } catch (altError) {
+                            console.error('Alternative format also failed:', altError);
+                            if (altError.response && altError.response.data) {
+                                console.error('Alternative format error details:', altError.response.data);
+                                errorDetails = { ...errorDetails, ...altError.response.data };
                             }
-                        } catch (updateError) {
-                            console.error('Failed to update profile after creation:', updateError);
                         }
                     }
                     
-                    // Si tous les mécanismes de mise à jour ont échoué, forcer manuellement le profile_id
-                    if (profileId && (!createdUser.profile_id || createdUser.profile_id != profileId)) {
-                        console.log('Manually attaching profile_id to user object');
-                        createdUser.profile_id = profileId;
-                        // Essayer de trouver le profil associé
-                        const profile = await getAllProfiles().then(profiles => 
-                            profiles.find(p => p.id === profileId)
-                        ).catch(() => null);
+                    // Si l'erreur vient du téléphone, essayons sans téléphone
+                    if (errorDetails.phone) {
+                        const noPhoneFormat = {
+                            email: userData.email,
+                            password: userData.password || 'defaultPassword123',
+                            first_name: userData.firstName || '',
+                            last_name: userData.lastName || '',
+                            status: userData.status ? userData.status.toUpperCase() : 'ACTIVE',
+                            profile: profileId
+                        };
                         
-                        if (profile) {
-                            console.log('Manually attaching profile object:', profile);
-                            createdUser.profile = profile;
+                        console.log('Trying format without phone field:', noPhoneFormat);
+                        
+                        try {
+                            const response = await api.request('/user/create/', 'POST', noPhoneFormat);
+                            console.log('User created without phone field:', response);
+                            return response;
+                        } catch (noPhoneError) {
+                            console.error('Format without phone also failed:', noPhoneError);
+                            if (noPhoneError.response && noPhoneError.response.data) {
+                                console.error('No phone format error details:', noPhoneError.response.data);
+                                errorDetails = { ...errorDetails, ...noPhoneError.response.data };
+                            }
                         }
                     }
                     
-                        return createdUser;
-                } catch (error) {
-                    console.warn(`Format ${i + 1} failed:`, error);
-                    lastError = error;
-                    // Capturer les détails de l'erreur si disponibles
-                    if (error.response && error.response.data) {
-                        errorDetails = { ...errorDetails, ...error.response.data };
-                    }
-                }
-            }
-            
-            // Dernier recours - essayer avec le corps de requête exact observé dans la console du navigateur
-            try {
-                console.log('Trying exact request body from browser console');
-                
-                // Corps exact
-                const exactBody = {
-                    email: userData.email,
-                    password: userData.password || 'defaultPassword123',
-                    first_name: userData.firstName,
-                    last_name: userData.lastName
-                };
-                
-                if (profileId) {
-                    exactBody.profile_id = profileId;
-                }
-                
-                console.log('Exact request body:', exactBody);
-                let createdUser = await api.request('/user/create/', 'POST', exactBody);
-                console.log('User created with exact request body:', createdUser);
-                return createdUser;
-            } catch (exactError) {
-                console.error('Exact request body also failed:', exactError);
-                lastError = exactError;
-                if (exactError.response && exactError.response.data) {
-                    errorDetails = { ...errorDetails, ...exactError.response.data };
-                }
-                
-                // Réessayer sans aucun attribut de profil
-                try {
-                    console.log('Final attempt: minimal data');
-                    const minimalData = {
+                    // Essayer le format le plus minimaliste possible
+                    const minimumUserData = {
                         email: userData.email,
                         password: userData.password || 'defaultPassword123',
-                        first_name: userData.firstName,
-                        last_name: userData.lastName
+                        first_name: userData.firstName || '',
+                        last_name: userData.lastName || ''
                     };
                     
-                    let createdUser = await api.request('/user/create/', 'POST', minimalData);
-                    console.log('User created with minimal data:', createdUser);
+                    console.log('Trying minimal format as last resort:', minimumUserData);
                     
-                    // Si créé avec succès, tenter de mettre à jour le profil séparément
-                    if (createdUser && createdUser.id && profileId) {
-                        try {
-                            await api.request('/user/update/', 'POST', { 
-                                id: createdUser.id,
-                                profile_id: profileId 
-                            });
-                            console.log('Profile updated separately after creation');
-                        } catch (err) {
-                            console.warn('Separate profile update failed');
-                            if (err.response && err.response.data) {
-                                errorDetails = { ...errorDetails, ...err.response.data };
+                    try {
+                        const response = await api.request('/user/create/', 'POST', minimumUserData);
+                        console.log('User created with minimal format:', response);
+                        
+                        // Si nous avons réussi à créer l'utilisateur, essayer de mettre à jour son profil séparément
+                        if (response && response.id && profileId) {
+                            try {
+                                console.log('Updating profile separately after minimal creation');
+                                await api.request('/user/update/', 'POST', {
+                                    id: response.id,
+                                    profile: profileId
+                                });
+                                console.log('Profile updated separately after minimal creation');
+                            } catch (updateError) {
+                                console.warn('Failed to update profile separately:', updateError);
                             }
                         }
+                        
+                        return response;
+                    } catch (minimalError) {
+                        console.error('Even minimal format failed:', minimalError);
+                        if (minimalError.response && minimalError.response.data) {
+                            console.error('Minimal format error details:', minimalError.response.data);
+                            errorDetails = { ...errorDetails, ...minimalError.response.data };
+                        }
                     }
-                    
-                    return createdUser;
-                } catch (minimalError) {
-                    console.error('All creation attempts failed:', minimalError);
-                    lastError = minimalError;
-                    if (minimalError.response && minimalError.response.data) {
-                        errorDetails = { ...errorDetails, ...minimalError.response.data };
-                    }
-                    throw new Error('Could not create user after multiple attempts');
                 }
+                
+                throw error;
             }
         } catch (error) {
-            console.error('All creation attempts failed:', lastError || error);
+            console.error('All creation attempts failed:', error);
+            
+            if (error.response && error.response.data) {
+                console.error('Error response data:', error.response.data);
+                errorDetails = { ...errorDetails, ...error.response.data };
+            }
+            
             console.error('Error details accumulated:', errorDetails);
             
-            // Si nous avons des détails d'erreur spécifiques, les inclure dans le message d'erreur
+            // Construire un message d'erreur informatif
             let errorMessage = 'Could not create user after multiple attempts';
             
             if (errorDetails.profile) {
                 errorMessage += `: Profile error - ${Array.isArray(errorDetails.profile) ? errorDetails.profile.join(', ') : errorDetails.profile}`;
+            } else if (errorDetails.phone) {
+                errorMessage += `: Phone error - ${Array.isArray(errorDetails.phone) ? errorDetails.phone.join(', ') : errorDetails.phone}`;
             } else if (errorDetails.email) {
                 errorMessage += `: Email error - ${Array.isArray(errorDetails.email) ? errorDetails.email.join(', ') : errorDetails.email}`;
             } else if (Object.keys(errorDetails).length > 0) {

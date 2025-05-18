@@ -42,7 +42,9 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Divider,
-  InputBase
+  InputBase,
+  useMediaQuery,
+  useTheme as useMuiTheme
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -78,6 +80,13 @@ const Users = () => {
     const { isMinimized } = useMenu();
     const { isDarkMode } = useTheme();
     const { t } = useTranslation();
+    const muiTheme = useMuiTheme();
+    
+    // Responsive breakpoints
+    const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(muiTheme.breakpoints.between('sm', 'md'));
+    const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'));
+    
     const [users, setUsers] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
     const [profiles, setProfiles] = useState([]);
@@ -349,6 +358,22 @@ const Users = () => {
             // S'assurer que le statut est en majuscules pour l'API
             const userStatus = newUser.status ? newUser.status.toUpperCase() : 'ACTIVE';
             
+            // Vérifier que tous les champs obligatoires sont remplis
+            if (!newUser.firstName || !newUser.firstName.trim()) {
+                setFormErrors(prev => ({...prev, firstName: t('users.firstNameRequired', 'First name is required')}));
+                return;
+            }
+            
+            if (!newUser.lastName || !newUser.lastName.trim()) {
+                setFormErrors(prev => ({...prev, lastName: t('users.lastNameRequired', 'Last name is required')}));
+                return;
+            }
+            
+            if (!newUser.email || !newUser.email.trim()) {
+                setFormErrors(prev => ({...prev, email: t('users.emailRequired', 'Email is required')}));
+                return;
+            }
+            
             const userToSave = {
                 email: newUser.email,
                 password: newUser.password,
@@ -356,7 +381,7 @@ const Users = () => {
                 lastName: newUser.lastName,
                 profileId: profileId,
                 status: userStatus,
-                phone: newUser.phone
+                phone: newUser.phone || '' // Assurer que phone n'est jamais undefined
             };
 
             console.log('Submitting user data:', userToSave);
@@ -391,10 +416,48 @@ const Users = () => {
                 
                 // Analyser l'erreur et afficher un message spécifique si possible
                 let errorMessage = t('users.errorSaving');
+                let fieldErrors = {};
                 
-                // Vérifier si l'erreur est liée au profil
-                if (apiError.message && apiError.message.includes('profile')) {
+                // Récupérer les détails de l'erreur du backend
+                if (apiError.response && apiError.response.data) {
+                    const errorData = apiError.response.data;
+                    console.error('API Error details:', errorData);
+                    
+                    // Gérer les erreurs spécifiques aux champs
+                    if (errorData.email) {
+                        fieldErrors.email = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email;
+                    }
+                    
+                    if (errorData.first_name) {
+                        fieldErrors.firstName = Array.isArray(errorData.first_name) ? errorData.first_name[0] : errorData.first_name;
+                    }
+                    
+                    if (errorData.last_name) {
+                        fieldErrors.lastName = Array.isArray(errorData.last_name) ? errorData.last_name[0] : errorData.last_name;
+                    }
+                    
+                    if (errorData.phone) {
+                        fieldErrors.phone = Array.isArray(errorData.phone) ? errorData.phone[0] : errorData.phone;
+                    }
+                    
+                    if (errorData.profile) {
+                        fieldErrors.profileId = Array.isArray(errorData.profile) ? errorData.profile[0] : errorData.profile;
+                        errorMessage = t('users.profileError', 'The selected profile is not valid or not available');
+                    }
+                    
+                    if (errorData.password) {
+                        fieldErrors.password = Array.isArray(errorData.password) ? errorData.password[0] : errorData.password;
+                    }
+                    
+                    // Mettre à jour les erreurs de formulaire
+                    if (Object.keys(fieldErrors).length > 0) {
+                        setFormErrors(prev => ({...prev, ...fieldErrors}));
+                    }
+                } 
+                // Vérifier si l'erreur est liée au profil dans le message
+                else if (apiError.message && apiError.message.includes('profile')) {
                     errorMessage = t('users.profileError', 'The selected profile is not valid or not available');
+                    setFormErrors(prev => ({...prev, profileId: errorMessage}));
                 } 
                 // Vérifier si l'erreur est liée à l'email existant
                 else if (apiError.message && apiError.message.includes('email')) {
@@ -402,7 +465,10 @@ const Users = () => {
                     setFormErrors(prev => ({...prev, email: errorMessage}));
                 }
                 
-                alert(errorMessage);
+                // Afficher l'alerte uniquement si nous n'avons pas déjà affiché des erreurs dans le formulaire
+                if (Object.keys(fieldErrors).length === 0) {
+                    alert(errorMessage);
+                }
             }
         } catch (error) {
             console.error('Erreur lors de la sauvegarde de l\'utilisateur:', error);
@@ -465,8 +531,8 @@ const Users = () => {
     const confirmSingleDelete = async () => {
         if (userToDelete && userToDelete.id) {
             try {
-                // Utiliser requestWithFallbacks pour une meilleure gestion des erreurs
-                await api.requestWithFallbacks('/user/delete/', 'POST', { id: userToDelete.id });
+                // Utiliser request directement au lieu de requestWithFallbacks
+                await api.request('/user/delete/', 'POST', { id: userToDelete.id });
                 
                 // Mettre à jour l'UI immédiatement
                 setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
@@ -475,13 +541,13 @@ const Users = () => {
                 loadUsers();
             } catch (error) {
                 console.error('Erreur lors de la suppression:', error);
-                // Mettre à jour l'UI même en cas d'erreur
+                // Mettre à jour l'UI même en cas d'erreur pour améliorer l'UX
                 setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
+            } finally {
+                // Fermer la boîte de dialogue et réinitialiser l'utilisateur à supprimer
+                setSingleDeleteDialog(false);
+                setUserToDelete(null);
             }
-            
-            // Fermer la boîte de dialogue et réinitialiser l'utilisateur à supprimer
-            setSingleDeleteDialog(false);
-            setUserToDelete(null);
         }
     };
 
@@ -886,7 +952,13 @@ const Users = () => {
         try {
             // Delete each selected user
             for (const userId of selectedUsers) {
-                await api.requestWithFallbacks('/user/delete/', 'POST', { id: userId });
+                try {
+                    // Utiliser request directement au lieu de requestWithFallbacks
+                    await api.request('/user/delete/', 'POST', { id: userId });
+                } catch (userError) {
+                    console.warn(`Erreur lors de la suppression de l'utilisateur ${userId}:`, userError);
+                    // Continuer malgré l'erreur pour les autres utilisateurs
+                }
             }
             
             // Update UI
@@ -911,8 +983,8 @@ const Users = () => {
 
     // Modifier le rendu du tableau pour ajouter des classes modernes et des animations
     const renderUserTable = () => (
-        <div className="table-container">
-            <table className="contact-table">
+        <div className={`table-container ${isMobile ? 'mobile-table-container' : ''}`}>
+            <table className={`contact-table ${isMobile ? 'mobile-contact-table' : ''}`}>
                 <thead>
                     <tr>
                         <th style={{ width: '40px' }}>
@@ -932,8 +1004,8 @@ const Users = () => {
                         </th>
                         <th>FULL NAME</th>
                         <th>EMAIL</th>
-                        <th>PHONE</th>
-                        <th>PROFILE</th>
+                        {!isMobile && <th>PHONE</th>}
+                        {!isMobile && <th>PROFILE</th>}
                         <th>STATUS</th>
                         <th style={{ textAlign: 'right' }}>ACTIONS</th>
                     </tr>
@@ -968,35 +1040,56 @@ const Users = () => {
                             </td>
                             <td>
                                 <div className="name-cell">
-                                    <div className="user-avatar" style={{ backgroundColor: getAvatarColor(user.id) }}>
+                                    <div className="user-avatar" style={{ 
+                                        backgroundColor: getAvatarColor(user.id),
+                                        width: isMobile ? '35px' : '45px',
+                                        height: isMobile ? '35px' : '45px',
+                                        fontSize: isMobile ? '0.8rem' : '1rem'
+                                    }}>
                                         {getInitials(user.firstName, user.lastName)}
                                     </div>
                                     <div>
-                                        <div className="profile-name">{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</div>
-                                        {user.title && <div className="profile-title">{user.title}</div>}
+                                        <div className="profile-name" style={{ fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
+                                            {`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                                        </div>
+                                        {user.title && <div className="profile-title" style={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
+                                            {user.title}
+                                        </div>}
+                                        {isMobile && user.profile && (
+                                            <div className="profile-title" style={{ fontSize: '0.7rem', color: '#6366f1' }}>
+                                                {user.profile.name}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </td>
-                            <td>{user.email}</td>
+                            <td style={{ fontSize: isMobile ? '0.75rem' : 'inherit' }}>{user.email}</td>
+                            {!isMobile && (
+                                <td>
+                                    <Box className="phone-cell">
+                                        {user.phone ? (
+                                            <>
+                                                <PhoneIcon className="phone-icon" />
+                                                <span>{user.phone}</span>
+                                            </>
+                                        ) : (
+                                            <IconButton disabled size="small">
+                                                <PhoneIcon className="phone-icon" sx={{ opacity: 0.3 }} />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                </td>
+                            )}
+                            {!isMobile && (
+                                <td>
+                                    {user.profile ? user.profile.name : ''}
+                                </td>
+                            )}
                             <td>
-                                <Box className="phone-cell">
-                                    {user.phone ? (
-                                        <>
-                                            <PhoneIcon className="phone-icon" />
-                                            <span>{user.phone}</span>
-                                        </>
-                                    ) : (
-                                        <IconButton disabled size="small">
-                                            <PhoneIcon className="phone-icon" sx={{ opacity: 0.3 }} />
-                                        </IconButton>
-                                    )}
-                                </Box>
-                            </td>
-                            <td>
-                                {user.profile ? user.profile.name : ''}
-                            </td>
-                            <td>
-                                <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`}>
+                                <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`} style={{
+                                    padding: isMobile ? '4px 8px' : '8px 16px',
+                                    fontSize: isMobile ? '0.6rem' : '0.8rem'
+                                }}>
                                     <span className="status-dot"></span>
                                     {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
                                 </div>
@@ -1005,47 +1098,51 @@ const Users = () => {
                                 <div className="action-buttons">
                                     <button 
                                         className="action-button edit"
+                                        style={{ width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px' }}
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             handleEdit(user.id);
                                         }}
                                     >
-                                        <EditIcon fontSize="small" />
+                                        <EditIcon fontSize={isMobile ? 'small' : 'medium'} />
                                     </button>
                                     {user.status?.toLowerCase() === 'active' && (
                                         <button 
                                             className="action-button block"
+                                            style={{ width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px' }}
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                                 handleToggleUserStatus(user.id, user.status);
                                             }}
                                         >
-                                            <LockPersonIcon fontSize="small" />
+                                            <LockPersonIcon fontSize={isMobile ? 'small' : 'medium'} />
                                         </button>
                                     )}
                                     {user.status?.toLowerCase() === 'blocked' && (
                                         <button 
                                             className="action-button unblock"
+                                            style={{ width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px' }}
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                                 handleToggleUserStatus(user.id, user.status);
                                             }}
                                         >
-                                            <LockOpenIcon fontSize="small" />
+                                            <LockOpenIcon fontSize={isMobile ? 'small' : 'medium'} />
                                         </button>
                                     )}
                                     <button 
                                         className="action-button delete"
+                                        style={{ width: isMobile ? '30px' : '40px', height: isMobile ? '30px' : '40px' }}
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             handleDelete(user.id);
                                         }}
                                     >
-                                        <DeleteIcon fontSize="small" />
+                                        <DeleteIcon fontSize={isMobile ? 'small' : 'medium'} />
                                     </button>
                                 </div>
                             </td>
@@ -1064,13 +1161,14 @@ const Users = () => {
                     <Typography variant="h4" component="h1">
                         <span className="selected-count">{selectedUsers.length}</span> {t('users.selected')}
                     </Typography>
-                    <Box className="users-actions">
+                    <Box className="users-actions" sx={{ flexDirection: isMobile ? 'column' : 'row' }}>
                         <Button
                             variant="contained"
                             color="error"
                             startIcon={<DeleteIcon />}
                             onClick={handleDeleteSelected}
                             className="delete-selected-button"
+                            fullWidth={isMobile}
                         >
                             {t('users.deleteSelected')} ({selectedUsers.length})
                         </Button>
@@ -1079,6 +1177,8 @@ const Users = () => {
                             startIcon={<CloseIcon />}
                             onClick={cancelSelection}
                             className="cancel-selection-button"
+                            fullWidth={isMobile}
+                            sx={{ mt: isMobile ? 1 : 0 }}
                         >
                             {t('users.cancelSelection')}
                         </Button>
@@ -1086,11 +1186,16 @@ const Users = () => {
                 </Box>
             ) : (
                 <Box className="users-header">
-                    <Typography variant="h4" component="h1">
+                    <Typography variant="h4" component="h1" sx={{ fontSize: isMobile ? '1.75rem' : '2.25rem' }}>
                         <span className="users-count">{filteredUsers.length}</span> {t('users.title')}
                     </Typography>
-                    <Box className="users-actions">
-                        <div className="search-container">
+                    <Box className="users-actions" sx={{ 
+                        flexDirection: isMobile ? 'column' : 'row',
+                        width: isMobile ? '100%' : 'auto',
+                        gap: isMobile ? 1 : 2,
+                        mt: isMobile ? 2 : 0
+                    }}>
+                        <div className="search-container" style={{ width: isMobile ? '100%' : 'auto' }}>
                             <SearchIcon className="search-icon" />
                             <InputBase
                                 placeholder={t('users.search')}
@@ -1101,33 +1206,45 @@ const Users = () => {
                             />
                         </div>
                         
-                        <ToggleButtonGroup
-                            value={viewMode}
-                            exclusive
-                            onChange={handleViewModeChange}
-                            aria-label="view mode"
-                            size="small"
-                            className="view-selector"
-                        >
-                            <ToggleButton value="grid" aria-label="grid view" className="view-button">
-                                <GridViewIcon />
-                            </ToggleButton>
-                            <ToggleButton value="list" aria-label="list view" className="view-button">
-                                <ListViewIcon />
-                            </ToggleButton>
-                        </ToggleButtonGroup>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            gap: 1, 
+                            width: isMobile ? '100%' : 'auto',
+                            justifyContent: isMobile ? 'space-between' : 'flex-start',
+                            mt: isMobile ? 1 : 0
+                        }}>
+                            <ToggleButtonGroup
+                                value={viewMode}
+                                exclusive
+                                onChange={handleViewModeChange}
+                                aria-label="view mode"
+                                size="small"
+                                className="view-selector"
+                            >
+                                <ToggleButton value="grid" aria-label="grid view" className="view-button">
+                                    <GridViewIcon />
+                                </ToggleButton>
+                                <ToggleButton value="list" aria-label="list view" className="view-button">
+                                    <ListViewIcon />
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                            
+                            <IconButton onClick={() => setShowFilters(!showFilters)} className="filter-button">
+                                <FilterListIcon />
+                            </IconButton>
+                            
+                            {!isMobile && (
+                                <Button
+                                    variant="contained"
+                                    startIcon={<FileDownloadIcon />}
+                                    onClick={() => handleExport('csv')}
+                                    className="export-button"
+                                >
+                                    {t('users.export')}
+                                </Button>
+                            )}
+                        </Box>
                         
-                        <IconButton onClick={() => setShowFilters(!showFilters)} className="filter-button">
-                            <FilterListIcon />
-                        </IconButton>
-                        <Button
-                            variant="contained"
-                            startIcon={<FileDownloadIcon />}
-                            onClick={() => handleExport('csv')}
-                            className="export-button"
-                        >
-                            {t('users.export')}
-                        </Button>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
@@ -1137,9 +1254,24 @@ const Users = () => {
                                 setOpenDialog(true);
                             }}
                             className="create-button"
+                            fullWidth={isMobile}
+                            sx={{ mt: isMobile ? 1 : 0 }}
                         >
                             {t('users.create')}
                         </Button>
+                        
+                        {isMobile && (
+                            <Button
+                                variant="outlined"
+                                startIcon={<FileDownloadIcon />}
+                                onClick={() => handleExport('csv')}
+                                className="export-button-mobile"
+                                fullWidth
+                                sx={{ mt: 1 }}
+                            >
+                                {t('users.export')}
+                            </Button>
+                        )}
                     </Box>
                 </Box>
             )}
@@ -1148,149 +1280,182 @@ const Users = () => {
 
     // Modifier le rendu de la grille pour un design plus moderne
     const renderUserGrid = () => (
-                <Grid container spacing={3}>
+        <Grid container spacing={isMobile ? 2 : 3}>
             {filteredUsers.map((user, index) => (
                 <Grid item xs={12} sm={6} md={4} lg={4} key={user.id} style={{ animationDelay: `${index * 0.05}s` }}>
-                            <Card 
-                                className={selectedUsers.includes(user.id) ? 'selected' : ''}
-                                onClick={() => {
-                                    setSelectedUsers(prev => 
-                                        prev.includes(user.id)
-                                            ? prev.filter(id => id !== user.id)
-                                            : [...prev, user.id]
-                                    );
-                                }}
-                            >
-                                <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedUsers(prev => 
-                                            prev.includes(user.id)
-                                                ? prev.filter(id => id !== user.id)
-                                                : [...prev, user.id]
-                                        );
-                                    }}
-                                    className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
+                    <Card 
+                        className={selectedUsers.includes(user.id) ? 'selected' : ''}
+                        onClick={() => {
+                            setSelectedUsers(prev => 
+                                prev.includes(user.id)
+                                    ? prev.filter(id => id !== user.id)
+                                    : [...prev, user.id]
+                            );
+                        }}
+                        sx={{ height: '100%' }}
+                    >
+                        <IconButton
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUsers(prev => 
+                                    prev.includes(user.id)
+                                        ? prev.filter(id => id !== user.id)
+                                        : [...prev, user.id]
+                                );
+                            }}
+                            className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
+                            sx={{
+                                position: 'absolute',
+                                top: 10,
+                                right: 10,
                                 zIndex: 10
-                                    }}
-                                >
-                                    {selectedUsers.includes(user.id) ? (
-                                        <CheckIcon />
-                                    ) : (
-                                        <AddIcon />
-                                    )}
-                                </IconButton>
-                                
-                                <CardContent 
-                                    sx={{ 
-                                        display: 'flex', 
-                                        flexDirection: 'column', 
-                                        alignItems: 'center',
-                                        p: 3
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <Avatar
-                                        sx={{
-                                    width: 90,
-                                    height: 90,
-                                            mb: 2,
-                                            bgcolor: getAvatarColor(user.id),
-                                    fontSize: '1.8rem',
-                                            fontWeight: 'bold'
-                                        }}
+                            }}
+                        >
+                            {selectedUsers.includes(user.id) ? (
+                                <CheckIcon />
+                            ) : (
+                                <AddIcon />
+                            )}
+                        </IconButton>
+                        
+                        <CardContent 
+                            sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center',
+                                p: isMobile ? 2 : 3,
+                                height: '100%'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Avatar
+                                sx={{
+                                    width: isMobile ? 70 : 90,
+                                    height: isMobile ? 70 : 90,
+                                    mb: 2,
+                                    bgcolor: getAvatarColor(user.id),
+                                    fontSize: isMobile ? '1.4rem' : '1.8rem',
+                                    fontWeight: 'bold'
+                                }}
                                 className="user-card-avatar"
-                                    >
-                                        {getInitials(user.firstName, user.lastName)}
-                                    </Avatar>
-                            <Typography variant="h6" className="card-user-name">
-                                        {user.fullName}
-                                    </Typography>
-                            <Typography variant="body2" className="card-user-profile">
-                                        {user.profile ? user.profile.name : 'No Profile'}
-                                    </Typography>
-                                    
-                                    <Chip
-                                        label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
-                                        className={`status-badge ${user.status}`}
-                                sx={{ mb: 2, mt: 2 }}
-                                    />
-                                    
-                                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                            >
+                                {getInitials(user.firstName, user.lastName)}
+                            </Avatar>
+                            <Typography 
+                                variant="h6" 
+                                className="card-user-name"
+                                sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }}
+                            >
+                                {user.fullName}
+                            </Typography>
+                            <Typography 
+                                variant="body2" 
+                                className="card-user-profile"
+                                sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}
+                            >
+                                {user.profile ? user.profile.name : 'No Profile'}
+                            </Typography>
+                            
+                            <Chip
+                                label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
+                                className={`status-badge ${user.status}`}
+                                sx={{ 
+                                    mb: 2, 
+                                    mt: 2,
+                                    height: isMobile ? '24px' : '32px',
+                                    fontSize: isMobile ? '0.65rem' : '0.8rem',
+                                    '& .MuiChip-label': {
+                                        px: isMobile ? 1 : 2
+                                    }
+                                }}
+                            />
+                            
+                            <Box sx={{ 
+                                width: '100%', 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: 1, 
+                                mt: 1,
+                                flex: 1
+                            }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-email">
-                                    <EmailIcon sx={{ fontSize: 18, mr: 1 }} />
-                                            <Typography variant="body2">{user.email}</Typography>
-                                        </Box>
+                                    <EmailIcon sx={{ fontSize: isMobile ? 16 : 18, mr: 1 }} />
+                                    <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
+                                        {user.email}
+                                    </Typography>
+                                </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-phone">
-                                    <PhoneIcon sx={{ fontSize: 18, mr: 1 }} />
-                                    <Typography variant="body2">{user.phone || '(Not provided)'}</Typography>
-                                        </Box>
-                                    </Box>
-                                    
+                                    <PhoneIcon sx={{ fontSize: isMobile ? 16 : 18, mr: 1 }} />
+                                    <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
+                                        {user.phone || '(Not provided)'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            
                             <Box className="card-actions" sx={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'center', 
-                                        gap: 2, 
-                                        mt: 3, 
-                                        width: '100%',
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                gap: isMobile ? 1 : 2, 
+                                mt: 3, 
+                                width: '100%',
                                 position: 'relative',
-                                p: 2
-                                    }}>
-                                        <IconButton
-                                            onClick={() => handleEdit(user.id)}
-                                            className="action-button edit"
-                                        >
-                                            <EditIcon />
-                                        </IconButton>
-                                        {user.status?.toLowerCase() === 'active' && (
-                                            <IconButton
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleUserStatus(user.id, user.status);
-                                                }}
-                                                className="action-button block"
-                                            >
-                                                <LockPersonIcon />
-                                            </IconButton>
-                                        )}
-                                        {user.status?.toLowerCase() === 'blocked' && (
-                                            <IconButton
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleUserStatus(user.id, user.status);
-                                                }}
-                                                className="action-button unblock"
-                                            >
-                                                <LockOpenIcon />
-                                            </IconButton>
-                                        )}
-                                        <IconButton
-                                            onClick={() => handleDelete(user.id)}
-                                            className="action-button delete"
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    ))}
+                                p: isMobile ? 1 : 2
+                            }}>
+                                <IconButton
+                                    onClick={() => handleEdit(user.id)}
+                                    className="action-button edit"
+                                    size={isMobile ? "small" : "medium"}
+                                >
+                                    <EditIcon fontSize={isMobile ? "small" : "medium"} />
+                                </IconButton>
+                                {user.status?.toLowerCase() === 'active' && (
+                                    <IconButton
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleUserStatus(user.id, user.status);
+                                        }}
+                                        className="action-button block"
+                                        size={isMobile ? "small" : "medium"}
+                                    >
+                                        <LockPersonIcon fontSize={isMobile ? "small" : "medium"} />
+                                    </IconButton>
+                                )}
+                                {user.status?.toLowerCase() === 'blocked' && (
+                                    <IconButton
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleUserStatus(user.id, user.status);
+                                        }}
+                                        className="action-button unblock"
+                                        size={isMobile ? "small" : "medium"}
+                                    >
+                                        <LockOpenIcon fontSize={isMobile ? "small" : "medium"} />
+                                    </IconButton>
+                                )}
+                                <IconButton
+                                    onClick={() => handleDelete(user.id)}
+                                    className="action-button delete"
+                                    size={isMobile ? "small" : "medium"}
+                                >
+                                    <DeleteIcon fontSize={isMobile ? "small" : "medium"} />
+                                </IconButton>
+                            </Box>
+                        </CardContent>
+                    </Card>
                 </Grid>
+            ))}
+        </Grid>
     );
 
     return (
-        <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+        <Box className={`users-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'} ${isMobile ? 'mobile-view' : ''}`}>
             {renderHeader()}
 
             <Collapse in={showFilters}>
-                <Paper sx={{ p: 3, mb: 3, borderRadius: '16px' }} className="filters-panel">
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        <FormControl size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+                <Paper sx={{ p: isMobile ? 2 : 3, mb: 3, borderRadius: '16px' }} className="filters-panel">
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
+                        <FormControl size="small" sx={{ minWidth: isMobile ? '100%' : 200, flexGrow: 1 }}>
                             <InputLabel>{t('users.filterByStatus')}</InputLabel>
                             <Select
                                 value={filterStatus}
@@ -1305,7 +1470,7 @@ const Users = () => {
                                 <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
                             </Select>
                         </FormControl>
-                        <FormControl size="small" sx={{ minWidth: 200, flexGrow: 1 }}>
+                        <FormControl size="small" sx={{ minWidth: isMobile ? '100%' : 200, flexGrow: 1 }}>
                             <InputLabel>{t('users.filterByProfile')}</InputLabel>
                             <Select
                                 value={filterProfile}
@@ -1388,141 +1553,176 @@ const Users = () => {
                 onClose={handleCancel} 
                 maxWidth="md" 
                 fullWidth
+                fullScreen={isMobile}
                 className="user-dialog"
                 PaperProps={{
                     sx: {
-                        borderRadius: '24px',
+                        borderRadius: isMobile ? 0 : '24px',
                         overflow: 'hidden'
                     }
                 }}
             >
-                <DialogTitle className="dialog-title">
-                    {editingUser !== null ? t('users.edit') : t('users.create')}
+                <DialogTitle className="dialog-title" sx={{ 
+                    background: isMobile ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : undefined,
+                    color: isMobile ? 'white' : undefined,
+                    padding: isMobile ? '20px 24px' : undefined,
+                    position: 'relative'
+                }}>
+                    {editingUser !== null ? t('users.edit', 'Edit User') : t('users.create', 'Create User')}
+                    {isMobile && (
+                        <IconButton
+                            aria-label="close"
+                            onClick={handleCancel}
+                            sx={{
+                                position: 'absolute',
+                                right: 8,
+                                top: 12,
+                                color: 'white'
+                            }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    )}
                 </DialogTitle>
-                <DialogContent className="dialog-content">
+                <DialogContent className="dialog-content" sx={{ padding: isMobile ? '20px 24px' : undefined }}>
                     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                        <Box className="form-row">
-                            <TextField
+                        <Box sx={{ mb: isMobile ? 3 : 0 }}>
+                            <FormControl 
                                 fullWidth
-                                label={t('users.firstName')}
-                                name="firstName"
-                                value={newUser.firstName}
-                                onChange={handleInputChange}
-                                error={!!formErrors.firstName}
-                                helperText={formErrors.firstName}
-                                className="form-field"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <PersonIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <TextField
-                                fullWidth
-                                label={t('users.lastName')}
-                                name="lastName"
-                                value={newUser.lastName}
-                                onChange={handleInputChange}
-                                error={!!formErrors.lastName}
-                                helperText={formErrors.lastName}
-                                className="form-field"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <PersonIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        </Box>
-
-                        <Box className="form-row">
-                            <TextField
-                                fullWidth
-                                label={t('users.email')}
-                                name="email"
-                                value={newUser.email}
-                                onChange={handleInputChange}
-                                error={!!formErrors.email}
-                                helperText={formErrors.email}
-                                className="form-field"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <EmailIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <TextField
-                                fullWidth
-                                label={t('users.phone')}
-                                name="phone"
-                                value={newUser.phone}
-                                onChange={handleInputChange}
-                                error={!!formErrors.phone}
-                                helperText={formErrors.phone}
-                                className="form-field"
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <PhoneIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        </Box>
-
-                        <Box className="form-row">
-                            <FormControl fullWidth error={!!formErrors.profileId} className="form-field">
-                                <InputLabel>{t('users.profile')}</InputLabel>
+                                margin={isMobile ? "dense" : "normal"}
+                                sx={{ mb: isMobile ? 2 : 0 }}
+                            >
+                                <InputLabel id="profile-label">{t('users.profile', 'Profile')}</InputLabel>
                                 <Select
+                                    labelId="profile-label"
                                     name="profileId"
                                     value={newUser.profileId || ''}
                                     onChange={handleInputChange}
-                                    label={t('users.profile')}
-                                    startAdornment={
-                                        <InputAdornment position="start">
-                                            <AccountCircleIcon />
-                                        </InputAdornment>
-                                    }
+                                    label={t('users.profile', 'Profile')}
+                                    sx={{
+                                        borderRadius: isMobile ? '10px' : undefined,
+                                        backgroundColor: isMobile ? 'white' : undefined,
+                                        '& .MuiSelect-icon': { color: isMobile ? '#6366f1' : undefined }
+                                    }}
                                 >
-                                    <MenuItem value="">{t('users.selectProfile')}</MenuItem>
+                                    <MenuItem value="">{t('users.selectProfile', 'Select Profile')}</MenuItem>
                                     {profiles.map((profile) => (
                                         <MenuItem key={profile.id} value={profile.id.toString()}>
                                             {profile.name}
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                {formErrors.profileId && (
-                                    <Typography color="error" variant="caption">
-                                        {formErrors.profileId}
-                                    </Typography>
-                                )}
                             </FormControl>
-                            
-                            <FormControl fullWidth className="form-field">
-                                <InputLabel>{t('users.status')}</InputLabel>
+
+                            <FormControl 
+                                fullWidth 
+                                margin={isMobile ? "dense" : "normal"}
+                            >
+                                <InputLabel id="status-label">{t('users.status', 'Status')}</InputLabel>
                                 <Select
+                                    labelId="status-label"
                                     name="status"
                                     value={newUser.status}
                                     onChange={handleInputChange}
-                                    label={t('users.status')}
+                                    label={t('users.status', 'Status')}
+                                    sx={{
+                                        borderRadius: isMobile ? '10px' : undefined,
+                                        backgroundColor: isMobile ? 'white' : undefined,
+                                        '& .MuiSelect-icon': { color: isMobile ? '#6366f1' : undefined }
+                                    }}
                                 >
-                                    <MenuItem value="active">{t('users.statusActive')}</MenuItem>
-                                    <MenuItem value="inactive">{t('users.statusInactive')}</MenuItem>
-                                    <MenuItem value="blocked">{t('users.statusBlocked')}</MenuItem>
-                                    <MenuItem value="suspended">{t('users.statusSuspended')}</MenuItem>
+                                    <MenuItem value="active">{t('users.statusActive', 'Active')}</MenuItem>
+                                    <MenuItem value="inactive">{t('users.statusInactive', 'Inactive')}</MenuItem>
+                                    <MenuItem value="blocked">{t('users.statusBlocked', 'Blocked')}</MenuItem>
+                                    <MenuItem value="suspended">{t('users.statusSuspended', 'Suspended')}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>
 
-                        <Box className="form-row">
+                        <Divider sx={{ my: isMobile ? 3 : 2, display: isMobile ? 'block' : 'none' }} />
+
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: isMobile ? 0 : 2 }}>
                             <TextField
                                 fullWidth
-                                label={t('users.password')}
+                                label={t('users.firstName', 'First Name')}
+                                name="firstName"
+                                value={newUser.firstName}
+                                onChange={handleInputChange}
+                                error={!!formErrors.firstName}
+                                helperText={formErrors.firstName}
+                                required
+                                className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined,
+                                    mb: 2
+                                }}
+                            />
+                        </Box>
+
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                            <TextField
+                                fullWidth
+                                label={t('users.lastName', 'Last Name')}
+                                name="lastName"
+                                value={newUser.lastName}
+                                onChange={handleInputChange}
+                                error={!!formErrors.lastName}
+                                helperText={formErrors.lastName}
+                                required
+                                className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined,
+                                    mb: 2
+                                }}
+                            />
+                        </Box>
+
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                            <TextField
+                                fullWidth
+                                label={t('users.email', 'Email')}
+                                type="email"
+                                name="email"
+                                value={newUser.email}
+                                onChange={handleInputChange}
+                                error={!!formErrors.email}
+                                helperText={formErrors.email}
+                                required
+                                className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined,
+                                    mb: 2
+                                }}
+                            />
+                        </Box>
+
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                            <TextField
+                                fullWidth
+                                label={t('users.phone', 'Phone')}
+                                name="phone"
+                                value={newUser.phone}
+                                onChange={handleInputChange}
+                                className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined,
+                                    mb: 2
+                                }}
+                            />
+                        </Box>
+
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                            <TextField
+                                fullWidth
+                                label={t('users.password', 'Password')}
                                 type={showPassword ? "text" : "password"}
                                 name="password"
                                 value={newUser.password}
@@ -1531,6 +1731,7 @@ const Users = () => {
                                 helperText={formErrors.password}
                                 required={!editingUser}
                                 className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
@@ -1538,16 +1739,25 @@ const Users = () => {
                                                 aria-label="toggle password visibility"
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 edge="end"
+                                                size={isMobile ? "small" : "medium"}
                                             >
                                                 {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
                                 }}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined,
+                                    mb: 2
+                                }}
                             />
+                        </Box>
+                        
+                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
                             <TextField
                                 fullWidth
-                                label={t('users.confirmPassword')}
+                                label={t('users.confirmPassword', 'Confirm Password')}
                                 type={showConfirmPassword ? "text" : "password"}
                                 name="confirmPassword"
                                 value={newUser.confirmPassword}
@@ -1556,115 +1766,197 @@ const Users = () => {
                                 helperText={formErrors.confirmPassword}
                                 required={!editingUser}
                                 className="form-field"
+                                margin={isMobile ? "dense" : "normal"}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                    <IconButton
+                                            <IconButton
                                                 aria-label="toggle confirm password visibility"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 edge="end"
+                                                size={isMobile ? "small" : "medium"}
                                             >
                                                 {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
                                 }}
+                                sx={{
+                                    borderRadius: isMobile ? '10px' : undefined,
+                                    backgroundColor: isMobile ? 'white' : undefined
+                                }}
                             />
                         </Box>
 
-                        <Box className="password-rules-container">
-                            <Box className="password-rules-header">
+                        <Box className="password-rules-container" sx={{ 
+                            mt: 3,
+                            border: isMobile ? 'none' : undefined,
+                            boxShadow: isMobile ? 'none' : undefined,
+                            padding: isMobile ? '16px' : undefined,
+                            backgroundColor: isMobile ? '#F9FAFB' : undefined,
+                            borderRadius: isMobile ? '10px' : undefined
+                        }}>
+                            <Box className="password-rules-header" sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
                                 <LockOutlined sx={{ fontSize: 18 }} />
-                                {t('security.passwordRules.help')}
+                                <Typography sx={{ fontWeight: 600 }}>
+                                    {t('security.passwordRules.help', 'Please ensure your password meets the following requirements:')}
+                                </Typography>
                             </Box>
-                            <Box component="ul" className="password-rules-list">
+                            <Box component="ul" className="password-rules-list" sx={{
+                                listStyle: isMobile ? 'none' : undefined,
+                                pl: isMobile ? 0 : undefined,
+                                mt: isMobile ? 2 : undefined
+                            }}>
                                 {passwordRules.minLength > 0 && (
-                                    <li>{t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength })}</li>
-                                )}
-                                {passwordRules.requireUppercase && (
-                                    <li>{t('security.passwordRules.uppercaseInfo')}</li>
+                                    <li style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '8px',
+                                        color: '#4B5563'
+                                    }}>
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                mr: 1, 
+                                                color: '#6366F1',
+                                                display: 'inline-block',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#6366F1'
+                                            }}
+                                        ></Box>
+                                        {t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength }, `Password must be at least ${passwordRules.minLength} characters long`)}
+                                    </li>
                                 )}
                                 {passwordRules.requireLowercase && (
-                                    <li>{t('security.passwordRules.lowercaseInfo')}</li>
+                                    <li style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '8px',
+                                        color: '#4B5563'
+                                    }}>
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                mr: 1, 
+                                                color: '#6366F1',
+                                                display: 'inline-block',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#6366F1'
+                                            }}
+                                        ></Box>
+                                        {t('security.passwordRules.lowercaseInfo', 'Password must contain at least one lowercase letter')}
+                                    </li>
                                 )}
                                 {passwordRules.requireNumbers && (
-                                    <li>{t('security.passwordRules.numberInfo')}</li>
+                                    <li style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '8px',
+                                        color: '#4B5563'
+                                    }}>
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                mr: 1, 
+                                                color: '#6366F1',
+                                                display: 'inline-block',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#6366F1'
+                                            }}
+                                        ></Box>
+                                        {t('security.passwordRules.numberInfo', 'Password must contain at least one number')}
+                                    </li>
+                                )}
+                                {passwordRules.requireUppercase && (
+                                    <li style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '8px',
+                                        color: '#4B5563'
+                                    }}>
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                mr: 1, 
+                                                color: '#6366F1',
+                                                display: 'inline-block',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#6366F1'
+                                            }}
+                                        ></Box>
+                                        {t('security.passwordRules.uppercaseInfo', 'Password must contain at least one uppercase letter')}
+                                    </li>
                                 )}
                                 {passwordRules.requireSpecialChars && (
-                                    <li>{t('security.passwordRules.specialInfo')}</li>
+                                    <li style={{ 
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '8px',
+                                        color: '#4B5563'
+                                    }}>
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                mr: 1, 
+                                                color: '#6366F1',
+                                                display: 'inline-block',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#6366F1'
+                                            }}
+                                        ></Box>
+                                        {t('security.passwordRules.specialInfo', 'Password must contain at least one special character')}
+                                    </li>
                                 )}
                             </Box>
                         </Box>
                     </Box>
                 </DialogContent>
-                <DialogActions className="dialog-actions">
-                    <Button onClick={handleCancel} startIcon={<CancelIcon />} className="cancel-button">
-                        {t('users.cancel')}
+                <DialogActions className="dialog-actions" sx={{ 
+                    flexDirection: isMobile ? 'column-reverse' : 'row',
+                    padding: isMobile ? '16px 24px 32px' : undefined,
+                    backgroundColor: isMobile ? 'white' : undefined
+                }}>
+                    <Button 
+                        onClick={handleCancel} 
+                        startIcon={<CloseIcon />} 
+                        className="cancel-button"
+                        fullWidth={isMobile}
+                        sx={{ 
+                            mt: isMobile ? 1 : 0,
+                            borderRadius: isMobile ? '8px' : undefined,
+                            border: isMobile ? '1px solid #D1D5DB' : undefined,
+                            color: isMobile ? '#6B7280' : undefined
+                        }}
+                        variant="outlined"
+                    >
+                        {t('users.cancel', 'Cancel')}
                     </Button>
                     <Button 
                         onClick={handleSubmit} 
                         variant="contained" 
                         startIcon={<SaveIcon />}
                         className="create-button"
+                        fullWidth={isMobile}
+                        sx={{
+                            borderRadius: isMobile ? '8px' : undefined,
+                            background: isMobile ? 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)' : undefined
+                        }}
                     >
-                        {editingUser !== null ? t('users.save') : t('users.create')}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Dialog 
-                open={openDeleteDialog} 
-                onClose={() => setOpenDeleteDialog(false)}
-                aria-labelledby="delete-dialog-title"
-                aria-describedby="delete-dialog-description"
-                PaperProps={{
-                    className: "delete-confirm-dialog",
-                    style: {
-                        borderRadius: '20px',
-                        overflow: 'hidden'
-                    }
-                }}
-                BackdropProps={{
-                    style: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
-                    }
-                }}
-                maxWidth="xs"
-                fullWidth
-            >
-                <Box className="delete-dialog-header">
-                    <div className="delete-dialog-icon">
-                        <DeleteIcon />
-                    </div>
-                    <Typography variant="h6" className="delete-dialog-title">
-                        {t('users.confirmDeleteMultiple')}
-                    </Typography>
-                </Box>
-                
-                <DialogContent className="delete-dialog-content">
-                    <Typography className="delete-dialog-description">
-                        {t('users.confirmDeleteMultipleDesc', { count: selectedUsers.length })}
-                    </Typography>
-                    <Typography variant="body2" className="delete-dialog-warning">
-                        {t('users.confirmDeleteWarning')}
-                    </Typography>
-                </DialogContent>
-                
-                <DialogActions className="delete-dialog-actions">
-                    <Button 
-                        onClick={() => setOpenDeleteDialog(false)} 
-                        variant="outlined"
-                        className="delete-dialog-cancel-button"
-                    >
-                        {t('users.cancel', 'Annuler')}
-                    </Button>
-                    <Button 
-                        onClick={confirmDeleteSelected} 
-                        variant="contained"
-                        color="error"
-                        className="delete-dialog-confirm-button"
-                    >
-                        {t('users.delete', 'Supprimer')}
+                        {editingUser !== null ? t('users.save', 'Save') : t('users.create', 'Create')}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1674,10 +1966,13 @@ const Users = () => {
                 onClose={cancelSingleDelete}
                 aria-labelledby="single-delete-dialog-title"
                 aria-describedby="single-delete-dialog-description"
+                fullWidth
+                maxWidth="xs"
+                fullScreen={isMobile}
                 PaperProps={{
                     className: "delete-confirm-dialog",
                     style: {
-                        borderRadius: '20px',
+                        borderRadius: isMobile ? 0 : '20px',
                         overflow: 'hidden'
                     }
                 }}
@@ -1686,32 +1981,83 @@ const Users = () => {
                         backgroundColor: 'rgba(0, 0, 0, 0.6)'
                     }
                 }}
-                maxWidth="xs"
-                fullWidth
             >
-                <Box className="delete-dialog-header">
-                    <div className="delete-dialog-icon">
-                        <DeleteIcon />
-                    </div>
-                    <Typography variant="h6" className="delete-dialog-title">
-                        {t('users.deleteTitle', 'Delete User')}
-                    </Typography>
+                <Box className="delete-dialog-header" sx={{ 
+                    background: isMobile ? '#FEE2E2' : undefined,
+                    padding: isMobile ? '20px 24px' : undefined,
+                    position: 'relative'
+                }}>
+                    {isMobile ? (
+                        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Box sx={{ 
+                                width: 50, 
+                                height: 50, 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                marginRight: '12px'
+                            }}>
+                                <DeleteIcon sx={{ color: '#EF4444' }} />
+                            </Box>
+                            <Typography variant="h6" sx={{ color: '#B91C1C' }}>
+                                {t('users.deleteTitle', 'Delete User')}
+                            </Typography>
+                            <IconButton
+                                aria-label="close"
+                                onClick={cancelSingleDelete}
+                                sx={{
+                                    position: 'absolute',
+                                    right: -5,
+                                    top: -5,
+                                    color: '#B91C1C'
+                                }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                    ) : (
+                        <>
+                            <div className="delete-dialog-icon">
+                                <DeleteIcon />
+                            </div>
+                            <Typography variant="h6" className="delete-dialog-title">
+                                {t('users.deleteTitle', 'Delete User')}
+                            </Typography>
+                        </>
+                    )}
                 </Box>
                 
-                <DialogContent className="delete-dialog-content">
-                    <Typography className="delete-dialog-description">
+                <DialogContent className="delete-dialog-content" sx={{ padding: isMobile ? '24px' : undefined }}>
+                    <Typography className="delete-dialog-description" sx={{ fontSize: isMobile ? '1rem' : undefined }}>
                         {t('users.deleteConfirmMessage', 'Are you sure you want to delete the user')} {userToDelete ? `${userToDelete.firstName} ${userToDelete.lastName}` : ''}?
                     </Typography>
-                    <Typography variant="body2" className="delete-dialog-warning">
+                    <Typography variant="body2" className="delete-dialog-warning" sx={{ 
+                        fontSize: isMobile ? '0.85rem' : undefined,
+                        marginTop: isMobile ? '16px' : undefined,
+                        backgroundColor: isMobile ? '#FEF2F2' : undefined,
+                        padding: isMobile ? '12px' : undefined,
+                        borderLeft: isMobile ? '3px solid #EF4444' : undefined
+                    }}>
                         {t('users.deleteWarning', 'This action cannot be undone. All data associated with this user will be permanently removed.')}
                     </Typography>
                 </DialogContent>
                 
-                <DialogActions className="delete-dialog-actions">
+                <DialogActions className="delete-dialog-actions" sx={{ 
+                    flexDirection: isMobile ? 'column-reverse' : 'row',
+                    padding: isMobile ? '16px 24px 24px' : undefined
+                }}>
                     <Button 
                         onClick={cancelSingleDelete} 
                         variant="outlined"
                         className="delete-dialog-cancel-button"
+                        fullWidth={isMobile}
+                        sx={{ 
+                            mt: isMobile ? 1 : 0,
+                            color: isMobile ? '#6B7280' : undefined,
+                            borderColor: isMobile ? '#E5E7EB' : undefined
+                        }}
                     >
                         {t('users.cancel', 'Cancel')}
                     </Button>
@@ -1720,6 +2066,127 @@ const Users = () => {
                         variant="contained"
                         color="error"
                         className="delete-dialog-confirm-button"
+                        fullWidth={isMobile}
+                        sx={{
+                            backgroundColor: isMobile ? '#EF4444' : undefined,
+                            borderRadius: isMobile ? '8px' : undefined
+                        }}
+                    >
+                        {t('users.delete', 'Delete')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog 
+                open={openDeleteDialog} 
+                onClose={() => setOpenDeleteDialog(false)}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                fullWidth
+                maxWidth="xs"
+                fullScreen={isMobile}
+                PaperProps={{
+                    className: "delete-confirm-dialog",
+                    style: {
+                        borderRadius: isMobile ? 0 : '20px',
+                        overflow: 'hidden'
+                    }
+                }}
+                BackdropProps={{
+                    style: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+                    }
+                }}
+            >
+                <Box className="delete-dialog-header" sx={{ 
+                    background: isMobile ? '#FEE2E2' : undefined,
+                    padding: isMobile ? '20px 24px' : undefined,
+                    position: 'relative'
+                }}>
+                    {isMobile ? (
+                        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Box sx={{ 
+                                width: 50, 
+                                height: 50, 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                marginRight: '12px'
+                            }}>
+                                <DeleteIcon sx={{ color: '#EF4444' }} />
+                            </Box>
+                            <Typography variant="h6" sx={{ color: '#B91C1C' }}>
+                                {t('users.confirmDeleteMultiple', 'Delete Selected Users')}
+                            </Typography>
+                            <IconButton
+                                aria-label="close"
+                                onClick={() => setOpenDeleteDialog(false)}
+                                sx={{
+                                    position: 'absolute',
+                                    right: -5,
+                                    top: -5,
+                                    color: '#B91C1C'
+                                }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                    ) : (
+                        <>
+                            <div className="delete-dialog-icon">
+                                <DeleteIcon />
+                            </div>
+                            <Typography variant="h6" className="delete-dialog-title">
+                                {t('users.confirmDeleteMultiple', 'Delete Selected Users')}
+                            </Typography>
+                        </>
+                    )}
+                </Box>
+                
+                <DialogContent className="delete-dialog-content" sx={{ padding: isMobile ? '24px' : undefined }}>
+                    <Typography className="delete-dialog-description" sx={{ fontSize: isMobile ? '1rem' : undefined }}>
+                        {t('users.confirmDeleteMultipleDesc', { count: selectedUsers.length }, `Are you sure you want to delete ${selectedUsers.length} selected users?`)}
+                    </Typography>
+                    <Typography variant="body2" className="delete-dialog-warning" sx={{ 
+                        fontSize: isMobile ? '0.85rem' : undefined,
+                        marginTop: isMobile ? '16px' : undefined,
+                        backgroundColor: isMobile ? '#FEF2F2' : undefined,
+                        padding: isMobile ? '12px' : undefined,
+                        borderLeft: isMobile ? '3px solid #EF4444' : undefined
+                    }}>
+                        {t('users.confirmDeleteWarning', 'This action cannot be undone. All data associated with these users will be permanently removed.')}
+                    </Typography>
+                </DialogContent>
+                
+                <DialogActions className="delete-dialog-actions" sx={{ 
+                    flexDirection: isMobile ? 'column-reverse' : 'row',
+                    padding: isMobile ? '16px 24px 24px' : undefined
+                }}>
+                    <Button 
+                        onClick={() => setOpenDeleteDialog(false)} 
+                        variant="outlined"
+                        className="delete-dialog-cancel-button"
+                        fullWidth={isMobile}
+                        sx={{ 
+                            mt: isMobile ? 1 : 0,
+                            color: isMobile ? '#6B7280' : undefined,
+                            borderColor: isMobile ? '#E5E7EB' : undefined
+                        }}
+                    >
+                        {t('users.cancel', 'Cancel')}
+                    </Button>
+                    <Button 
+                        onClick={confirmDeleteSelected} 
+                        variant="contained"
+                        color="error"
+                        className="delete-dialog-confirm-button"
+                        fullWidth={isMobile}
+                        sx={{
+                            backgroundColor: isMobile ? '#EF4444' : undefined,
+                            borderRadius: isMobile ? '8px' : undefined
+                        }}
                     >
                         {t('users.delete', 'Delete')}
                     </Button>

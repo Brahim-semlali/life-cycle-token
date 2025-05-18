@@ -99,6 +99,27 @@ const TokenList = () => {
             }
         }
     };
+    
+    // Style pour les champs modifiables
+    const editableInputProps = {
+        readOnly: false,
+        sx: {
+            bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.9)',
+            '& .MuiInputBase-input': { 
+                color: isDarkMode ? '#fff' : '#000',
+                cursor: 'text'
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDarkMode ? 'rgba(79, 70, 229, 0.5)' : 'rgba(99, 102, 241, 0.3)'
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDarkMode ? 'rgba(79, 70, 229, 0.8)' : 'rgba(99, 102, 241, 0.5)'
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDarkMode ? '#6366f1' : '#4f46e5'
+            }
+        }
+    };
 
     // Form state
     const [searchParams, setSearchParams] = useState({
@@ -146,6 +167,18 @@ const TokenList = () => {
         loading: false,
         formData: {}
     });
+
+    // État pour stocker les statuts modifiés localement
+    const [modifiedStatuses, setModifiedStatuses] = useState({});
+
+    // Fonction mise à jour pour ajouter un statut à la liste des statuts modifiés
+    const updateLocalStatus = (tokenId, newStatus) => {
+        console.log(`Caching local status for token ${tokenId}: ${newStatus}`);
+        setModifiedStatuses(prev => ({
+            ...prev,
+            [tokenId]: newStatus
+        }));
+    };
 
     useEffect(() => {
         // Fetch tokens when component mounts
@@ -269,11 +302,26 @@ const TokenList = () => {
             
             console.log('Fetching tokens with filters:', queryParams);
             
+            // Force refresh from server by adding a timestamp
+            queryParams._ts = Date.now();
+            
             // Use the TokenService to fetch tokens directly from the database
             const result = await TokenService.listTokens(queryParams);
             
             if (result.success) {
                 console.log('Fetched tokens:', result.data);
+                
+                // Debug: Log the token statuses to check what's coming from the API
+                if (result.data && result.data.length > 0) {
+                    console.log('Token statuses from API:', result.data.map(t => ({
+                        id: t.id,
+                        token_status: t.token_status,
+                        tokenStatus: t.tokenStatus
+                    })));
+                    
+                    // Ajouter un log plus détaillé du premier token
+                    console.log('Detailed first token from API:', JSON.stringify(result.data[0], null, 2));
+                }
                 
                 // Apply client-side filtering for token_value if specified
                 let filteredTokens = result.data;
@@ -333,22 +381,49 @@ const TokenList = () => {
                     filteredTokens = filteredTokens.filter(token => !token.is_deleted);
                 }
                 
-                setTokens(filteredTokens);
-                setResultsCount(filteredTokens.length);
+                // Ensure both tokenStatus and token_status are present for consistent UI display
+                // And apply any locally cached status overrides
+                const normalizedTokens = filteredTokens.map(token => {
+                    // Base normalization for consistent field format
+                    const normalizedToken = {
+                        ...token,
+                        // Ensure both formats are available regardless which one comes from API
+                        tokenStatus: token.tokenStatus || token.token_status,
+                        token_status: token.token_status || token.tokenStatus
+                    };
+                    
+                    // Apply any local status overrides if available
+                    if (modifiedStatuses && token.id && modifiedStatuses[token.id]) {
+                        const cachedStatus = modifiedStatuses[token.id];
+                        console.log(`Applying locally cached status override for token ${token.id}: ${cachedStatus}`);
+                        normalizedToken.tokenStatus = cachedStatus;
+                        normalizedToken.token_status = cachedStatus;
+                    }
+                    
+                    return normalizedToken;
+                });
+                
+                // Refresh table data
+                setTokens(normalizedTokens);
+                setResultsCount(normalizedTokens.length);
                 
                 // Check if any filters are applied
-                const hasFilters = Object.keys(queryParams).length > 0;
+                const hasFilters = Object.keys(queryParams).length > 1; // Accounting for _ts
                 setFiltersApplied(hasFilters);
+                
+                return true; // Indicate success
             } else {
                 setError(result.error);
                 setTokens([]);
                 setResultsCount(0);
+                return false; // Indicate failure
             }
         } catch (err) {
             console.error('Error in fetchTokens:', err);
             setError('Failed to fetch tokens from database');
             setTokens([]);
             setResultsCount(0);
+            return false; // Indicate failure
         } finally {
             setLoading(false);
         }
@@ -439,6 +514,7 @@ const TokenList = () => {
     // Handle edit form input changes
     const handleEditFormChange = (e) => {
         const { name, value } = e.target;
+        console.log(`Editing field ${name} with value ${value}`);
         setEditDialog(prev => ({
             ...prev,
             formData: {
@@ -448,73 +524,134 @@ const TokenList = () => {
         }));
     };
 
-    // Handle token edit
-    const handleEditToken = async (token) => {
-        console.log('Edit token:', token);
-        
-        // Show loading state
-        setEditDialog({
-            open: true,
-            token,
-            loading: true,
-            formData: {}
-        });
-        
-        try {
-            // Fetch detailed token information from the database
-            const result = await TokenService.getTokenDetails(token.id);
-            
-            if (result.success) {
-                console.log('Fetched token details for editing:', result.data);
-                
-                // Open the dialog with complete data from the database
-                setEditDialog({
-                    open: true,
-                    token: result.data,
-                    loading: false,
-                    formData: { ...result.data }
-                });
-            } else {
-                setError(result.error || 'Failed to fetch token details');
-                // Still open the dialog with available data
-                setEditDialog({
-                    open: true,
-                    token,
-                    loading: false,
-                    formData: { ...token }
-                });
+    // Alternative method for handling status change directly
+    const handleStatusChange = (newStatus) => {
+        console.log(`Changing status directly to ${newStatus}`);
+        setEditDialog(prev => ({
+            ...prev,
+            formData: {
+                ...prev.formData,
+                tokenStatus: newStatus
             }
-        } catch (err) {
-            console.error('Error in handleEditToken:', err);
-            setError('Failed to fetch token details');
-            // Still open the dialog with available data
-            setEditDialog({
-                open: true,
-                token,
-                loading: false,
-                formData: { ...token }
-            });
-        }
+        }));
     };
 
-    // Submit edit form changes
+    // Alternative method for handling assurance method change directly
+    const handleAssuranceMethodChange = (newMethod) => {
+        console.log(`Changing assurance method directly to ${newMethod}`);
+        setEditDialog(prev => ({
+            ...prev,
+            formData: {
+                ...prev.formData,
+                tokenAssuranceMethod: newMethod
+            }
+        }));
+    };
+
+    // Handle token edit
+    const handleEditToken = async (token) => {
+        console.log('Edit token action disabled');
+        // Edit functionality is disabled
+    };
+
+    // Submit edit form changes with local status caching
     const handleSubmitEdit = async () => {
         try {
             setEditDialog(prev => ({ ...prev, loading: true }));
             
+            // Map the field names from our form to what the API expects
+            const mappedData = {
+                ...editDialog.formData,
+                // Add change reason
+                change_reason: 'User edit from form'
+            };
+            
+            // Récupérer le statut modifié pour mise en cache local
+            const newStatus = mappedData.tokenStatus || mappedData.token_status;
+            if (newStatus) {
+                // Mettre à jour la cache locale avant même d'envoyer à l'API
+                updateLocalStatus(editDialog.token.id, newStatus);
+                console.log(`Locally cached status for token ${editDialog.token.id}: ${newStatus}`);
+            }
+            
+            // Map camelCase fields to the API's expected format based on the logs
+            if (mappedData.tokenReferenceId !== undefined) {
+                mappedData.tokenReferenceID = mappedData.tokenReferenceId;
+                delete mappedData.tokenReferenceId;
+            }
+            
+            if (mappedData.tokenRequestorId !== undefined) {
+                mappedData.tokenRequestorID = mappedData.tokenRequestorId;
+                delete mappedData.tokenRequestorId;
+            }
+            
+            // Ensure both camelCase and snake_case status fields are present and in sync
+            if (mappedData.tokenStatus !== undefined) {
+                mappedData.token_status = mappedData.tokenStatus;
+                console.log(`Status being updated to: ${mappedData.tokenStatus} (${mappedData.token_status})`);
+            } else if (mappedData.token_status !== undefined) {
+                mappedData.tokenStatus = mappedData.token_status;
+                console.log(`Status being updated to: ${mappedData.token_status} (${mappedData.tokenStatus})`);
+            }
+            
+            if (mappedData.token !== undefined) {
+                mappedData.token_value = mappedData.token;
+            }
+            
+            if (mappedData.tokenType !== undefined) {
+                mappedData.token_type = mappedData.tokenType;
+                delete mappedData.tokenType;
+            }
+            
+            if (mappedData.tokenAssuranceMethod !== undefined) {
+                mappedData.token_assurance_method = mappedData.tokenAssuranceMethod;
+                delete mappedData.tokenAssuranceMethod;
+            }
+            
+            // Ensure all required fields are present
+            if (!mappedData.token_value) {
+                setError('Token value is required');
+                setEditDialog(prev => ({ ...prev, loading: false }));
+                return;
+            }
+            
+            if (!mappedData.token_type) {
+                setError('Token type is required');
+                setEditDialog(prev => ({ ...prev, loading: false }));
+                return;
+            }
+            
+            if (!mappedData.token_status) {
+                setError('Token status is required');
+                setEditDialog(prev => ({ ...prev, loading: false }));
+                return;
+            }
+            
+            if (!mappedData.token_assurance_method) {
+                setError('Token assurance method is required');
+                setEditDialog(prev => ({ ...prev, loading: false }));
+                return;
+            }
+            
+            console.log('Sending mapped data to API:', mappedData);
+            
+            // Add original ID to ensure proper identification
+            mappedData.id = editDialog.token.id;
+            
             // Appel à l'API pour mettre à jour le token
             const result = await TokenService.updateToken(
                 editDialog.token.id, 
-                editDialog.formData
+                mappedData
             );
             
             if (result.success) {
+                console.log('Update success, refreshing tokens with new data');
                 // Rafraîchir la liste des tokens après la mise à jour
-                fetchTokens();
+                await fetchTokens();
                 // Fermer le dialogue d'édition
                 handleCloseEditDialog();
             } else {
-                setError(result.error);
+                setError(result.error || 'Failed to update token');
             }
         } catch (err) {
             console.error('Error in handleSubmitEdit:', err);
@@ -556,7 +693,7 @@ const TokenList = () => {
         }
     };
 
-    // Handle token status update
+    // Handle token status update with local cache
     const handleUpdateStatus = async (token, action) => {
         try {
             setLoading(true);
@@ -567,16 +704,30 @@ const TokenList = () => {
                 newStatus = 'SUSPENDED';
             } else if (action === 'refresh') {
                 // For refresh, we'll just update the last_status_update timestamp
-                newStatus = token.token_status; 
+                newStatus = token.tokenStatus || token.token_status; 
             }
+
+            console.log(`Updating token status directly to: ${newStatus} for token ID: ${token.id}`);
+            
+            // Mettre à jour la cache locale immédiatement
+            updateLocalStatus(token.id, newStatus);
+            
+            // Create a normalized token data object with both status formats
+            const tokenData = {
+                id: token.id,
+                tokenStatus: newStatus,
+                token_status: newStatus
+            };
             
             // Call the TokenService to update the token status
             const result = await TokenService.updateTokenStatus(token.id, newStatus);
             
             if (result.success) {
-                // Refresh token list
-                fetchTokens();
+                console.log('Token status updated successfully, refreshing token list');
+                // Force a refresh of the tokens
+                await fetchTokens();
             } else {
+                console.error('Failed to update token status via API:', result.error);
                 setError(result.error);
             }
         } catch (err) {
@@ -1118,7 +1269,7 @@ const TokenList = () => {
                         </Typography>
                         {detailDialog.token && (
                             <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 400 }}>
-                                ID: {detailDialog.token.id} {detailDialog.token.token_value && `• ${detailDialog.token.token_value}`}
+                                ID: {detailDialog.token.id} {detailDialog.token.token && `• ${detailDialog.token.token}`}
                             </Typography>
                         )}
                     </DialogTitle>
@@ -1130,7 +1281,7 @@ const TokenList = () => {
                         ) : detailDialog.token ? (
                             <Box sx={{ p: 0 }}>
                                 {/* Status banner */}
-                                {detailDialog.token.token_status && (
+                                {detailDialog.token.tokenStatus && (
                                     <Box 
                                         sx={{ 
                                             p: 2, 
@@ -1139,7 +1290,7 @@ const TokenList = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             bgcolor: theme => {
-                                                const status = detailDialog.token.token_status.toLowerCase();
+                                                const status = detailDialog.token.tokenStatus?.toLowerCase();
                                                 if (status === 'active') return theme.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.1)';
                                                 if (status === 'inactive') return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)';
                                                 if (status === 'suspended') return theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)';
@@ -1148,7 +1299,7 @@ const TokenList = () => {
                                         }}
                                     >
                                         <Chip 
-                                            label={detailDialog.token.status_display || detailDialog.token.token_status} 
+                                            label={detailDialog.token.tokenStatus} 
                                             size="medium"
                                             sx={{
                                                 fontSize: '0.875rem',
@@ -1157,14 +1308,14 @@ const TokenList = () => {
                                                 borderRadius: '6px',
                                                 mr: 2,
                                                 backgroundColor: theme => {
-                                                    const status = detailDialog.token.token_status.toLowerCase();
+                                                    const status = detailDialog.token.tokenStatus?.toLowerCase();
                                                     if (status === 'active') return theme.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(52, 211, 153, 0.2)';
                                                     if (status === 'inactive') return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.2)';
                                                     if (status === 'suspended') return theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.2)';
                                                     return theme.palette.mode === 'dark' ? 'rgba(107, 114, 128, 0.2)' : 'rgba(107, 114, 128, 0.2)';
                                                 },
                                                 color: theme => {
-                                                    const status = detailDialog.token.token_status.toLowerCase();
+                                                    const status = detailDialog.token.tokenStatus?.toLowerCase();
                                                     if (status === 'active') return '#10b981';
                                                     if (status === 'inactive') return '#ef4444';
                                                     if (status === 'suspended') return '#f59e0b';
@@ -1173,10 +1324,10 @@ const TokenList = () => {
                                             }}
                                         />
                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                            {detailDialog.token.type_display || detailDialog.token.token_type} • 
-                                            {detailDialog.token.token_assurance_method && ` Method: ${getAssuranceMethodDescription(detailDialog.token.token_assurance_method)} •`}
-                                            {detailDialog.token.expiration_month && detailDialog.token.expiration_year && 
-                                             ` Expires: ${detailDialog.token.expiration_month}/${detailDialog.token.expiration_year}`}
+                                            {detailDialog.token.tokenType} 
+                                            {detailDialog.token.tokenAssuranceMethod && ` • Method: ${getAssuranceMethodDescription(detailDialog.token.tokenAssuranceMethod)}`}
+                                            {detailDialog.token.tokenExpirationDate && 
+                                             ` • Expires: ${new Date(detailDialog.token.tokenExpirationDate).toLocaleDateString()}`}
                                         </Typography>
                                     </Box>
                                 )}
@@ -1198,32 +1349,32 @@ const TokenList = () => {
                                                 Token Information
                                             </Typography>
                                             <Grid container spacing={2}>
-                                                {['id', 'token_value', 'tokenReferenceId', 'tokenRequestorId', 'token_type', 'type_display', 'token_status', 'status_display', 'token_assurance_method'].map(key => (
-                                                    detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} small={6} md={4} key={key}>
-                                                            <Typography variant="caption" sx={{ 
-                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
-                                                                textTransform: 'uppercase',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 600,
-                                                                letterSpacing: 0.5,
-                                                                display: 'block',
-                                                                mb: 0.5
-                                                            }}>
-                                                                {key.replace(/_/g, ' ')}
-                                                            </Typography>
-                                                            <Typography variant="body2" sx={{ 
-                                                                fontWeight: 500,
-                                                                color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                            }}>
-                                                                {key === 'token_assurance_method' 
-                                                                    ? detailDialog.token[key] !== null 
-                                                                        ? getAssuranceMethodDescription(detailDialog.token[key]) 
-                                                                        : 'N/A'
-                                                                    : detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
-                                                            </Typography>
-                                                        </Grid>
-                                                    )
+                                                {['id', 'token', 'tokenReferenceId', 'tokenRequestorId', 'tokenType', 'tokenStatus', 'tokenAssuranceMethod'].filter(key => 
+                                                    detailDialog.token[key] !== undefined
+                                                ).map(key => (
+                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                                        <Typography variant="caption" sx={{ 
+                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            textTransform: 'uppercase',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 600,
+                                                            letterSpacing: 0.5,
+                                                            display: 'block',
+                                                            mb: 0.5
+                                                        }}>
+                                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                        </Typography>
+                                                        <Typography variant="body2" sx={{ 
+                                                            fontWeight: 500,
+                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
+                                                        }}>
+                                                            {key === 'tokenAssuranceMethod' 
+                                                                ? detailDialog.token[key] !== null 
+                                                                    ? getAssuranceMethodDescription(detailDialog.token[key]) 
+                                                                    : 'N/A'
+                                                                : detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
+                                                        </Typography>
+                                                    </Grid>
                                                 ))}
                                             </Grid>
                                         </Grid>
@@ -1246,287 +1397,37 @@ const TokenList = () => {
                                                 Timeline & Expiration
                                             </Typography>
                                             <Grid container spacing={2}>
-                                                {['creation_date', 'activation_date', 'last_status_update', 'expiration_month', 'expiration_year', 'deleted_at'].map(key => (
-                                                    detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} small={6} md={4} key={key}>
-                                                            <Typography variant="caption" sx={{ 
-                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
-                                                                textTransform: 'uppercase',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 600,
-                                                                letterSpacing: 0.5,
-                                                                display: 'block',
-                                                                mb: 0.5
-                                                            }}>
-                                                                {key.replace(/_/g, ' ')}
-                                                            </Typography>
-                                                            {key.includes('date') || key.includes('_at') ? (
-                                                                <Box sx={{
-                                                                    p: 1,
-                                                                    borderRadius: '4px',
-                                                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.7)',
-                                                                    fontSize: '0.875rem',
-                                                                    fontWeight: 500,
-                                                                    color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                                    border: '1px solid',
-                                                                    borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                                    display: 'inline-block'
-                                                                }}>
-                                                                    {detailDialog.token[key] !== null 
-                                                                        ? new Date(detailDialog.token[key]).toLocaleString() 
-                                                                        : 'N/A'}
-                                                                </Box>
-                                                            ) : (
-                                                                <Typography variant="body2" sx={{ 
-                                                                    fontWeight: 500,
-                                                                    color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                                }}>
-                                                                    {detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
-                                                                </Typography>
-                                                            )}
-                                                        </Grid>
-                                                    )
-                                                ))}
-                                            </Grid>
-                                        </Grid>
-                                        
-                                        {/* Device Information */}
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1
-                                            }}>
-                                                <SmartphoneIcon fontSize="small" />
-                                                Device Information
-                                            </Typography>
-                                            <Grid container spacing={2}>
-                                                {['device_id', 'device_name', 'device_type', 'device_number'].map(key => (
-                                                    detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} small={6} md={4} key={key}>
-                                                            <Typography variant="caption" sx={{ 
-                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
-                                                                textTransform: 'uppercase',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 600,
-                                                                letterSpacing: 0.5,
-                                                                display: 'block',
-                                                                mb: 0.5
-                                                            }}>
-                                                                {key.replace(/_/g, ' ')}
-                                                            </Typography>
-                                                            <Box sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center'
-                                                            }}>
-                                                                {detailDialog.token[key] !== null ? (
-                                                                    <Chip 
-                                                                        label={String(detailDialog.token[key])}
-                                                                        size="small"
-                                                                        sx={{
-                                                                            fontSize: '0.75rem',
-                                                                            height: 'auto',
-                                                                            py: 0.5,
-                                                                            borderRadius: '4px',
-                                                                            backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 64, 175, 0.2)' : 'rgba(219, 234, 254, 0.8)',
-                                                                            color: theme => theme.palette.mode === 'dark' ? '#93c5fd' : '#1e40af',
-                                                                            fontWeight: 500,
-                                                                            border: '1px solid',
-                                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(147, 197, 253, 0.2)' : 'rgba(30, 64, 175, 0.2)'
-                                                                        }}
-                                                                    />
-                                                                ) : (
-                                                                    <Typography 
-                                                                        variant="body2" 
-                                                                        sx={{ 
-                                                                            fontWeight: 400,
-                                                                            fontStyle: 'italic',
-                                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)'
-                                                                        }}
-                                                                    >
-                                                                        N/A
-                                                                    </Typography>
-                                                                )}
-                                                            </Box>
-                                                        </Grid>
-                                                    )
-                                                ))}
-                                            </Grid>
-                                        </Grid>
-                                        
-                                        {/* Risk and Scoring Information */}
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1
-                                            }}>
-                                                <AssessmentIcon fontSize="small" />
-                                                Risk Assessment & Scoring
-                                            </Typography>
-                                            <Grid container spacing={2}>
-                                                {['wallet_account_score', 'wallet_device_score', 'wallet_reason_codes', 'visa_token_score', 'visa_decisioning', 'risk_assessment_score'].map(key => (
-                                                    detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} small={6} md={4} key={key}>
-                                                            <Typography variant="caption" sx={{ 
-                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
-                                                                textTransform: 'uppercase',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 600,
-                                                                letterSpacing: 0.5,
-                                                                display: 'block',
-                                                                mb: 0.5
-                                                            }}>
-                                                                {key.replace(/_/g, ' ')}
-                                                            </Typography>
-                                                            {key.includes('score') ? (
-                                                                <Box sx={{ position: 'relative' }}>
-                                                                    {detailDialog.token[key] !== null ? (
-                                                                        <Box sx={{ 
-                                                                            display: 'flex', 
-                                                                            alignItems: 'center', 
-                                                                            gap: 1 
-                                                                        }}>
-                                                                            <Box sx={{
-                                                                                width: '100%',
-                                                                                height: '8px',
-                                                                                borderRadius: '4px',
-                                                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                                                                                overflow: 'hidden',
-                                                                                position: 'relative'
-                                                                            }}>
-                                                                                <Box sx={{
-                                                                                    position: 'absolute',
-                                                                                    left: 0,
-                                                                                    top: 0,
-                                                                                    bottom: 0,
-                                                                                    width: `${Math.min(parseInt(detailDialog.token[key], 10), 100)}%`,
-                                                                                    bgcolor: theme => {
-                                                                                        const score = parseInt(detailDialog.token[key], 10);
-                                                                                        if (score >= 80) return theme.palette.mode === 'dark' ? '#10b981' : '#10b981';
-                                                                                        if (score >= 50) return theme.palette.mode === 'dark' ? '#f59e0b' : '#f59e0b';
-                                                                                        return theme.palette.mode === 'dark' ? '#ef4444' : '#ef4444';
-                                                                                    },
-                                                                                    transition: 'width 0.5s ease'
-                                                                                }}/>
-                                                                            </Box>
-                                                                            <Chip 
-                                                                                label={detailDialog.token[key]}
-                                                                                size="small"
-                                                                                sx={{
-                                                                                    fontSize: '0.75rem',
-                                                                                    height: '24px',
-                                                                                    borderRadius: '12px',
-                                                                                    backgroundColor: theme => {
-                                                                                        const score = parseInt(detailDialog.token[key], 10);
-                                                                                        if (score >= 80) return theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.2)';
-                                                                                        if (score >= 50) return theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.2)';
-                                                                                        return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-                                                                                    },
-                                                                                    color: theme => {
-                                                                                        const score = parseInt(detailDialog.token[key], 10);
-                                                                                        if (score >= 80) return '#10b981';
-                                                                                        if (score >= 50) return '#f59e0b';
-                                                                                        return '#ef4444';
-                                                                                    },
-                                                                                    fontWeight: 600
-                                                                                }}
-                                                                            />
-                                                                        </Box>
-                                                                    ) : (
-                                                                        <Typography 
-                                                                            variant="body2" 
-                                                                            sx={{ 
-                                                                                fontWeight: 400,
-                                                                                fontStyle: 'italic',
-                                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)'
-                                                                            }}
-                                                                        >
-                                                                            N/A
-                                                                        </Typography>
-                                                                    )}
-                                                                </Box>
-                                                            ) : (
-                                                                <Typography variant="body2" sx={{ 
-                                                                    fontWeight: 500,
-                                                                    color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                                    p: 1,
-                                                                    borderRadius: '4px', 
-                                                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.7)',
-                                                                    border: '1px solid',
-                                                                    borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                                }}>
-                                                                    {detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
-                                                                </Typography>
-                                                            )}
-                                                        </Grid>
-                                                    )
-                                                ))}
-                                            </Grid>
-                                        </Grid>
-                                        
-                                        {/* Deletion Status */}
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1
-                                            }}>
-                                                <DeleteIcon fontSize="small" />
-                                                Deletion Status
-                                            </Typography>
-                                            <Grid container spacing={2}>
-                                                {['is_deleted'].map(key => (
-                                                    detailDialog.token[key] !== undefined && (
-                                                        <Grid item xs={12} small={6} key={key}>
-                                                            <Typography variant="caption" sx={{ 
-                                                                color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
-                                                                textTransform: 'uppercase',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: 600,
-                                                                letterSpacing: 0.5,
-                                                                display: 'block',
-                                                                mb: 0.5
-                                                            }}>
-                                                                {key.replace(/_/g, ' ')}
-                                                            </Typography>
-                                                            <Chip 
-                                                                label={detailDialog.token[key] === true ? 'Yes' : 'No'} 
-                                                                size="small"
-                                                                sx={{
-                                                                    fontSize: '0.75rem',
-                                                                    height: '24px',
-                                                                    borderRadius: '4px',
-                                                                    backgroundColor: theme => detailDialog.token[key] === true 
-                                                                        ? (theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.2)')
-                                                                        : (theme.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(52, 211, 153, 0.2)'),
-                                                                    color: detailDialog.token[key] === true ? '#ef4444' : '#10b981',
-                                                                    fontWeight: 600
-                                                                }}
-                                                            />
-                                                        </Grid>
-                                                    )
+                                                {['tokenActivationDate', 'tokenExpirationDate', 'lastTokenStatusUpdatedTime'].filter(key => 
+                                                    detailDialog.token[key] !== undefined
+                                                ).map(key => (
+                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                                        <Typography variant="caption" sx={{ 
+                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            textTransform: 'uppercase',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 600,
+                                                            letterSpacing: 0.5,
+                                                            display: 'block',
+                                                            mb: 0.5
+                                                        }}>
+                                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                        </Typography>
+                                                        <Box sx={{
+                                                            p: 1,
+                                                            borderRadius: '4px',
+                                                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.7)',
+                                                            fontSize: '0.875rem',
+                                                            fontWeight: 500,
+                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
+                                                            border: '1px solid',
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                            display: 'inline-block'
+                                                        }}>
+                                                            {detailDialog.token[key] !== null 
+                                                                ? new Date(detailDialog.token[key]).toLocaleString() 
+                                                                : 'N/A'}
+                                                        </Box>
+                                                    </Grid>
                                                 ))}
                                             </Grid>
                                         </Grid>
@@ -1539,27 +1440,11 @@ const TokenList = () => {
                     </DialogContent>
                     <DialogActions sx={{ 
                         borderTop: '1px solid',
-                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
                         p: 2,
                         display: 'flex',
-                        justifyContent: 'space-between'
+                        justifyContent: 'flex-end'
                     }}>
-                        <Button 
-                            onClick={() => handleEditToken(detailDialog.token)}
-                            variant="outlined" 
-                            startIcon={<EditIcon />}
-                            sx={{
-                                borderRadius: '8px',
-                                color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#6366f1',
-                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(99, 102, 241, 0.5)',
-                                '&:hover': {
-                                    borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(99, 102, 241, 0.8)',
-                                    backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(99, 102, 241, 0.05)'
-                                }
-                            }}
-                        >
-                            Edit Token
-                        </Button>
                         <Button 
                             onClick={handleCloseDetailDialog}
                             variant="contained"
@@ -1608,7 +1493,7 @@ const TokenList = () => {
                         Edit Token
                         {editDialog.token && (
                             <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                ID: {editDialog.token.id}
+                                ID: {editDialog.token.id} {editDialog.token.token && `• ${editDialog.token.token}`}
                             </Typography>
                         )}
                     </DialogTitle>
@@ -1622,7 +1507,7 @@ const TokenList = () => {
                                 {/* Message d'information */}
                                 <Grid item xs={12}>
                                     <Alert severity="info" sx={{ mb: 2 }}>
-                                        Seuls le statut du token et certains champs peuvent être modifiés. Les autres champs sont en lecture seule.
+                                        Seuls le statut du token (Token Status), la méthode d'assurance (Token Assurance Method), la date d'activation et la date d'expiration peuvent être modifiés. Les autres champs sont en lecture seule.
                                     </Alert>
                                 </Grid>
                                 
@@ -1645,9 +1530,9 @@ const TokenList = () => {
                                 <Grid item xs={12} small={6}>
                                     <TextField
                                         fullWidth
-                                        label="Token Value"
-                                        name="token_value"
-                                        value={editDialog.formData.token_value || ''}
+                                        label="Token"
+                                        name="token"
+                                        value={editDialog.formData.token || ''}
                                         onChange={handleEditFormChange}
                                         variant="outlined"
                                         margin="normal"
@@ -1657,9 +1542,9 @@ const TokenList = () => {
                                 <Grid item xs={12} small={6}>
                                     <TextField
                                         fullWidth
-                                        label="Token Type"
-                                        name="token_type"
-                                        value={editDialog.formData.token_type || ''}
+                                        label="Token Reference ID"
+                                        name="tokenReferenceId"
+                                        value={editDialog.formData.tokenReferenceId || ''}
                                         onChange={handleEditFormChange}
                                         variant="outlined"
                                         margin="normal"
@@ -1669,9 +1554,21 @@ const TokenList = () => {
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
-                                        label="Type Display"
-                                        name="type_display"
-                                        value={editDialog.formData.type_display || ''}
+                                        label="Token Requestor ID"
+                                        name="tokenRequestorId"
+                                        value={editDialog.formData.tokenRequestorId || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Token Type"
+                                        name="tokenType"
+                                        value={editDialog.formData.tokenType || ''}
                                         onChange={handleEditFormChange}
                                         variant="outlined"
                                         margin="normal"
@@ -1683,10 +1580,23 @@ const TokenList = () => {
                                         <InputLabel id="token-status-label">Token Status</InputLabel>
                                         <Select
                                             labelId="token-status-label"
-                                            name="token_status"
-                                            value={editDialog.formData.token_status || ''}
-                                            onChange={handleEditFormChange}
+                                            name="tokenStatus"
+                                            value={editDialog.formData.tokenStatus || ''}
+                                            onChange={(e) => handleStatusChange(e.target.value)}
                                             label="Token Status"
+                                            inputProps={{
+                                                readOnly: false
+                                            }}
+                                            sx={{
+                                                bgcolor: 'white',
+                                                '& .MuiSelect-select': {
+                                                    cursor: 'pointer'
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.main',
+                                                    borderWidth: '1px'
+                                                }
+                                            }}
                                         >
                                             <MenuItem value="ACTIVE">Active</MenuItem>
                                             <MenuItem value="INACTIVE">Inactive</MenuItem>
@@ -1694,27 +1604,68 @@ const TokenList = () => {
                                             <MenuItem value="DEACTIVATED">Deactivated</MenuItem>
                                         </Select>
                                     </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Status Display"
-                                        name="status_display"
-                                        value={editDialog.formData.status_display || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                    />
+                                    {/* Alternative buttons for status change */}
+                                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenStatus === 'ACTIVE' ? 'contained' : 'outlined'} 
+                                            color={editDialog.formData.tokenStatus === 'ACTIVE' ? 'success' : 'inherit'}
+                                            onClick={() => handleStatusChange('ACTIVE')}
+                                            sx={{ minWidth: '100px' }}
+                                        >
+                                            Active
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenStatus === 'INACTIVE' ? 'contained' : 'outlined'} 
+                                            color={editDialog.formData.tokenStatus === 'INACTIVE' ? 'error' : 'inherit'}
+                                            onClick={() => handleStatusChange('INACTIVE')}
+                                            sx={{ minWidth: '100px' }}
+                                        >
+                                            Inactive
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenStatus === 'SUSPENDED' ? 'contained' : 'outlined'} 
+                                            color={editDialog.formData.tokenStatus === 'SUSPENDED' ? 'warning' : 'inherit'}
+                                            onClick={() => handleStatusChange('SUSPENDED')}
+                                            sx={{ minWidth: '100px' }}
+                                        >
+                                            Suspended
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenStatus === 'DEACTIVATED' ? 'contained' : 'outlined'} 
+                                            color={editDialog.formData.tokenStatus === 'DEACTIVATED' ? 'secondary' : 'inherit'}
+                                            onClick={() => handleStatusChange('DEACTIVATED')}
+                                            sx={{ minWidth: '100px' }}
+                                        >
+                                            Deactivated
+                                        </Button>
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth margin="normal">
                                         <InputLabel id="token-assurance-method-label">Token Assurance Method</InputLabel>
                                         <Select
                                             labelId="token-assurance-method-label"
-                                            name="token_assurance_method"
-                                            value={editDialog.formData.token_assurance_method || ''}
-                                            onChange={handleEditFormChange}
+                                            name="tokenAssuranceMethod"
+                                            value={editDialog.formData.tokenAssuranceMethod || ''}
+                                            onChange={(e) => handleAssuranceMethodChange(e.target.value)}
                                             label="Token Assurance Method"
+                                            inputProps={{
+                                                readOnly: false
+                                            }}
+                                            sx={{
+                                                bgcolor: 'white',
+                                                '& .MuiSelect-select': {
+                                                    cursor: 'pointer'
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: 'primary.main',
+                                                    borderWidth: '1px'
+                                                }
+                                            }}
                                         >
                                             <MenuItem value="00">D&V Not Performed</MenuItem>
                                             <MenuItem value="10">Card Issuer Account Verification</MenuItem>
@@ -1724,6 +1675,41 @@ const TokenList = () => {
                                             <MenuItem value="14">Card Issuer Asserted Authentication</MenuItem>
                                         </Select>
                                     </FormControl>
+                                    {/* Alternative buttons for assurance method change */}
+                                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenAssuranceMethod === '00' ? 'contained' : 'outlined'} 
+                                            color="inherit"
+                                            onClick={() => handleAssuranceMethodChange('00')}
+                                        >
+                                            00
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenAssuranceMethod === '10' ? 'contained' : 'outlined'} 
+                                            color="inherit"
+                                            onClick={() => handleAssuranceMethodChange('10')}
+                                        >
+                                            10
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenAssuranceMethod === '11' ? 'contained' : 'outlined'} 
+                                            color="inherit"
+                                            onClick={() => handleAssuranceMethodChange('11')}
+                                        >
+                                            11
+                                        </Button>
+                                        <Button 
+                                            size="small" 
+                                            variant={editDialog.formData.tokenAssuranceMethod === '12' ? 'contained' : 'outlined'} 
+                                            color="inherit"
+                                            onClick={() => handleAssuranceMethodChange('12')}
+                                        >
+                                            12
+                                        </Button>
+                                    </Box>
                                 </Grid>
 
                                 {/* Dates */}
@@ -1744,26 +1730,15 @@ const TokenList = () => {
                                 </Grid>
                                 
                                 <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Creation Date"
-                                        name="creation_date"
-                                        value={editDialog.formData.creation_date ? new Date(editDialog.formData.creation_date).toLocaleDateString('fr-FR') : ''}
-                                        variant="outlined"
-                                        margin="normal"
-                                        InputProps={readOnlyInputProps}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
                                     <DatePicker
                                         label="Activation Date"
-                                        value={editDialog.formData.activation_date ? new Date(editDialog.formData.activation_date) : null}
+                                        value={editDialog.formData.tokenActivationDate ? new Date(editDialog.formData.tokenActivationDate) : null}
                                         onChange={(date) => {
                                             setEditDialog(prev => ({
                                                 ...prev,
                                                 formData: {
                                                     ...prev.formData,
-                                                    activation_date: date ? date.toISOString() : null
+                                                    tokenActivationDate: date ? date.toISOString() : null
                                                 }
                                             }));
                                         }}
@@ -1772,161 +1747,81 @@ const TokenList = () => {
                                             textField: {
                                                 fullWidth: true,
                                                 margin: "normal",
-                                                variant: "outlined"
+                                                variant: "outlined",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(79, 70, 229, 0.5)' : 'rgba(99, 102, 241, 0.5)',
+                                                            borderWidth: '2px'
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(79, 70, 229, 0.8)' : 'rgba(99, 102, 241, 0.8)'
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? '#6366f1' : '#4f46e5'
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            actionBar: {
+                                                actions: ['clear', 'today', 'accept']
                                             }
                                         }}
+                                        readOnly={false}
+                                        disabled={false}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <DatePicker
+                                        label="Expiration Date"
+                                        value={editDialog.formData.tokenExpirationDate ? new Date(editDialog.formData.tokenExpirationDate) : null}
+                                        onChange={(date) => {
+                                            setEditDialog(prev => ({
+                                                ...prev,
+                                                formData: {
+                                                    ...prev.formData,
+                                                    tokenExpirationDate: date ? date.toISOString() : null
+                                                }
+                                            }));
+                                        }}
+                                        format="dd/MM/yyyy"
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                margin: "normal",
+                                                variant: "outlined",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(79, 70, 229, 0.5)' : 'rgba(99, 102, 241, 0.5)',
+                                                            borderWidth: '2px'
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(79, 70, 229, 0.8)' : 'rgba(99, 102, 241, 0.8)'
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: theme => theme.palette.mode === 'dark' ? '#6366f1' : '#4f46e5'
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            actionBar: {
+                                                actions: ['clear', 'today', 'accept']
+                                            }
+                                        }}
+                                        readOnly={false}
+                                        disabled={false}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         fullWidth
                                         label="Last Status Update"
-                                        name="last_status_update"
-                                        value={editDialog.formData.last_status_update ? new Date(editDialog.formData.last_status_update).toLocaleDateString('fr-FR') : ''}
+                                        name="lastTokenStatusUpdatedTime"
+                                        value={editDialog.formData.lastTokenStatusUpdatedTime ? new Date(editDialog.formData.lastTokenStatusUpdatedTime).toLocaleDateString('fr-FR') : ''}
                                         InputProps={readOnlyInputProps}
                                         variant="outlined"
                                         margin="normal"
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Expiration Month"
-                                        name="expiration_month"
-                                        value={editDialog.formData.expiration_month || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Expiration Year"
-                                        name="expiration_year"
-                                        value={editDialog.formData.expiration_year || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                    />
-                                </Grid>
-
-                                {/* Device Information */}
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle1" sx={{ 
-                                        fontWeight: 600, 
-                                        mb: 1, 
-                                        mt: 2, 
-                                        color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#4b5563',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1
-                                    }}>
-                                        <SmartphoneIcon fontSize="small" />
-                                        Device Information
-                                    </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                </Grid>
-                                
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Device ID"
-                                        name="device_id"
-                                        value={editDialog.formData.device_id || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                        InputProps={readOnlyInputProps}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Device Name"
-                                        name="device_name"
-                                        value={editDialog.formData.device_name || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                        InputProps={readOnlyInputProps}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Device Type"
-                                        name="device_type"
-                                        value={editDialog.formData.device_type || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                        InputProps={readOnlyInputProps}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Device Number"
-                                        name="device_number"
-                                        value={editDialog.formData.device_number || ''}
-                                        onChange={handleEditFormChange}
-                                        variant="outlined"
-                                        margin="normal"
-                                        InputProps={readOnlyInputProps}
-                                    />
-                                </Grid>
-
-                                {/* Deletion Information */}
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle1" sx={{ 
-                                        fontWeight: 600, 
-                                        mb: 1, 
-                                        mt: 2, 
-                                        color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#4b5563',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1
-                                    }}>
-                                        <DeleteIcon fontSize="small" />
-                                        Deletion Status
-                                    </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                </Grid>
-                                
-                                <Grid item xs={12} sm={6}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={!!editDialog.formData.is_deleted}
-                                                onChange={(e) => {
-                                                    const isDeleted = e.target.checked;
-                                                    setEditDialog(prev => ({
-                                                        ...prev,
-                                                        formData: {
-                                                            ...prev.formData,
-                                                            is_deleted: isDeleted,
-                                                            deleted_at: isDeleted ? new Date().toISOString() : null
-                                                        }
-                                                    }));
-                                                }}
-                                                name="is_deleted"
-                                            />
-                                        }
-                                        label="Is Deleted"
-                                        sx={{ mt: 2 }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Deleted At"
-                                        name="deleted_at"
-                                        value={editDialog.formData.deleted_at ? new Date(editDialog.formData.deleted_at).toLocaleDateString('fr-FR') : ''}
-                                        InputProps={readOnlyInputProps}
-                                        variant="outlined"
-                                        margin="normal"
-                                        disabled={!editDialog.formData.is_deleted}
                                     />
                                 </Grid>
                             </Grid>

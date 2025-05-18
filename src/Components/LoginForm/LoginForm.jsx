@@ -8,7 +8,7 @@ import { authService } from '../../services/api';
 
 const LoginForm = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [credentials, setCredentials] = useState({
         email: '',
@@ -26,10 +26,16 @@ const LoginForm = () => {
 
     useEffect(() => {
         document.body.classList.add('login-body');
+        
+        // Rediriger vers le dashboard si déjà authentifié
+        if (isAuthenticated()) {
+            navigate('/dashboard');
+        }
+        
         return () => {
             document.body.classList.remove('login-body');
         };
-    }, []);
+    }, [isAuthenticated, navigate]);
 
     const handleChange = (e) => {
         setCredentials({
@@ -55,8 +61,13 @@ const LoginForm = () => {
         setIsLoading(true);
 
         try {
-            const user = await authService.login(credentials.email, credentials.password);
-            await login(user);
+            // Appeler le service d'authentification pour obtenir un token JWT
+            const userData = await authService.login(credentials.email, credentials.password);
+            
+            // Appeler la fonction login du context qui utilisera les données stockées
+            await login(userData);
+            
+            // Rediriger vers le dashboard
             navigate('/dashboard');
         } catch (error) {
             if (error.response?.data) {
@@ -74,8 +85,12 @@ const LoginForm = () => {
                         responseData.remaining_time_minutes,
                         responseData.remaining_time_seconds
                     ));
-                } else {
+                } else if (responseData.remaining_attempts) {
                     setError(`Il vous reste ${responseData.remaining_attempts} tentatives sur ${responseData.max_attempts} avant le blocage du compte.`);
+                } else if (responseData.detail) {
+                    setError(responseData.detail);
+                } else {
+                    setError('Identifiants incorrects. Veuillez réessayer.');
                 }
             } else {
                 setError('Une erreur est survenue. Veuillez réessayer plus tard.');

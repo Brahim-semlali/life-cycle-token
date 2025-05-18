@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api';
 import ModuleService from '../services/ModuleService';
+import TokenStorage from '../services/TokenStorage';
 
 // Création du contexte d'authentification
 const AuthContext = createContext(null);
@@ -16,17 +17,72 @@ export const useAuth = () => {
 
 // Provider du contexte d'authentification
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(TokenStorage.getUser());
   const [userModules, setUserModules] = useState([]);
   const [userMenus, setUserMenus] = useState([]);
   const [allModules, setAllModules] = useState([]);
   const [allMenus, setAllMenus] = useState([]);
+  const [tokenRefreshTimer, setTokenRefreshTimer] = useState(null);
+
+  // Vérification si l'utilisateur est authentifié
+  const isAuthenticated = () => {
+    return TokenStorage.isTokenValid() && !!user;
+  };
+
+  // Vérifier l'authentification et charger les données utilisateur au démarrage
+  useEffect(() => {
+    const checkAuthOnStartup = async () => {
+      // Si le token est valide, charger les données de l'utilisateur
+      if (TokenStorage.isTokenValid()) {
+        try {
+          // Récupérer les données utilisateur depuis le localStorage ou depuis l'API si nécessaire
+          const userData = await authService.getCurrentUser();
+          if (userData) {
+            setUser(userData);
+            // Démarrer le timer de rafraîchissement du token
+            startTokenRefreshTimer();
+          } else {
+            // Si pas d'utilisateur malgré un token valide, nettoyer l'état
+            TokenStorage.clear();
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Erreur lors de la récupération des données utilisateur:", error);
+          // En cas d'erreur, supposer que le token est invalide
+          TokenStorage.clear();
+          setUser(null);
+        }
+      } else {
+        // Si le token n'est pas valide, s'assurer que l'utilisateur est déconnecté
+        TokenStorage.clear();
+        setUser(null);
+      }
+    };
+    
+    checkAuthOnStartup();
+    
+    // Nettoyer le timer de rafraîchissement si existant
+    return () => {
+      if (tokenRefreshTimer) {
+        clearInterval(tokenRefreshTimer);
+      }
+    };
+  }, []);
 
   // Charger les modules et menus disponibles
   useEffect(() => {
     const initModulesAndMenus = async () => {
       try {
+        // Seulement charger les modules et menus si l'utilisateur est authentifié
+        if (!TokenStorage.isTokenValid()) {
+          console.log("Utilisateur non authentifié - pas de chargement des modules et menus");
+          setAllModules([]);
+          setAllMenus([]);
+          setUserModules([]);
+          setUserMenus([]);
+          return;
+        }
+        
         console.log("Chargement des modules et menus...");
         const { modules, menus } = await ModuleService.loadModulesAndMenus();
         console.log("Modules et menus chargés avec succès:", { 
@@ -36,21 +92,23 @@ export const AuthProvider = ({ children }) => {
         setAllModules(modules || []);
         setAllMenus(menus || []);
         
-        // Pour le développement, si l'utilisateur n'est pas authentifié
-        // on peut lui donner accès à tous les modules/menus
-        if (!isAuthenticated || !user || !user.profile) {
-          console.log("Mode développement: attribution de tous les modules et menus");
-          setUserModules(modules?.map(m => m.id) || []);
-          setUserMenus(menus?.map(m => m.id) || []);
+        // Ne pas assigner automatiquement de modules ou menus si l'utilisateur n'a pas de profil
+        if (!TokenStorage.isTokenValid() || !user || !user.profile) {
+          console.log("Utilisateur sans profil défini - pas d'attribution automatique de modules/menus");
+          setUserModules([]);
+          setUserMenus([]);
         }
       } catch (error) {
         console.error("Erreur lors du chargement des modules et menus:", error);
+        setAllModules([]);
+        setAllMenus([]);
+        setUserModules([]);
+        setUserMenus([]);
       }
     };
 
-    // Pour le développement, chargeons les modules même si l'utilisateur n'est pas connecté
     initModulesAndMenus();
-  }, [isAuthenticated, user]);
+  }, [user]);
 
   // Mettre à jour les modules et menus de l'utilisateur lorsque l'utilisateur change
   useEffect(() => {
@@ -67,22 +125,49 @@ export const AuthProvider = ({ children }) => {
       
       setUserModules(profileModules);
       setUserMenus(profileMenus);
-    } else if (!isAuthenticated && allModules.length > 0 && allMenus.length > 0) {
-      // Pour le développement, si l'utilisateur n'est pas authentifié,
-      // lui donner accès à tous les modules et menus
-      console.log("Mode développement: attribution de tous les modules et menus");
-      setUserModules(allModules.map(m => m.id));
-      setUserMenus(allMenus.map(m => m.id));
+    } else if (!TokenStorage.isTokenValid()) {
+      // Lorsque l'utilisateur n'est pas authentifié, ne pas lui donner accès aux modules/menus
+      console.log("Utilisateur non authentifié - aucun module/menu attribué");
+      setUserModules([]);
+      setUserMenus([]);
     } else if (!user) {
       setUserModules([]);
       setUserMenus([]);
     }
-  }, [user, isAuthenticated, allModules, allMenus]);
+  }, [user, allModules, allMenus]);
+
+  // Timer pour rafraîchir/vérifier le token périodiquement
+  const startTokenRefreshTimer = () => {
+    // Annuler tout timer existant
+    if (tokenRefreshTimer) {
+      clearInterval(tokenRefreshTimer);
+    }
+    
+    // Vérifier le statut du token toutes les minutes
+    const timer = setInterval(() => {
+      // Vérifier le temps restant du token
+      const timeLeft = TokenStorage.getTimeToExpiry();
+      console.log(`Token expiration check: ${timeLeft} seconds remaining`);
+      
+      // Si le token a moins de 5 minutes restantes, déconnecter l'utilisateur
+      // (à l'avenir, on pourrait implémenter un rafraîchissement silencieux du token)
+      if (timeLeft < 300) {
+        console.warn('Token near expiration, logging out...');
+        logout();
+      }
+    }, 60000); // Vérifier chaque minute
+    
+    setTokenRefreshTimer(timer);
+  };
 
   const login = async (userData) => {
     try {
-      setIsAuthenticated(true);
+      // Stocker les données utilisateur
       setUser(userData);
+      TokenStorage.setUser(userData);
+      
+      // Démarrer le timer de rafraîchissement du token
+      startTokenRefreshTimer();
       
       // Charger immédiatement les modules et menus après la connexion
       const { modules, menus } = await ModuleService.loadModulesAndMenus();
@@ -113,20 +198,31 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      // Arrêter le timer de rafraîchissement
+      if (tokenRefreshTimer) {
+        clearInterval(tokenRefreshTimer);
+        setTokenRefreshTimer(null);
+      }
+      
+      // Appeler le service de déconnexion
       await authService.logout();
-      setIsAuthenticated(false);
+      
+      // Nettoyer les états
       setUser(null);
       setUserModules([]);
       setUserMenus([]);
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
+      // Même en cas d'erreur, nettoyer l'état local
+      setUser(null);
+      setUserModules([]);
+      setUserMenus([]);
     }
   };
 
   // Vérification de l'accès aux modules
   const checkModuleAccess = (moduleCode) => {
-    if (!isAuthenticated) return false;
+    if (!isAuthenticated()) return false;
     
     // Si aucun module n'est défini, autoriser l'accès à tous (temporaire pour le développement)
     if (!userModules || userModules.length === 0) return true;
@@ -142,7 +238,7 @@ export const AuthProvider = ({ children }) => {
 
   // Vérification de l'accès aux sous-modules (menus)
   const checkSubModuleAccess = (moduleCode, subModuleCode) => {
-    if (!isAuthenticated) return false;
+    if (!isAuthenticated()) return false;
     
     // Si aucun sous-module n'est défini, autoriser l'accès à tous (temporaire pour le développement)
     if (!userMenus || userMenus.length === 0) return true;
@@ -165,8 +261,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const value = {
-    isAuthenticated,
     user,
+    isAuthenticated,
     login,
     logout,
     checkModuleAccess,

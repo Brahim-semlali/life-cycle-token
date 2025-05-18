@@ -70,9 +70,12 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         const columnsToDisplay = [
             'token',
             'tokenReferenceId',
+            'tokenReferenceID',
             'tokenRequestorId',
+            'tokenRequestorID',
             'tokenType',
             'tokenStatus',
+            'token_status',
             'tokenAssuranceMethod',
             'tokenActivationDate',
             'tokenExpirationDate',
@@ -120,7 +123,9 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         const preferredOrder = [
             'token',
             'tokenReferenceId',
+            'tokenReferenceID',
             'tokenRequestorId',
+            'tokenRequestorID',
             'tokenType',
             'tokenStatus',
             'tokenAssuranceMethod',
@@ -128,6 +133,24 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             'tokenExpirationDate',
             'lastTokenStatusUpdatedTime'
         ];
+        
+        // Filtrer pour éviter les doublons entre tokenStatus et token_status
+        if (availableKeys.includes('tokenStatus') && availableKeys.includes('token_status')) {
+            // Garder seulement tokenStatus pour l'affichage
+            availableKeys = availableKeys.filter(key => key !== 'token_status');
+        }
+        
+        // Filtrer pour éviter les doublons entre tokenReferenceId et tokenReferenceID
+        if (availableKeys.includes('tokenReferenceId') && availableKeys.includes('tokenReferenceID')) {
+            // Garder seulement tokenReferenceID pour l'affichage
+            availableKeys = availableKeys.filter(key => key !== 'tokenReferenceId');
+        }
+        
+        // Filtrer pour éviter les doublons entre tokenRequestorId et tokenRequestorID
+        if (availableKeys.includes('tokenRequestorId') && availableKeys.includes('tokenRequestorID')) {
+            // Garder seulement tokenRequestorID pour l'affichage
+            availableKeys = availableKeys.filter(key => key !== 'tokenRequestorId');
+        }
         
         // Trier les colonnes disponibles selon l'ordre préférentiel
         const sortedKeys = [...availableKeys].sort((a, b) => {
@@ -152,7 +175,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             id: key,
             label: formatColumnLabel(key),
             isDate: key.includes('Date') || key.includes('Time'),
-            isStatus: key === 'tokenStatus',
+            isStatus: key === 'tokenStatus' || key === 'token_status',
             isDisplay: key.toLowerCase().includes('display'),
             isAssurance: key.includes('Assurance'),
             isScore: key.toLowerCase().includes('score'),
@@ -169,7 +192,9 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         const customLabels = {
             'token': 'Token',
             'tokenReferenceId': 'Reference ID',
+            'tokenReferenceID': 'Reference ID',
             'tokenRequestorId': 'Requestor ID',
+            'tokenRequestorID': 'Requestor ID',
             'tokenStatus': 'Status',
             'tokenType': 'Type',
             'tokenAssuranceMethod': 'Assurance Method',
@@ -344,6 +369,23 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     const renderCellContent = (token, column) => {
         // Check if the property exists in the token object
         if (!(column.id in token)) {
+            // For tokenStatus, try token_status as a fallback
+            if (column.id === 'tokenStatus' && 'token_status' in token) {
+                return renderCellContent({...token, tokenStatus: token.token_status}, column);
+            }
+            // For token_status, try tokenStatus as a fallback
+            if (column.id === 'token_status' && 'tokenStatus' in token) {
+                return renderCellContent({...token, token_status: token.tokenStatus}, column);
+            }
+            // For tokenReferenceId, try tokenReferenceID as a fallback
+            if (column.id === 'tokenReferenceId' && 'tokenReferenceID' in token) {
+                return renderCellContent({...token, tokenReferenceId: token.tokenReferenceID}, column);
+            }
+            // For tokenRequestorId, try tokenRequestorID as a fallback
+            if (column.id === 'tokenRequestorId' && 'tokenRequestorID' in token) {
+                return renderCellContent({...token, tokenRequestorId: token.tokenRequestorID}, column);
+            }
+            
             console.log(`Property ${column.id} not found in token:`, token);
             return 'N/A';
         }
@@ -573,20 +615,6 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                         }}
                                                     >
                                                         <ViewIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Edit token">
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={() => handleEditToken(token)}
-                                                        sx={{
-                                                                color: theme.palette.primary.main,
-                                                            '&:hover': {
-                                                                    backgroundColor: `${theme.palette.primary.main}15`
-                                                                }
-                                                        }}
-                                                    >
-                                                        <EditIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="More options">

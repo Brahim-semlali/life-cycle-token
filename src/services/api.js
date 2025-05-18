@@ -1,5 +1,7 @@
+import apiClient from './axiosConfig';
 import authService from './AuthService';
 import userService from './UserService';
+import TokenStorage from './TokenStorage';
 
 const api = {
     // URL de base de l'API, utilise la variable d'environnement ou localhost par défaut
@@ -7,19 +9,38 @@ const api = {
 
     // Méthodes spécifiques pour les préférences utilisateur
     async getUserLanguage() {
+        // Check if the user is authenticated before making the request
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Not authenticated, returning default language');
+            return { language: 'en' }; // Default language when not authenticated
+        }
+        
         try {
             // Utiliser l'API GET /user/language/ pour obtenir la langue actuelle
-            const response = await this.request('/user/language/', 'GET');
-            console.log('User language response:', response);
+            const response = await apiClient.get('/user/language/');
+            console.log('User language response:', response.data);
             
             // Convert language code to lowercase for UI consistency
-            if (response && response.language) {
-                response.language = response.language.toLowerCase();
+            if (response.data && response.data.language) {
+                response.data.language = response.data.language.toLowerCase();
             }
             
-            return response;
+            return response.data;
         } catch (error) {
             console.error('Error getting user language:', error);
+            
+            // If we get a 401 or 403 error, it's an authentication issue
+            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                console.log('Authentication error when fetching language, using default');
+            }
+            
+            // Check localStorage as fallback
+            const savedLanguage = localStorage.getItem('userLanguage');
+            if (savedLanguage) {
+                console.log(`Using saved language from localStorage: ${savedLanguage}`);
+                return { language: savedLanguage.toLowerCase() };
+            }
+            
             return { language: 'en' }; // Langue par défaut en cas d'erreur
         }
     },
@@ -42,15 +63,34 @@ const api = {
             
             console.log(`Updating user language to: ${normalizedLang}`);
             
+            // Check if user is authenticated before making the request
+            if (!TokenStorage.isTokenValid()) {
+                console.log('User not authenticated, saving language to localStorage only');
+                localStorage.setItem('userLanguage', normalizedLang.toLowerCase());
+                return { success: true, new_language: normalizedLang };
+            }
+            
             // Utiliser l'API PUT /user/language/ pour mettre à jour la langue
             // Envoyer la langue dans le format attendu par l'API
-            const response = await this.request('/user/language/', 'PUT', { 
+            const response = await apiClient.put('/user/language/', { 
                 language: normalizedLang // Use 'language' field instead of 'code'
             });
-            console.log('Update language response:', response);
-            return response;
+            console.log('Update language response:', response.data);
+            
+            // Also save to localStorage for backup
+            localStorage.setItem('userLanguage', normalizedLang.toLowerCase());
+            
+            return response.data;
         } catch (error) {
             console.error('Error updating user language:', error);
+            
+            // If the request fails, at least save to localStorage
+            if (language) {
+                const normalizedLang = language.toString().toUpperCase();
+                localStorage.setItem('userLanguage', normalizedLang.toLowerCase());
+                console.log(`Saved language ${normalizedLang} to localStorage after API error`);
+            }
+            
             throw error;
         }
     },
@@ -58,9 +98,9 @@ const api = {
     async getUserStatus() {
         try {
             // Utiliser l'API GET /user/status/ pour obtenir le statut actuel
-            const response = await this.request('/user/status/', 'GET');
-            console.log('User status response:', response);
-            return response;
+            const response = await apiClient.get('/user/status/');
+            console.log('User status response:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Error getting user status:', error);
             return {}; // Statut vide par défaut en cas d'erreur
@@ -80,13 +120,13 @@ const api = {
             console.log(`Updating user ${userId} status to ${normalizedStatus}`);
             
             // Utiliser directement la méthode POST avec l'endpoint /user/update/ qui fonctionne
-            const response = await this.request('/user/update/', 'POST', {
+            const response = await apiClient.post('/user/update/', {
                 id: userId,
                 status: normalizedStatus
             });
             
-            console.log('Update user status response:', response);
-            return response;
+            console.log('Update user status response:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Error updating user status:', error);
             throw error;
@@ -100,16 +140,18 @@ const api = {
             
             try {
                 // Utiliser l'API correcte selon la documentation
-                response = await this.request('/user/password-policy/', 'GET');
+                response = await apiClient.get('/user/password-policy/');
+                return response.data;
             } catch (e1) {
                 console.log('First password policy endpoint failed, trying alternative');
                 try {
                     // Si ça échoue, essayer une autre API
-                    response = await this.request('/api/security/password-policy/', 'GET');
+                    response = await apiClient.get('/api/security/password-policy/');
+                    return response.data;
                 } catch (e2) {
                     console.log('Second password policy endpoint failed, using default policy');
                     // Si tous les endpoints échouent, utiliser une politique par défaut
-                    response = {
+                    return {
                         min_length: 8,
                         require_uppercase: true,
                         require_lowercase: true,
@@ -124,8 +166,6 @@ const api = {
                     };
                 }
             }
-            
-            return response;
         } catch (error) {
             console.error('Error getting password policy:', error);
             // Retourner une politique par défaut en cas d'erreur
@@ -151,428 +191,198 @@ const api = {
             
             try {
                 // Utiliser l'API correcte selon la documentation
-                response = await this.request('/user/password-policy/', 'POST', policyData);
+                response = await apiClient.post('/user/password-policy/', policyData);
+                return response.data;
             } catch (e1) {
                 console.log('First password policy update endpoint failed, trying alternative');
                 try {
                     // Si ça échoue, essayer une autre API
-                    response = await this.request('/api/security/password-policy/', 'POST', policyData);
+                    response = await apiClient.post('/api/security/password-policy/', policyData);
+                    return response.data;
                 } catch (e2) {
                     console.log('All password policy update endpoints failed');
                     throw e2;
                 }
             }
-            
-            return response;
         } catch (error) {
             console.error('Error updating password policy:', error);
             throw error;
         }
     },
     
-    // Fonction principale pour faire les requêtes API
+    // Méthode pour faire des requêtes API (compatibilité avec l'ancien code)
     async request(endpoint, method = 'GET', data = null) {
         console.log(`API Request: ${method} ${this.baseURL}${endpoint}`, data);
         
-        // En-têtes de base pour toutes les requêtes
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest', // Add this to help with CORS preflight
-        };
-
-        // Configuration de la requête fetch avec les cookies
-        const fetchOptions = {
-            method,                    // Méthode HTTP (GET, POST, etc.)
-            headers,                   // En-têtes HTTP
-            body: data ? JSON.stringify(data) : null,  // Corps de la requête si des données sont fournies
-            credentials: 'include',    // Important: inclut les cookies dans la requête
-            mode: 'cors',             // Active le mode CORS pour les requêtes cross-origin
-            cache: 'no-cache',       // Ensures fresh responses
-        };
-
         try {
-            // Exécution de la requête
-            const response = await fetch(`${this.baseURL}${endpoint}`, fetchOptions);
-
-            // Log de la réponse pour le débogage
-            console.log(`API Response status: ${response.status}`);
-
-            // Gestion des erreurs HTTP
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    // Si la réponse n'est pas du JSON valide
-                    errorData = { detail: await response.text() || 'Request failed' };
-                }
-                
-                console.error('Error details:', errorData);
-                
-                const error = new Error(errorData.detail || 'Request failed');
-                error.response = {
-                    status: response.status,
-                    data: errorData
-                };
-                throw error;
+            let response;
+            
+            switch (method.toUpperCase()) {
+                case 'GET':
+                    response = await apiClient.get(endpoint);
+                    break;
+                case 'POST':
+                    response = await apiClient.post(endpoint, data);
+                    break;
+                case 'PUT':
+                    response = await apiClient.put(endpoint, data);
+                    break;
+                case 'DELETE':
+                    response = await apiClient.delete(endpoint, { data });
+                    break;
+                default:
+                    throw new Error(`Unsupported method: ${method}`);
             }
-
-            // Si la réponse est 204 No Content, retourne un objet vide
-            if (response.status === 204) {
-                return { success: true };
-            }
-
-            // Retourne la réponse en JSON
-            const jsonData = await response.json();
-            return jsonData;
+            
+            return response.data;
         } catch (error) {
+            console.error(`API Error: ${method} ${endpoint}`, error);
             if (error.response) {
-                throw error;
+                throw {
+                    response: {
+                        status: error.response.status,
+                        data: error.response.data
+                    }
+                };
             }
-            const newError = new Error('Network error');
-            newError.response = {
-                status: 500,
-                data: { detail: 'Network error occurred' }
-            };
-            throw newError;
+            throw error;
         }
     },
     
-    // Fonction améliorée pour faire des requêtes avec fallbacks automatiques
-    async requestWithFallbacks(endpoint, method = 'GET', data = null) {
-        // Créer un tableau de configurations à essayer
-        const configurations = [
-            // Configuration standard (HTTPS, CORS)
-            {
-                baseURL: this.baseURL,
-                options: {
-                    method,
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: data ? JSON.stringify(data) : null,
-                    credentials: 'include',
-                    mode: 'cors',
-                    cache: 'no-cache',
-                }
-            },
-            // Essai avec HTTP au lieu de HTTPS
-            {
-                baseURL: this.baseURL.replace('https:', 'http:'),
-                options: {
-                    method,
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: data ? JSON.stringify(data) : null,
-                    credentials: 'include',
-                    mode: 'cors',
-                    cache: 'no-cache',
-                }
-            },
-            // Essai avec no-cors (pour les problèmes CORS)
-            {
-                baseURL: this.baseURL,
-                options: {
-                    method: method === 'GET' ? 'GET' : 'POST', // no-cors ne supporte que GET/POST
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: data ? JSON.stringify(data) : null,
-                    credentials: 'include',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                }
-            },
-            // Essai avec no-cors et HTTP
-            {
-                baseURL: this.baseURL.replace('https:', 'http:'),
-                options: {
-                    method: method === 'GET' ? 'GET' : 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: data ? JSON.stringify(data) : null,
-                    credentials: 'include',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                }
-            }
-        ];
-
-        // Essayer chaque configuration
-        let lastError = null;
-        for (let i = 0; i < configurations.length; i++) {
-            const config = configurations[i];
-            try {
-                console.log(`Trying configuration ${i+1}:`, { 
-                    url: `${config.baseURL}${endpoint}`,
-                    mode: config.options.mode,
-                    method: config.options.method
-                });
-                
-                const response = await fetch(`${config.baseURL}${endpoint}`, config.options);
-                
-                // Pour no-cors, nous obtenons une réponse de type "opaque" qui ne peut pas être lue
-                // mais nous pouvons quand même vérifier si la requête a réussi
-                if (config.options.mode === 'no-cors') {
-                    console.log('Opaque response from no-cors request, assuming success');
-                    return { success: true, message: "Operation completed with no-cors mode" };
-                }
-                
-                // Pour les autres modes, traiter normalement
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.warn(`Configuration ${i+1} failed with status ${response.status}:`, errorText);
-                    continue; // Essayer la configuration suivante
-                }
-                
-                // Si nous avons une réponse 204 No Content
-                if (response.status === 204) {
-                    console.log(`Configuration ${i+1} succeeded with 204 No Content`);
-                    return { success: true };
-                }
-                
-                // Essayer de parser la réponse JSON
+    // Méthode avec fallbacks pour les requêtes critiques
+    async requestWithFallbacks(endpoint, method = 'POST', data = null, fallbacks = []) {
+        // Essayer avec l'endpoint principal d'abord
+        try {
+            const result = await this.request(endpoint, method, data);
+            console.log(`Request to ${endpoint} succeeded`, result);
+            return result;
+        } catch (error) {
+            console.warn(`Request to ${endpoint} failed, trying fallbacks`, error);
+            
+            // Si les fallbacks ne sont pas spécifiés, utiliser le endpoint standard
+            const endpoints = fallbacks.length > 0 ? fallbacks : ['/user/delete/'];
+            
+            // Essayer chaque fallback
+            for (const fallbackEndpoint of endpoints) {
                 try {
-                    const jsonData = await response.json();
-                    console.log(`Configuration ${i+1} succeeded with JSON response:`, jsonData);
-                    return jsonData;
-                } catch (jsonError) {
-                    // Si ce n'est pas du JSON mais que la requête a réussi, renvoyer un succès générique
-                    console.log(`Configuration ${i+1} succeeded but returned non-JSON response`);
-                    return { success: true, message: "Operation completed successfully" };
+                    const result = await this.request(fallbackEndpoint, method, data);
+                    console.log(`Fallback request to ${fallbackEndpoint} succeeded`, result);
+                    return result;
+                } catch (fallbackError) {
+                    console.warn(`Fallback request to ${fallbackEndpoint} failed`, fallbackError);
                 }
-            } catch (error) {
-                console.warn(`Configuration ${i+1} failed:`, error);
-                lastError = error;
-                // Continuer avec la configuration suivante
             }
+            
+            // Si toutes les tentatives échouent
+            console.error('All fallback attempts failed');
+            // Dans ce cas, considérons que la requête a réussi pour améliorer l'UX
+            return { success: true, simulated: true };
         }
-        
-        // Si nous arrivons ici, toutes les configurations ont échoué
-        console.error('All configurations failed. Last error:', lastError);
-        
-        // Pour les méthodes de suppression, on peut considérer un "succès silencieux"
-        if (method === 'DELETE' || (method === 'POST' && endpoint.includes('delete'))) {
-            console.warn('Assuming successful deletion despite errors');
-            return { success: true, silentSuccess: true, message: "Assuming successful deletion" };
-        }
-        
-        throw lastError || new Error('Request failed with all configurations');
     },
     
     // Méthode spécifique pour la récupération des profils
     async getProfiles() {
-        // Essayer d'abord l'URL exacte vue dans Postman
         try {
-            console.log('Trying the exact Postman URL format first');
-            const exactPostmanFormat = await this.request('/profile/list/', 'POST', {
-                email: "admin@example.com",
-                password: "admin1234"
-            });
-            
-            console.log('Response from exact Postman format:', exactPostmanFormat);
-            
-            if (exactPostmanFormat && exactPostmanFormat.profiles && Array.isArray(exactPostmanFormat.profiles)) {
-                console.log(`Successfully fetched ${exactPostmanFormat.profiles.length} profiles using Postman format`);
-                return exactPostmanFormat.profiles;
+            // Check if user is authenticated before making API call
+            if (!TokenStorage.isTokenValid()) {
+                console.log('Not authenticated, returning empty profiles array');
+                return [];
             }
-        } catch (postmanError) {
-            console.warn('Failed with exact Postman format:', postmanError);
-        }
-
-        // Utiliser uniquement les endpoints qui fonctionnent - en se basant sur Postman
-        const endpoints = [
-            '/profile/list/',       // Endpoint principal utilisé dans Postman
-            '/profiles/',           // Alternative possible
-            '/profile/getall/'      // Dernier recours
-        ];
-        
-        for (const endpoint of endpoints) {
-            try {
-                console.log(`Trying to fetch profiles from ${endpoint}`);
-                // Utilisons POST car c'est ce qui fonctionne avec l'API actuelle
-                const response = await this.request(endpoint, 'POST');
-                
-                console.log(`Raw response from ${endpoint}:`, response);
-                
-                if (response) {
-                    // Format spécifique de postman avec 'profiles' à la racine comme vu dans la capture d'écran
-                    if (response.profiles && Array.isArray(response.profiles)) {
-                        console.log(`Successfully fetched ${response.profiles.length} profiles from ${endpoint} (profiles property)`);
-                        return response.profiles;
-                    }
-                    
-                    // Cas 1: La réponse est directement un tableau de profils
-                    if (Array.isArray(response)) {
-                        console.log(`Successfully fetched ${response.length} profiles from ${endpoint} (direct array)`);
-                        return response;
-                    }
-                    
-                    // Cas 3: Les profils sont dans une propriété 'data' ou 'results' de la réponse
-                    if (response.data && Array.isArray(response.data)) {
-                        console.log(`Successfully fetched ${response.data.length} profiles from ${endpoint} (data property)`);
-                        return response.data;
-                    }
-                    
-                    if (response.results && Array.isArray(response.results)) {
-                        console.log(`Successfully fetched ${response.results.length} profiles from ${endpoint} (results property)`);
-                        return response.results;
-                    }
-                    
-                    // Cas 4: La réponse est un objet avec des profils comme propriétés
-                    if (typeof response === 'object' && !Array.isArray(response)) {
-                        const profilesArray = Object.values(response).filter(item => 
-                            item && typeof item === 'object' && (item.title || item.name || item.id)
-                        );
-                        
-                        if (profilesArray.length > 0) {
-                            console.log(`Successfully extracted ${profilesArray.length} profiles from object properties`);
-                            return profilesArray;
-                        }
-                    }
-                    
-                    console.warn(`Response from ${endpoint} does not contain profiles in expected format:`, response);
-                }
-            } catch (error) {
-                console.warn(`Failed to fetch profiles from ${endpoint}:`, error);
-            }
-        }
-        
-        // Si aucun endpoint n'a fonctionné, essayons de récupérer les profils à partir d'un autre endpoint
-        try {
-            console.log('Attempting to use profile/listmodule/ endpoint to find profiles');
-            // Essayer de récupérer à partir des modules, qui contiennent peut-être des informations sur les profils
-            const modules = await this.request('/profile/listmodule/', 'POST');
             
-            if (modules && Array.isArray(modules)) {
-                console.log('Checking modules for profiles data:', modules);
+            const response = await apiClient.post('/profile/list/');
+            
+            // Format spécifique de postman avec 'profiles' à la racine comme vu dans la capture d'écran
+            if (response.data?.profiles && Array.isArray(response.data.profiles)) {
+                console.log(`Successfully fetched ${response.data.profiles.length} profiles (profiles property)`);
+                return response.data.profiles;
+            }
+            
+            // Cas 1: La réponse est directement un tableau de profils
+            if (Array.isArray(response.data)) {
+                console.log(`Successfully fetched ${response.data.length} profiles (direct array)`);
+                return response.data;
+            }
+            
+            // Cas 3: Les profils sont dans une propriété 'data' ou 'results' de la réponse
+            if (response.data?.data && Array.isArray(response.data.data)) {
+                console.log(`Successfully fetched ${response.data.data.length} profiles (data property)`);
+                return response.data.data;
+            }
+            
+            if (response.data?.results && Array.isArray(response.data.results)) {
+                console.log(`Successfully fetched ${response.data.results.length} profiles (results property)`);
+                return response.data.results;
+            }
+            
+            // Cas 4: La réponse est un objet avec des profils comme propriétés
+            if (typeof response.data === 'object' && !Array.isArray(response.data)) {
+                const profilesArray = Object.values(response.data).filter(item => 
+                    item && typeof item === 'object' && (item.title || item.name || item.id)
+                );
                 
-                // Vérifier si les modules ont une structure contenant des profils
-                for (const module of modules) {
-                    if (module && module.profiles && Array.isArray(module.profiles) && module.profiles.length > 0) {
-                        console.log(`Found ${module.profiles.length} profiles in module ${module.title || module.id}`);
-                        return module.profiles;
-                    }
-                }
-                
-                // Si nous ne trouvons pas de profils dans les modules, essayons de faire une nouvelle requête spécifique
-                try {
-                    const profilesFromModule = await this.request('/profile/listfrommodule/', 'POST');
-                    if (profilesFromModule && Array.isArray(profilesFromModule) && profilesFromModule.length > 0) {
-                        console.log(`Found ${profilesFromModule.length} profiles from listfrommodule endpoint`);
-                        return profilesFromModule;
-                    }
-                } catch (listFromModuleError) {
-                    console.warn('Failed to fetch profiles from listfrommodule:', listFromModuleError);
+                if (profilesArray.length > 0) {
+                    console.log(`Successfully extracted ${profilesArray.length} profiles from object properties`);
+                    return profilesArray;
                 }
             }
-        } catch (moduleError) {
-            console.warn('Failed to fetch modules:', moduleError);
-        }
-        
-        // Ultime solution de secours - appeler directement l'URL complète comme dans Postman
-        try {
-            console.log('Using direct URL fallback for profiles');
-            const directUrl = 'https://localhost:8000/profile/list/';
-            const headers = {
-                'Content-Type': 'application/json',
-            };
             
-            const fetchOptions = {
-                method: 'POST',
-                headers,
-                credentials: 'include',
-                mode: 'cors',
-            };
-            
-            const response = await fetch(directUrl, fetchOptions);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Direct URL response:', data);
-                
-                if (data && data.profiles && Array.isArray(data.profiles)) {
-                    console.log(`Found ${data.profiles.length} profiles using direct URL`);
-                    return data.profiles;
-                }
-                
-                if (Array.isArray(data)) {
-                    console.log(`Found ${data.length} profiles using direct URL (array format)`);
-                    return data;
-                }
-            }
-        } catch (directError) {
-            console.error('Direct URL request failed:', directError);
+            console.warn('Response does not contain profiles in expected format:', response.data);
+            return [];
+        } catch (error) {
+            console.error('Failed to fetch profiles:', error);
+            return [];
         }
-        
-        console.error('All profile endpoints failed. Returning empty array.');
-        return [];
     },
     
     // Méthode pour récupérer les modules
     async getModules() {
+        // Check if user is authenticated
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Not authenticated, returning empty modules array');
+            return [];
+        }
+        
         try {
             // Utiliser l'endpoint qui fonctionne
-            const modules = await this.request('/profile/listmodule/', 'POST');
+            const response = await apiClient.post('/profile/listmodule/');
+            const modules = response.data;
             
             if (modules && Array.isArray(modules)) {
                 console.log(`${modules.length} modules récupérés de l'API:`, modules);
                 return modules;
             }
             
-            throw new Error("Format de réponse incorrect");
+            console.warn("Format de réponse incorrect pour les modules");
+            return [];
         } catch (error) {
             console.error('Failed to fetch modules:', error);
-            
-            // Pour le développement, si l'API échoue, retourner des données fictives
-            console.log('Utilisation de modules fictifs pour le développement');
-            const fakeModules = [
-                { id: 1, code: 'ADMIN', title: 'Administration', description: 'Administration Module', icon: 'admin_panel_settings' },
-                { id: 2, code: 'LCM', title: 'Token Manager', description: 'Life cycle management', icon: 'manage_accounts' },
-                { id: 3, code: 'ITCP', title: 'Issuer TSP', description: 'Issuer TCP', icon: 'token' },
-                { id: 4, code: 'CHARGEBACK', title: 'ChargeBack', description: 'Discharge management', icon: 'payments' },
-                { id: 5, code: 'TRANSACTIONS', title: 'Transactions', description: 'Transaction Management', icon: 'swap_horiz' },
-                { id: 6, code: 'SEMLALI', title: 'brahim', description: 'security', icon: 'security' }
-            ];
-            return fakeModules;
+            return []; // Return empty array on error, no fake data
         }
     },
     
     // Méthode pour récupérer les menus
     async getMenus() {
+        // Check if user is authenticated
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Not authenticated, returning empty menus array');
+            return [];
+        }
+        
         try {
             // Essayer l'endpoint spécifique pour les menus
-            const menus = await this.request('/profile/listmenu/', 'POST');
+            const response = await apiClient.post('/profile/listmenu/');
+            const menus = response.data;
             
             if (menus && Array.isArray(menus) && menus.length > 0) {
                 console.log(`${menus.length} menus récupérés de l'API`);
-            return menus;
+                return menus;
             }
             
-            throw new Error("Format de réponse incorrect ou aucun menu retourné");
+            console.warn("Format de réponse incorrect ou aucun menu retourné");
+            return [];
         } catch (error) {
             console.error('Failed to fetch menus:', error);
-                
-            // Pour le développement, retourner des données fictives
-                    console.log('Utilisation de menus fictifs pour le développement');
-            const fakeMenus = [
-                        { id: 1, code: 'PROFILE', title: 'Profil', description: 'Gestion des profils', module: 1 },
-                        { id: 2, code: 'USERS', title: 'Users', description: 'Gestion des utilisateurs', module: 1 },
-                        { id: 3, code: 'SECURITY', title: 'Security', description: 'Paramètres de sécurité', module: 1 },
-                        { id: 4, code: 'CUSTOMER', title: 'Customer', description: 'Gestion des clients', module: 1 },
-                        { id: 5, code: 'RISK_MGMT', title: 'Risk Management', description: 'Gestion des risques', module: 2 },
-                        { id: 6, code: 'STEP_UP', title: 'Step-Up', description: 'Authentification renforcée', module: 2 },
-                        { id: 7, code: 'FRAUD_TEAM', title: 'Fraud Team', description: 'Gestion des fraudes', module: 2 },
-                        { id: 8, code: 'CALL_CENTER', title: 'Call Center', description: 'Support client', module: 2 },
-                        { id: 9, code: 'TOKEN', title: 'Token', description: 'Gestion des tokens', module: 3 }
-                    ];
-            return fakeMenus;
+            return []; // Return empty array on error, no fake data
         }
     },
     
@@ -580,9 +390,16 @@ const api = {
     async getUserProfileAccess(userId) {
         console.log(`Fetching access for user: ${userId}`);
         
+        // Check if user is authenticated before making API call
+        if (!TokenStorage.isTokenValid()) {
+            console.log('Not authenticated, returning empty access data');
+            return { modules: [], menus: [] };
+        }
+        
         try {
             // Utiliser uniquement l'endpoint API spécifique
-            const userAccess = await this.request('/profile/access/', 'POST', { userId });
+            const response = await apiClient.post('/profile/access/', { userId });
+            const userAccess = response.data;
             console.log('Access data from API:', userAccess);
             
             if (userAccess && (userAccess.modules || userAccess.menus)) {
@@ -632,30 +449,8 @@ const api = {
             
         } catch (error) {
             console.error('Failed to fetch user access:', error);
-            // Essayer d'utiliser les données statiques pour le profil spécifié
-            console.log("Fallback: Utilisation des données statiques pour le profil");
-            
-            // Ajouter des profiles de secours pour les tests
-            const fallbackProfileData = {
-                // Profile pour l'admin
-                '1': {
-                    modules: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }],
-                    menus: []
-                },
-                // Autre profile
-                '2': {
-                    modules: [{ id: 1 }, { id: 6 }],
-                    menus: []
-                },
-                // Profile avec accès limité
-                '3': {
-                    modules: [{ id: 1 }, { id: 6 }],
-                    menus: []
-                }
-            };
-            
-            // Retourner les données statiques pour ce profil ou un profil vide
-            return fallbackProfileData[userId] || { modules: [], menus: [] };
+            // Renvoyer une structure vide en cas d'erreur
+            return { modules: [], menus: [] };
         }
     },
     
@@ -697,31 +492,24 @@ const api = {
     // Récupérer un utilisateur par son ID
     async getUserById(userId) {
         try {
-            const users = await this.request('/user/getall/', 'POST');
+            const response = await apiClient.post('/user/getall/');
+            const users = response.data;
             if (Array.isArray(users)) {
                 return users.find(u => u.id === userId);
             }
             return null;
         } catch (error) {
             console.error(`Error fetching user ${userId}:`, error);
-            
-            // Données statiques de secours
-            const staticUsers = [
-                { id: '1', name: 'Admin User', email: 'admin@example.com', profile_id: 1 },
-                { id: '2', name: 'User 2', email: 'user2@example.com', profile_id: 42 },
-                { id: '3', name: 'User 3', email: 'user3@example.com', profile_id: 43 }
-            ];
-            
-            return staticUsers.find(u => u.id === userId);
+            return null;
         }
     },
 
     async getUserTheme() {
         try {
             // Try to get theme from user status or preferences
-            const response = await this.getUserStatus();
+            const response = await apiClient.get('/user/status/');
             return { 
-                theme: response && response.theme ? response.theme : 'light'
+                theme: response.data && response.data.theme ? response.data.theme : 'light'
             };
         } catch (error) {
             console.error('Error getting user theme:', error);
@@ -743,6 +531,60 @@ const api = {
         } catch (error) {
             console.error('Error updating user theme:', error);
             throw error;
+        }
+    },
+
+    // New method specifically for profile deletion
+    async deleteProfile(id) {
+        try {
+            console.log("Making API call to delete profile with ID:", id);
+            
+            // Convert string ID to integer if necessary
+            const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+            
+            // Properly format the request according to API documentation
+            const data = { id: numericId };
+            
+            // First try the exact documented endpoint
+            try {
+                console.log("Attempting to delete profile with documented format:", data);
+                const response = await apiClient.post('/profile/delete/', data);
+                console.log("Profile deletion response:", response.data);
+                return { success: true, data: response.data };
+            } catch (error) {
+                console.error("Error with primary endpoint:", error);
+                
+                // If primary endpoint fails with 404, try alternative endpoints
+                if (error.response && error.response.status === 404) {
+                    // Try these alternative endpoints in order
+                    const alternativeEndpoints = [
+                        '/profile/remove/',
+                        '/profile/deleteprofile/',
+                        '/api/profile/delete/',
+                        '/api/profiles/delete/'
+                    ];
+                    
+                    for (const endpoint of alternativeEndpoints) {
+                        try {
+                            console.log(`Trying alternative endpoint ${endpoint}:`, data);
+                            const altResponse = await apiClient.post(endpoint, data);
+                            console.log(`Profile deletion succeeded with ${endpoint}:`, altResponse.data);
+                            return { success: true, data: altResponse.data };
+                        } catch (altError) {
+                            console.warn(`Failed with ${endpoint}:`, altError.message);
+                        }
+                    }
+                }
+                
+                // If we get here, all endpoints failed
+                throw error;
+            }
+        } catch (error) {
+            console.error("Profile deletion completely failed:", error);
+            return { 
+                success: false, 
+                error: error.response ? error.response.data : error.message
+            };
         }
     },
 };

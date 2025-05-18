@@ -2146,4 +2146,309 @@ th .selection-button {
 .MuiFormControl-root .MuiOutlinedInput-root.Mui-focused::after {
     width: 100%;
     left: 0;
+}
+
+/* Mobile-specific styles */
+.mobile-view {
+    padding: 1rem !important;
+}
+
+.mobile-view .users-header {
+    padding: 16px !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+}
+
+.mobile-view .selection-header {
+    padding: 16px !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+}
+
+.mobile-view .contact-table th,
+.mobile-view .contact-table td {
+    padding: 12px 8px !important;
+    font-size: 0.85rem !important;
+}
+
+.mobile-view .status-badge {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+}
+
+.mobile-view .status-badge::before {
+    width: 8px !important;
+    height: 8px !important;
+    left: 6px !important;
+}
+
+.mobile-view .action-button {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+}
+
+.mobile-view .action-buttons {
+    gap: 4px !important;
+}
+
+.mobile-view .create-button,
+.mobile-view .export-button-mobile {
+    padding: 8px 16px !important;
+    height: auto !important;
+    font-size: 0.9rem !important;
+}
+
+.mobile-view .search-container {
+    height: 40px !important;
+    padding-left: 16px !important;
+}
+
+.mobile-view .search-icon {
+    font-size: 1rem !important;
+}
+
+.mobile-view .search-container .MuiInputBase-input {
+    font-size: 0.9rem !important;
+}
+
+.mobile-view .view-selector {
+    height: 40px !important;
+}
+
+.mobile-view .view-button {
+    width: 35px !important;
+    height: 35px !important;
+}
+
+.mobile-view .user-avatar {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 0.8rem !important;
+}
+
+.mobile-view .name-cell {
+    gap: 8px !important;
+}
+
+.mobile-view .profile-name {
+    font-size: 0.85rem !important;
+}
+
+.mobile-view .profile-title {
+    font-size: 0.7rem !important;
+}
+
+.mobile-view .card-user-name {
+    font-size: 1rem !important;
+}
+
+.mobile-view .card-user-profile {
+    font-size: 0.75rem !important;
+}
+
+.mobile-view .card-user-email,
+.mobile-view .card-user-phone {
+    font-size: 0.75rem !important;
+}
+
+.mobile-view .filter-select {
+    font-size: 0.9rem !important;
+}
+
+.mobile-view .table-container {
+    overflow-x: auto;
+}
+
+.mobile-view .mobile-contact-table {
+    min-width: 600px;
+}
+
+.mobile-view .dialog-title {
+    font-size: 1.2rem !important;
+    padding: 16px !important;
+}
+
+.mobile-view .dialog-content {
+    padding: 16px !important;
+}
+
+.mobile-view .dialog-actions {
+    padding: 16px !important;
+}
+
+.mobile-view .form-field .MuiInputBase-input {
+    font-size: 0.9rem !important;
+}
+
+.mobile-view .password-rules-container {
+    padding: 12px !important;
+}
+
+.mobile-view .password-rules-list li {
+    font-size: 0.8rem !important;
+    margin-bottom: 6px !important;
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 600px) and (max-width: 960px) {
+    .users-container {
+        padding: 2rem !important;
+    }
+    
+    .users-header {
+        padding: 20px !important;
+    }
+    
+    .users-actions {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+    }
+    
+    .create-button {
+        height: 45px !important;
+    }
+    
+    .contact-table th,
+    .contact-table td {
+        padding: 15px !important;
+    }
+}
+
+/* Further mobile optimizations for very small screens */
+@media (max-width: 400px) {
+    .mobile-view {
+        padding: 0.75rem !important;
+    }
+    
+    .mobile-view .users-header {
+        padding: 12px !important;
+    }
+    
+    .mobile-view .contact-table th,
+    .mobile-view .contact-table td {
+        padding: 10px 6px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .mobile-view .user-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .mobile-view .action-button {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    
+    .mobile-view .action-button .MuiSvgIcon-root {
+        font-size: 0.9rem !important;
+    }
+} 
+
+/* Mobile-specific styles for dialogs */
+@media (max-width: 600px) {
+    .mobile-view .delete-confirm-dialog {
+        margin: 0;
+    }
+    
+    .mobile-view .delete-dialog-header {
+        background-color: #FEE2E2;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .mobile-view .delete-dialog-content {
+        padding: 24px;
+    }
+    
+    .mobile-view .delete-dialog-warning {
+        background-color: #FEF2F2;
+        padding: 12px;
+        border-left: 3px solid #EF4444;
+        font-size: 0.85rem;
+        margin-top: 16px;
+    }
+    
+    .mobile-view .delete-dialog-actions {
+        padding: 16px 24px 24px;
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+    
+    .mobile-view .delete-dialog-cancel-button {
+        margin-top: 8px;
+        border-color: #E5E7EB;
+        color: #6B7280;
+    }
+    
+    .mobile-view .delete-dialog-confirm-button {
+        background-color: #EF4444;
+        border-radius: 8px;
+    }
+    
+    /* Edit User Dialog Mobile Styles */
+    .mobile-view .user-dialog .MuiPaper-root {
+        margin: 0;
+    }
+    
+    .mobile-view .dialog-title {
+        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+        color: white;
+        padding: 20px 24px;
+        position: relative;
+    }
+    
+    .mobile-view .dialog-content {
+        padding: 20px 24px;
+    }
+    
+    .mobile-view .form-field .MuiOutlinedInput-root,
+    .mobile-view .MuiFormControl-root .MuiOutlinedInput-root {
+        border-radius: 10px;
+        background-color: white;
+    }
+    
+    .mobile-view .password-rules-container {
+        border: none;
+        box-shadow: none;
+        padding: 16px;
+        background-color: #F9FAFB;
+        border-radius: 10px;
+        margin-top: 24px;
+    }
+    
+    .mobile-view .password-rules-list {
+        list-style: none;
+        padding-left: 0;
+        margin-top: 12px;
+    }
+    
+    .mobile-view .password-rules-list li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: #4B5563;
+    }
+    
+    .mobile-view .dialog-actions {
+        flex-direction: column-reverse;
+        padding: 16px 24px 32px;
+        background-color: white;
+    }
+    
+    .mobile-view .dialog-actions .cancel-button {
+        margin-top: 8px;
+        border-radius: 8px;
+        border: 1px solid #D1D5DB;
+        color: #6B7280;
+    }
+    
+    .mobile-view .dialog-actions .create-button {
+        border-radius: 8px;
+        background: linear-gradient(45deg, #4338ca 0%, #6d28d9 100%);
+    }
 } 

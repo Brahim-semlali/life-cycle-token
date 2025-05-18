@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import api from '../services/api';
+import TokenStorage from '../services/TokenStorage';
 
 // Create the language context
 const LanguageContext = createContext();
@@ -60,18 +61,26 @@ export const LanguageProvider = ({ children }) => {
           setCurrentLanguage(savedLanguage.toLowerCase());
         }
         
-        // Then try to get from API
-        console.log('Fetching language from API...');
-        const response = await api.getUserLanguage();
-        console.log('API language response:', response);
-        
-        if (response && response.language) {
-          const apiLanguage = response.language.toLowerCase();
-          console.log(`Setting language from API: ${apiLanguage}`);
-          setCurrentLanguage(apiLanguage);
-          
-          // Update localStorage
-          localStorage.setItem('userLanguage', apiLanguage);
+        // Only try to get from API if user is authenticated
+        if (TokenStorage.isTokenValid()) {
+          console.log('User is authenticated, fetching language from API...');
+          try {
+            const response = await api.getUserLanguage();
+            console.log('API language response:', response);
+            
+            if (response && response.language) {
+              const apiLanguage = response.language.toLowerCase();
+              console.log(`Setting language from API: ${apiLanguage}`);
+              setCurrentLanguage(apiLanguage);
+              
+              // Update localStorage
+              localStorage.setItem('userLanguage', apiLanguage);
+            }
+          } catch (apiError) {
+            console.warn('Error loading language from API, using localStorage value instead:', apiError);
+          }
+        } else {
+          console.log('User not authenticated, skipping API language fetch');
         }
       } catch (error) {
         console.error('Error loading language preference:', error);
