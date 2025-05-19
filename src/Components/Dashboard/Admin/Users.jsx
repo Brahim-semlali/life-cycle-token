@@ -44,7 +44,8 @@ import {
   Divider,
   InputBase,
   useMediaQuery,
-  useTheme as useMuiTheme
+  useTheme as useMuiTheme,
+  CircularProgress
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -88,6 +89,7 @@ const Users = () => {
     const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'));
     
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true); // Add loading state
     const [editingUser, setEditingUser] = useState(null);
     const [profiles, setProfiles] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
@@ -143,6 +145,7 @@ const Users = () => {
     };
 
     const loadUsers = async () => {
+        setLoading(true); // Set loading to true before fetching data
         try {
             const allUsers = await userService.getAllUsers();
             console.log('Raw users from API:', allUsers);
@@ -193,6 +196,8 @@ const Users = () => {
             setUsers(sortedUsers);
         } catch (error) {
             console.error('Erreur lors du chargement des utilisateurs:', error.message);
+        } finally {
+            setLoading(false); // Set loading to false after data is fetched or error occurs
         }
     };
 
@@ -513,6 +518,7 @@ const Users = () => {
                 lastName: user.lastName || user.last_name || '',
                 profileId: profileId ? profileId.toString() : '', // Convertir en chaîne pour le composant Select
                 status: normalizedStatus,
+                phone: user.phone || '',
                 password: '',
                 confirmPassword: ''
             });
@@ -1486,11 +1492,60 @@ const Users = () => {
                                 ))}
                             </Select>
                         </FormControl>
-                                    </Box>
+                    </Box>
                 </Paper>
             </Collapse>
 
-            {filteredUsers.length === 0 ? (
+            {loading ? (
+                <Box 
+                    sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        height: '50vh',
+                        width: '100%'
+                    }}
+                >
+                    <Box 
+                        sx={{ 
+                            position: 'relative', 
+                            display: 'inline-flex',
+                            mb: 3
+                        }}
+                    >
+                        <CircularProgress 
+                            size={60} 
+                            thickness={4} 
+                            sx={{ 
+                                color: theme => isDarkMode ? '#818cf8' : '#4f46e5',
+                                animationDuration: '1.2s'
+                            }} 
+                        />
+                    </Box>
+                    <Typography 
+                        variant="h6" 
+                        component="div" 
+                        sx={{ 
+                            color: theme => isDarkMode ? '#e2e8f0' : '#1e293b',
+                            fontWeight: 600,
+                            mb: 1
+                        }}
+                    >
+                        {t('users.loading', 'Loading users...')}
+                    </Typography>
+                    <Typography 
+                        variant="body2" 
+                        color="text.secondary" 
+                        sx={{ 
+                            maxWidth: 300, 
+                            textAlign: 'center' 
+                        }}
+                    >
+                        {t('users.loadingDescription', 'Please wait while we fetch the user data')}
+                    </Typography>
+                </Box>
+            ) : filteredUsers.length === 0 ? (
                 <Box className="empty-state" sx={{ 
                     display: 'flex', 
                     flexDirection: 'column', 
@@ -1558,15 +1613,19 @@ const Users = () => {
                 PaperProps={{
                     sx: {
                         borderRadius: isMobile ? 0 : '24px',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        background: isDarkMode ? 'linear-gradient(145deg, #1a1d23 0%, #111827 100%)' : 'linear-gradient(145deg, #fff 0%, #f9fafb 100%)',
+                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)'
                     }
                 }}
             >
                 <DialogTitle className="dialog-title" sx={{ 
-                    background: isMobile ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : undefined,
-                    color: isMobile ? 'white' : undefined,
-                    padding: isMobile ? '20px 24px' : undefined,
-                    position: 'relative'
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                    color: 'white',
+                    padding: isMobile ? '20px 24px' : '28px 32px',
+                    position: 'relative',
+                    fontSize: '1.5rem',
+                    fontWeight: 700
                 }}>
                     {editingUser !== null ? t('users.edit', 'Edit User') : t('users.create', 'Create User')}
                     {isMobile && (
@@ -1584,13 +1643,90 @@ const Users = () => {
                         </IconButton>
                     )}
                 </DialogTitle>
-                <DialogContent className="dialog-content" sx={{ padding: isMobile ? '20px 24px' : undefined }}>
+                <DialogContent className="dialog-content" sx={{ 
+                    padding: isMobile ? '20px 24px' : '32px',
+                    background: isDarkMode ? '#1a1d23' : '#fff'
+                }}>
                     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-                        <Box sx={{ mb: isMobile ? 3 : 0 }}>
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ 
+                                mb: 2, 
+                                fontWeight: 600, 
+                                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}
+                        >
+                            <PersonIcon fontSize="small" color="primary" />
+                            {t('users.personalInfo', 'Personal Information')}
+                        </Typography>
+
+                        <Box sx={{ 
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                            gap: 3,
+                            mb: 4
+                        }}>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                label={t('users.firstName', 'First Name')}
+                                name="firstName"
+                                value={newUser.firstName}
+                                onChange={handleInputChange}
+                                error={!!formErrors.firstName}
+                                helperText={formErrors.firstName}
+                                required
+                                className="form-field"
+                                InputProps={{
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
+                                }}
+                            />
+
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                label={t('users.lastName', 'Last Name')}
+                                name="lastName"
+                                value={newUser.lastName}
+                                onChange={handleInputChange}
+                                error={!!formErrors.lastName}
+                                helperText={formErrors.lastName}
+                                required
+                                className="form-field"
+                                InputProps={{
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
+                                }}
+                            />
+                        </Box>
+
+                        <Box sx={{ 
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                            gap: 3,
+                            mb: 4,
+                            background: isDarkMode ? 'rgba(30, 41, 59, 0.4)' : 'rgba(249, 250, 251, 0.7)',
+                            borderRadius: '16px',
+                            padding: 3,
+                            boxShadow: isDarkMode ? 'inset 0 1px 3px rgba(0, 0, 0, 0.2)' : 'inset 0 1px 3px rgba(0, 0, 0, 0.05)'
+                        }}>
                             <FormControl 
                                 fullWidth
-                                margin={isMobile ? "dense" : "normal"}
-                                sx={{ mb: isMobile ? 2 : 0 }}
+                                variant="outlined"
+                                error={!!formErrors.profileId}
+                                className="form-field"
                             >
                                 <InputLabel id="profile-label">{t('users.profile', 'Profile')}</InputLabel>
                                 <Select
@@ -1600,9 +1736,10 @@ const Users = () => {
                                     onChange={handleInputChange}
                                     label={t('users.profile', 'Profile')}
                                     sx={{
-                                        borderRadius: isMobile ? '10px' : undefined,
-                                        backgroundColor: isMobile ? 'white' : undefined,
-                                        '& .MuiSelect-icon': { color: isMobile ? '#6366f1' : undefined }
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        '& .MuiSelect-icon': { color: isDarkMode ? '#818cf8' : '#6366f1' }
                                     }}
                                 >
                                     <MenuItem value="">{t('users.selectProfile', 'Select Profile')}</MenuItem>
@@ -1612,11 +1749,17 @@ const Users = () => {
                                         </MenuItem>
                                     ))}
                                 </Select>
+                                {formErrors.profileId && (
+                                    <Typography variant="caption" color="error">
+                                        {formErrors.profileId}
+                                    </Typography>
+                                )}
                             </FormControl>
 
                             <FormControl 
                                 fullWidth 
-                                margin={isMobile ? "dense" : "normal"}
+                                variant="outlined"
+                                className="form-field"
                             >
                                 <InputLabel id="status-label">{t('users.status', 'Status')}</InputLabel>
                                 <Select
@@ -1626,64 +1769,80 @@ const Users = () => {
                                     onChange={handleInputChange}
                                     label={t('users.status', 'Status')}
                                     sx={{
-                                        borderRadius: isMobile ? '10px' : undefined,
-                                        backgroundColor: isMobile ? 'white' : undefined,
-                                        '& .MuiSelect-icon': { color: isMobile ? '#6366f1' : undefined }
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        '& .MuiSelect-icon': { color: isDarkMode ? '#818cf8' : '#6366f1' }
                                     }}
                                 >
-                                    <MenuItem value="active">{t('users.statusActive', 'Active')}</MenuItem>
-                                    <MenuItem value="inactive">{t('users.statusInactive', 'Inactive')}</MenuItem>
-                                    <MenuItem value="blocked">{t('users.statusBlocked', 'Blocked')}</MenuItem>
-                                    <MenuItem value="suspended">{t('users.statusSuspended', 'Suspended')}</MenuItem>
+                                    <MenuItem value="active" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            bgcolor: '#10b981',
+                                            boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)'
+                                        }} />
+                                        {t('users.statusActive', 'Active')}
+                                    </MenuItem>
+                                    <MenuItem value="inactive" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            bgcolor: '#6b7280',
+                                            boxShadow: '0 0 0 2px rgba(107, 114, 128, 0.2)'
+                                        }} />
+                                        {t('users.statusInactive', 'Inactive')}
+                                    </MenuItem>
+                                    <MenuItem value="blocked" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            bgcolor: '#f59e0b',
+                                            boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)'
+                                        }} />
+                                        {t('users.statusBlocked', 'Blocked')}
+                                    </MenuItem>
+                                    <MenuItem value="suspended" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box sx={{ 
+                                            width: 8, 
+                                            height: 8, 
+                                            borderRadius: '50%', 
+                                            bgcolor: '#ef4444',
+                                            boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)'
+                                        }} />
+                                        {t('users.statusSuspended', 'Suspended')}
+                                    </MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>
 
-                        <Divider sx={{ my: isMobile ? 3 : 2, display: isMobile ? 'block' : 'none' }} />
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ 
+                                mb: 2, 
+                                fontWeight: 600, 
+                                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}
+                        >
+                            <EmailIcon fontSize="small" color="primary" />
+                            {t('users.contactInfo', 'Contact Information')}
+                        </Typography>
 
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: isMobile ? 0 : 2 }}>
+                        <Box sx={{ 
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                            gap: 3,
+                            mb: 4
+                        }}>
                             <TextField
                                 fullWidth
-                                label={t('users.firstName', 'First Name')}
-                                name="firstName"
-                                value={newUser.firstName}
-                                onChange={handleInputChange}
-                                error={!!formErrors.firstName}
-                                helperText={formErrors.firstName}
-                                required
-                                className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined,
-                                    mb: 2
-                                }}
-                            />
-                        </Box>
-
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
-                            <TextField
-                                fullWidth
-                                label={t('users.lastName', 'Last Name')}
-                                name="lastName"
-                                value={newUser.lastName}
-                                onChange={handleInputChange}
-                                error={!!formErrors.lastName}
-                                helperText={formErrors.lastName}
-                                required
-                                className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined,
-                                    mb: 2
-                                }}
-                            />
-                        </Box>
-
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
-                            <TextField
-                                fullWidth
+                                variant="outlined"
                                 label={t('users.email', 'Email')}
                                 type="email"
                                 name="email"
@@ -1693,46 +1852,84 @@ const Users = () => {
                                 helperText={formErrors.email}
                                 required
                                 className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined,
-                                    mb: 2
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <EmailIcon sx={{ color: isDarkMode ? '#818cf8' : '#6366f1' }} />
+                                        </InputAdornment>
+                                    ),
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
                                 }}
                             />
-                        </Box>
 
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
                             <TextField
                                 fullWidth
+                                variant="outlined"
                                 label={t('users.phone', 'Phone')}
                                 name="phone"
                                 value={newUser.phone}
                                 onChange={handleInputChange}
                                 className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined,
-                                    mb: 2
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PhoneIcon sx={{ color: isDarkMode ? '#818cf8' : '#6366f1' }} />
+                                        </InputAdornment>
+                                    ),
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
                                 }}
                             />
                         </Box>
 
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ 
+                                mb: 2, 
+                                fontWeight: 600, 
+                                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}
+                        >
+                            <LockOutlined fontSize="small" color="primary" />
+                            {t('users.security', 'Security')}
+                        </Typography>
+
+                        <Box sx={{ 
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                            gap: 3,
+                            mb: 4
+                        }}>
                             <TextField
                                 fullWidth
+                                variant="outlined"
                                 label={t('users.password', 'Password')}
                                 type={showPassword ? "text" : "password"}
                                 name="password"
-                                value={newUser.password}
+                                value={newUser.password || ''}
                                 onChange={handleInputChange}
                                 error={!!formErrors.password}
                                 helperText={formErrors.password}
                                 required={!editingUser}
                                 className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
                                 InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <LockOutlined sx={{ color: isDarkMode ? '#818cf8' : '#6366f1' }} />
+                                        </InputAdornment>
+                                    ),
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
@@ -1745,29 +1942,33 @@ const Users = () => {
                                             </IconButton>
                                         </InputAdornment>
                                     ),
-                                }}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined,
-                                    mb: 2
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
                                 }}
                             />
-                        </Box>
-                        
-                        <Box className="form-row" sx={{ flexDirection: isMobile ? 'column' : 'row', mt: 0 }}>
+                            
                             <TextField
                                 fullWidth
+                                variant="outlined"
                                 label={t('users.confirmPassword', 'Confirm Password')}
                                 type={showConfirmPassword ? "text" : "password"}
                                 name="confirmPassword"
-                                value={newUser.confirmPassword}
+                                value={newUser.confirmPassword || ''}
                                 onChange={handleInputChange}
                                 error={!!formErrors.confirmPassword}
                                 helperText={formErrors.confirmPassword}
                                 required={!editingUser}
                                 className="form-field"
-                                margin={isMobile ? "dense" : "normal"}
                                 InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <LockOutlined sx={{ color: isDarkMode ? '#818cf8' : '#6366f1' }} />
+                                        </InputAdornment>
+                                    ),
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton
@@ -1780,57 +1981,69 @@ const Users = () => {
                                             </IconButton>
                                         </InputAdornment>
                                     ),
-                                }}
-                                sx={{
-                                    borderRadius: isMobile ? '10px' : undefined,
-                                    backgroundColor: isMobile ? 'white' : undefined
+                                    sx: {
+                                        borderRadius: '12px',
+                                        backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.3s ease'
+                                    }
                                 }}
                             />
                         </Box>
 
                         <Box className="password-rules-container" sx={{ 
                             mt: 3,
-                            border: isMobile ? 'none' : undefined,
-                            boxShadow: isMobile ? 'none' : undefined,
-                            padding: isMobile ? '16px' : undefined,
-                            backgroundColor: isMobile ? '#F9FAFB' : undefined,
-                            borderRadius: isMobile ? '10px' : undefined
+                            background: isDarkMode ? 'rgba(30, 41, 59, 0.4)' : 'rgba(249, 250, 251, 0.7)',
+                            borderRadius: '16px',
+                            padding: 3,
+                            border: 'none',
+                            boxShadow: isDarkMode ? 'inset 0 1px 3px rgba(0, 0, 0, 0.2)' : 'inset 0 1px 3px rgba(0, 0, 0, 0.05)'
                         }}>
                             <Box className="password-rules-header" sx={{ 
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '12px',
+                                mb: 2
                             }}>
-                                <LockOutlined sx={{ fontSize: 18 }} />
-                                <Typography sx={{ fontWeight: 600 }}>
+                                <Box sx={{
+                                    width: 36,
+                                    height: 36,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    background: isDarkMode ? 'rgba(139, 92, 246, 0.2)' : 'rgba(124, 58, 237, 0.1)'
+                                }}>
+                                    <LockOutlined sx={{ color: isDarkMode ? '#a78bfa' : '#7c3aed' }} />
+                                </Box>
+                                <Typography sx={{ fontWeight: 600, color: isDarkMode ? '#e2e8f0' : '#1e293b' }}>
                                     {t('security.passwordRules.help', 'Please ensure your password meets the following requirements:')}
                                 </Typography>
                             </Box>
                             <Box component="ul" className="password-rules-list" sx={{
-                                listStyle: isMobile ? 'none' : undefined,
-                                pl: isMobile ? 0 : undefined,
-                                mt: isMobile ? 2 : undefined
+                                listStyle: 'none',
+                                pl: 0,
+                                mt: 2,
+                                display: 'grid',
+                                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                                gap: 1
                             }}>
                                 {passwordRules.minLength > 0 && (
                                     <li style={{ 
                                         display: 'flex',
                                         alignItems: 'center',
                                         marginBottom: '8px',
-                                        color: '#4B5563'
+                                        color: isDarkMode ? '#cbd5e1' : '#4B5563',
+                                        background: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px'
                                     }}>
-                                        <Box 
-                                            component="span" 
-                                            sx={{ 
-                                                mr: 1, 
-                                                color: '#6366F1',
-                                                display: 'inline-block',
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#6366F1'
-                                            }}
-                                        ></Box>
-                                        {t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength }, `Password must be at least ${passwordRules.minLength} characters long`)}
+                                        <CheckIcon sx={{ 
+                                            fontSize: '0.9rem', 
+                                            mr: 1, 
+                                            color: isDarkMode ? '#a78bfa' : '#7c3aed'
+                                        }} />
+                                        {t('security.passwordRules.minLengthInfo', { length: passwordRules.minLength }, `At least ${passwordRules.minLength} characters`)}
                                     </li>
                                 )}
                                 {passwordRules.requireLowercase && (
@@ -1838,21 +2051,17 @@ const Users = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         marginBottom: '8px',
-                                        color: '#4B5563'
+                                        color: isDarkMode ? '#cbd5e1' : '#4B5563',
+                                        background: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px'
                                     }}>
-                                        <Box 
-                                            component="span" 
-                                            sx={{ 
-                                                mr: 1, 
-                                                color: '#6366F1',
-                                                display: 'inline-block',
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#6366F1'
-                                            }}
-                                        ></Box>
-                                        {t('security.passwordRules.lowercaseInfo', 'Password must contain at least one lowercase letter')}
+                                        <CheckIcon sx={{ 
+                                            fontSize: '0.9rem', 
+                                            mr: 1, 
+                                            color: isDarkMode ? '#a78bfa' : '#7c3aed'
+                                        }} />
+                                        {t('security.passwordRules.lowercaseInfo', 'One lowercase letter')}
                                     </li>
                                 )}
                                 {passwordRules.requireNumbers && (
@@ -1860,21 +2069,17 @@ const Users = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         marginBottom: '8px',
-                                        color: '#4B5563'
+                                        color: isDarkMode ? '#cbd5e1' : '#4B5563',
+                                        background: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px'
                                     }}>
-                                        <Box 
-                                            component="span" 
-                                            sx={{ 
-                                                mr: 1, 
-                                                color: '#6366F1',
-                                                display: 'inline-block',
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#6366F1'
-                                            }}
-                                        ></Box>
-                                        {t('security.passwordRules.numberInfo', 'Password must contain at least one number')}
+                                        <CheckIcon sx={{ 
+                                            fontSize: '0.9rem', 
+                                            mr: 1, 
+                                            color: isDarkMode ? '#a78bfa' : '#7c3aed'
+                                        }} />
+                                        {t('security.passwordRules.numberInfo', 'One number')}
                                     </li>
                                 )}
                                 {passwordRules.requireUppercase && (
@@ -1882,21 +2087,17 @@ const Users = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         marginBottom: '8px',
-                                        color: '#4B5563'
+                                        color: isDarkMode ? '#cbd5e1' : '#4B5563',
+                                        background: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px'
                                     }}>
-                                        <Box 
-                                            component="span" 
-                                            sx={{ 
-                                                mr: 1, 
-                                                color: '#6366F1',
-                                                display: 'inline-block',
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#6366F1'
-                                            }}
-                                        ></Box>
-                                        {t('security.passwordRules.uppercaseInfo', 'Password must contain at least one uppercase letter')}
+                                        <CheckIcon sx={{ 
+                                            fontSize: '0.9rem', 
+                                            mr: 1, 
+                                            color: isDarkMode ? '#a78bfa' : '#7c3aed'
+                                        }} />
+                                        {t('security.passwordRules.uppercaseInfo', 'One uppercase letter')}
                                     </li>
                                 )}
                                 {passwordRules.requireSpecialChars && (
@@ -1904,21 +2105,17 @@ const Users = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         marginBottom: '8px',
-                                        color: '#4B5563'
+                                        color: isDarkMode ? '#cbd5e1' : '#4B5563',
+                                        background: isDarkMode ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px'
                                     }}>
-                                        <Box 
-                                            component="span" 
-                                            sx={{ 
-                                                mr: 1, 
-                                                color: '#6366F1',
-                                                display: 'inline-block',
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#6366F1'
-                                            }}
-                                        ></Box>
-                                        {t('security.passwordRules.specialInfo', 'Password must contain at least one special character')}
+                                        <CheckIcon sx={{ 
+                                            fontSize: '0.9rem', 
+                                            mr: 1, 
+                                            color: isDarkMode ? '#a78bfa' : '#7c3aed'
+                                        }} />
+                                        {t('security.passwordRules.specialInfo', 'One special character')}
                                     </li>
                                 )}
                             </Box>
@@ -1927,36 +2124,43 @@ const Users = () => {
                 </DialogContent>
                 <DialogActions className="dialog-actions" sx={{ 
                     flexDirection: isMobile ? 'column-reverse' : 'row',
-                    padding: isMobile ? '16px 24px 32px' : undefined,
-                    backgroundColor: isMobile ? 'white' : undefined
+                    padding: isMobile ? '16px 24px 32px' : '24px 32px',
+                    background: isDarkMode ? '#1a1d23' : '#fff',
+                    gap: 2
                 }}>
                     <Button 
                         onClick={handleCancel} 
                         startIcon={<CloseIcon />} 
                         className="cancel-button"
                         fullWidth={isMobile}
-                        sx={{ 
-                            mt: isMobile ? 1 : 0,
-                            borderRadius: isMobile ? '8px' : undefined,
-                            border: isMobile ? '1px solid #D1D5DB' : undefined,
-                            color: isMobile ? '#6B7280' : undefined
-                        }}
                         variant="outlined"
+                        sx={{ 
+                            borderRadius: '12px',
+                            padding: '10px 24px',
+                            color: isDarkMode ? '#cbd5e1' : '#6B7280',
+                            borderColor: isDarkMode ? 'rgba(51, 65, 85, 0.5)' : '#E5E7EB',
+                            background: isDarkMode ? 'rgba(30, 41, 59, 0.4)' : 'white',
+                            fontWeight: 600
+                        }}
                     >
                         {t('users.cancel', 'Cancel')}
                     </Button>
                     <Button 
                         onClick={handleSubmit} 
                         variant="contained" 
-                        startIcon={<SaveIcon />}
+                        startIcon={editingUser !== null ? <SaveIcon /> : <AddIcon />}
                         className="create-button"
                         fullWidth={isMobile}
                         sx={{
-                            borderRadius: isMobile ? '8px' : undefined,
-                            background: isMobile ? 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)' : undefined
+                            borderRadius: '12px',
+                            padding: '10px 24px',
+                            background: 'linear-gradient(45deg, #4338ca 0%, #6d28d9 100%)',
+                            boxShadow: '0 10px 25px rgba(79, 70, 229, 0.4)',
+                            fontWeight: 600,
+                            transition: 'all 0.3s ease'
                         }}
                     >
-                        {editingUser !== null ? t('users.save', 'Save') : t('users.create', 'Create')}
+                        {editingUser !== null ? t('users.save', 'Update User') : t('users.create', 'Create User')}
                     </Button>
                 </DialogActions>
             </Dialog>

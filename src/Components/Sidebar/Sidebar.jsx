@@ -85,11 +85,8 @@ const Sidebar = () => {
     useEffect(() => {
         if (isTablet && !isMinimized) {
             setIsMinimized(true);
-        } else if (isDesktop && isMinimized && !isMobile) {
-            // Sur desktop, revenir au mode complet si ce n'est pas explicitement minimisé par l'utilisateur
-            setIsMinimized(false);
         }
-    }, [isTablet, isDesktop, isMinimized, setIsMinimized, isMobile]);
+    }, [isTablet, isMinimized, setIsMinimized]);
 
     // Fetch user-specific access data
     useEffect(() => {
