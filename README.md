@@ -36,56 +36,71 @@ Titrit Technologies est une application web moderne développée avec React.js q
 - **ESLint** - Analyse statique du code
 - **Autoprefixer & PostCSS** - Optimisation CSS
 - **HTTPS en développement** - Utilisation de certificats SSL locaux (mkcert)
+- **Playwright** - Tests end-to-end (E2E)
 
 ## Structure du projet
 
 ```
 src/
 ├── Components/             # Composants React
-│   ├── LoginForm/         # Formulaire de connexion
-│   ├── Sidebar/           # Barre latérale de navigation
-│   ├── Dashboard/         # Composants du tableau de bord
-│   │   ├── Admin/         # Gestion administrative (utilisateurs, profils, sécurité)
-│   │   ├── TokenManager/  # Gestion des tokens
-│   │   ├── IssuerTSP/     # Émetteur TSP
-│   │   ├── ChargeBack/    # Gestion des remboursements
-│   │   └── Transactions/  # Gestion des transactions
-│   └── Utils/             # Composants utilitaires
-├── context/               # Contextes React pour la gestion d'état globale
-│   ├── AuthContext.jsx    # Gestion de l'authentification
-│   ├── ThemeContext.jsx   # Gestion du thème (clair/sombre)
+│   ├── Dashboard/          # Composants du tableau de bord
+│   │   ├── Admin/          # Gestion administrative (utilisateurs, profils, sécurité)
+│   │   ├── TokenManager/   # Gestion des tokens
+│   │   │   ├── RiskManagement.jsx  # Module de gestion des risques
+│   │   │   ├── StepUp.jsx          # Module d'authentification renforcée
+│   │   │   ├── FraudTeam.jsx       # Module pour l'équipe anti-fraude
+│   │   │   └── CallCenter.jsx      # Module pour le centre d'appel
+│   │   ├── IssuerTSP/      # Émetteur TSP
+│   │   ├── ChargeBack/     # Gestion des remboursements
+│   │   └── Transactions/   # Gestion des transactions
+│   ├── LoginForm/          # Formulaire de connexion
+│   ├── Sidebar/            # Barre latérale de navigation
+│   ├── Layout/             # Composants de mise en page
+│   ├── Mobile/             # Composants spécifiques aux appareils mobiles
+│   ├── LanguageSelector/   # Sélecteur de langue
+│   ├── PrivateRoute/       # Protection des routes
+│   └── Utils/              # Composants utilitaires
+├── context/                # Contextes React pour la gestion d'état globale
+│   ├── AuthContext.jsx     # Gestion de l'authentification
+│   ├── ThemeContext.jsx    # Gestion du thème (clair/sombre)
 │   ├── LanguageContext.jsx # Gestion des langues
-│   └── MenuContext.jsx    # Gestion de l'état du menu
-├── services/              # Services d'API et utilitaires
-│   ├── api.js             # Service principal d'API
-│   ├── AuthService.js     # Services d'authentification
-│   ├── UserService.js     # Services de gestion des utilisateurs
-│   ├── ProfileService.js  # Services de gestion des profils
-│   └── ModuleService.js   # Services de gestion des modules
-├── translations/          # Fichiers de traduction
-│   ├── en.js             # Traductions anglaises
-│   ├── fr.js             # Traductions françaises
-│   ├── ar.js             # Traductions arabes
-│   └── es.js             # Traductions espagnoles
-├── routes/                # Configuration des routes
-├── config/                # Fichiers de configuration
-├── App.js                 # Composant principal de l'application
-└── index.js              # Point d'entrée de l'application
+│   └── MenuContext.jsx     # Gestion de l'état du menu
+├── services/               # Services d'API et utilitaires
+│   ├── api.js              # Service principal d'API
+│   ├── AuthService.js      # Services d'authentification
+│   ├── UserService.js      # Services de gestion des utilisateurs
+│   ├── ProfileService.js   # Services de gestion des profils
+│   ├── TokenService.js     # Services de gestion des tokens
+│   └── ModuleService.js    # Services de gestion des modules
+├── translations/           # Fichiers de traduction
+│   ├── en.js               # Traductions anglaises
+│   ├── fr.js               # Traductions françaises
+│   ├── ar.js               # Traductions arabes
+│   └── es.js               # Traductions espagnoles
+├── routes/                 # Configuration des routes
+├── config/                 # Fichiers de configuration
+├── styles/                 # Styles globaux et thèmes
+├── utils/                  # Fonctions utilitaires
+├── App.js                  # Composant principal de l'application
+└── index.js                # Point d'entrée de l'application
 ```
 
 ## Fonctionnalités principales
 
 ### Administration
-- **Gestion des utilisateurs** - Création, modification, suppression et recherche d'utilisateurs
-- **Gestion des profils** - Définition de rôles et de permissions pour les utilisateurs
+- **Gestion des utilisateurs** - Interface moderne pour la création, modification, suppression et recherche d'utilisateurs
+- **Gestion des profils** - Définition de rôles et de permissions pour les utilisateurs avec interface visuelle avancée
 - **Paramètres de sécurité** - Configuration des règles de mot de passe et des politiques de sécurité
 - **Gestion des clients** - Interface pour la gestion des clients et leur configuration
+- **Gestion des traductions** - Import/export des traductions via fichiers Excel
 
 ### Token Manager
-- **Gestion des risques** - Évaluation et gestion des risques liés aux tokens
-- **Step-Up** - Authentification renforcée pour les transactions sensibles
-- **Équipe anti-fraude** - Outils pour l'équipe de gestion des fraudes
-- **Centre d'appel** - Interface pour le support client
+- **Gestion des risques (Risk Management)** - Module implémenté pour l'évaluation et la gestion des risques liés aux tokens
+- **Step-Up Authentication** - Interface implémentée pour la gestion de l'authentification renforcée pour les transactions sensibles
+- **Équipe anti-fraude (Fraud Team)** - Composant implémenté pour l'équipe de gestion des fraudes
+- **Centre d'appel (Call Center)** - Interface implémentée pour le support client
+- **Organisation modulaire** - Structure bien définie avec routing dynamique et composants indépendants
+- **Intégration complète** - Intégration avec les systèmes d'authentification et de gestion des permissions existants
 
 ### Issuer TSP
 - **Gestion des tokens** - Création et gestion des tokens
@@ -98,11 +113,12 @@ src/
 
 ### Fonctionnalités transversales
 - **Multi-langue** - Support de plusieurs langues (anglais, français, arabe, espagnol)
-- **Thème sombre/clair** - Personnalisation de l'interface utilisateur
-- **Interface responsive** - Adaptation à différentes tailles d'écran
+- **Thème sombre/clair** - Personnalisation de l'interface utilisateur avec changement dynamique
+- **Interface responsive** - Adaptation à différentes tailles d'écran, y compris les appareils mobiles
 - **Contrôle d'accès** - Accès basé sur les rôles et les permissions
-- **Système de notifications** - Affichage de messages d'information et d'erreur
+- **Système de notifications** - Affichage de messages d'information et d'erreur contextuels
 - **Import/Export** - Fonctionnalités pour importer et exporter des données (notamment les traductions)
+- **Design moderne** - Interface utilisateur intuitive et esthétique avec animations et transitions fluides
 
 ## Installation et configuration
 
@@ -156,6 +172,7 @@ L'application utilise un service API centralisé dans `src/services/api.js` avec
 - Gestion automatique des cookies de session
 - Gestion des erreurs et des tentatives de reconnexion
 - Support pour différents endpoints et méthodes
+- Mécanismes de fallback pour la compatibilité avec différentes versions d'API
 
 ### Variables d'environnement
 Créez un fichier `.env` à la racine du projet avec le contenu suivant:
@@ -184,45 +201,59 @@ const getUserData = async (userId) => {
 ### Processus d'authentification
 1. L'utilisateur saisit ses identifiants sur la page de connexion
 2. Les identifiants sont envoyés à l'API d'authentification
-3. Un cookie de session est défini après une authentification réussie
-4. Ce cookie est automatiquement inclus dans toutes les requêtes suivantes
+3. Un cookie de session et/ou un token JWT est défini après une authentification réussie
+4. Ces informations d'authentification sont automatiquement incluses dans toutes les requêtes suivantes
+5. Une vérification automatique de l'expiration du token est effectuée
 
 ### Sécurité des mots de passe
-L'application applique des règles strictes pour les mots de passe:
-- Longueur minimale (8 caractères par défaut)
-- Combinaison de lettres majuscules et minuscules
-- Inclusion de chiffres
-- Caractères spéciaux (facultatif mais recommandé)
+L'application applique des règles configurable pour les mots de passe:
+- Longueur minimale (configurable, 8 caractères par défaut)
+- Combinaison de lettres majuscules et minuscules (configurable)
+- Inclusion de chiffres (configurable)
+- Caractères spéciaux (configurable)
+- Politique de tentatives de connexion (verrouillage après X tentatives échouées)
+- Politique d'expiration des mots de passe
 
 ### Protection des routes
 Toutes les routes protégées utilisent des composants d'autorisation qui vérifient:
 - L'authentification de l'utilisateur
 - Les permissions basées sur le profil de l'utilisateur
 - L'accès aux modules spécifiques
+- Redirection automatique vers la page de connexion en cas d'authentification invalide
 
 ### HTTPS en développement
 L'application utilise HTTPS même en environnement de développement pour assurer la sécurité des cookies et des données transmises. Cette configuration utilise mkcert pour générer des certificats SSL locaux.
 
 ## Gestion des utilisateurs et des profils
 
+### Interface utilisateur modernisée
+- Design visuellement attrayant avec grilles et cartes
+- Tableaux de données interactifs avec fonctionnalités avancées
+- Formulaires avec validation en temps réel
+- Gestion des statuts utilisateur (actif, inactif, bloqué, suspendu)
+- Avatar généré automatiquement à partir des initiales
+
 ### Création d'utilisateurs
 Les administrateurs peuvent créer de nouveaux utilisateurs avec les informations suivantes:
-- Informations personnelles (nom, prénom, email)
+- Informations personnelles (nom, prénom)
 - Profil assigné (détermine les permissions)
-- Statut (actif, inactif, bloqué, etc.)
-- Informations de contact
+- Statut (actif, inactif, bloqué, suspendu)
+- Informations de contact (email, téléphone)
+- Paramètres de sécurité personnalisables
 
 ### Profils et permissions
 Les profils définissent l'accès aux différents modules et fonctionnalités:
-- Chaque profil peut être configuré avec des permissions spécifiques
-- Les permissions sont organisées par modules et menus
-- Les utilisateurs héritent des permissions de leur profil assigné
+- Interface visuelle pour configurer les permissions
+- Permissions organisées par modules et fonctionnalités
+- Affichage visuel des niveaux d'accès par couleur
+- Import/export des configurations de profil
 
 ### Interface de gestion avancée
 - Tableaux de données interactifs avec MUI X Data Grid
 - Pagination, tri et filtrage des listes d'utilisateurs et de profils
 - Opérations par lots (suppression multiple, changement de statut, etc.)
-- Recherche avancée
+- Recherche avancée et filtres multi-critères
+- Vue en grille ou en liste avec basculement facile
 
 ## Internationalisation (i18n)
 
@@ -236,6 +267,7 @@ Les profils définissent l'accès aux différents modules et fonctionnalités:
 1. Les traductions sont stockées dans des fichiers JavaScript par langue
 2. L'interface permet d'exporter et d'importer des traductions via Excel
 3. L'application adapte automatiquement la direction du texte pour l'arabe (RTL)
+4. Sélecteur de langue intuitif avec drapeaux
 
 ### Modèle de traduction
 Un modèle Excel est disponible dans `public/assets/templates/translations_template.xlsx` pour faciliter l'ajout de nouvelles traductions.
@@ -259,18 +291,20 @@ const MyComponent = () => {
 ## Thème et personnalisation
 
 ### Système de thème
-L'application implémente un système de thèmes permettant aux utilisateurs de basculer entre les modes clair et sombre.
+L'application implémente un système de thèmes permettant aux utilisateurs de basculer entre les modes clair et sombre, avec un rendu visuellement cohérent.
 
 ### Composants adaptés au thème
 - Tous les composants réagissent au changement de thème
 - La barre latérale, les formulaires, les tableaux et autres éléments sont stylisés pour les deux modes
 - Les préférences de thème sont sauvegardées pour chaque utilisateur
+- Bouton de basculement de thème avec animation fluide
 
 ### Personnalisation de l'interface
 L'interface utilisateur peut être personnalisée de plusieurs façons:
 - Barre latérale rétractable pour maximiser l'espace de travail
 - Adaptation aux différentes tailles d'écran (responsive design)
 - Options d'accessibilité conformes aux normes WCAG
+- Animations et transitions fluides pour une expérience utilisateur améliorée
 
 ## Notifications système
 
