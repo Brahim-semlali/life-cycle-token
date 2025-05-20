@@ -18,24 +18,89 @@ export const loadModules = async () => {
         }
 
         // Utiliser l'API pour récupérer les modules
-        const modules = await api.getModules();
-        
-        if (modules && Array.isArray(modules)) {
-            console.log(`${modules.length} modules chargés avec succès`);
-            cachedModules = modules; // Stocker en cache uniquement les modules provenant de l'API
-            return modules;
+        try {
+            const modules = await api.getModules();
+            
+            if (modules && Array.isArray(modules)) {
+                console.log(`${modules.length} modules chargés avec succès depuis l'API`);
+                console.log("Modules from API:", modules);
+                cachedModules = modules; // Stocker en cache uniquement les modules provenant de l'API
+                return modules;
+            }
+            
+            console.warn("Aucun module n'a été retourné par l'API");
+            return [];
+        } catch (apiError) {
+            // Silence 403 errors
+            if (apiError.response && apiError.response.status === 403) {
+                console.log('Accès refusé (403) lors du chargement des modules - utilisation des modules par défaut');
+                return [];
+            }
+            console.error('Erreur lors du chargement des modules:', apiError);
+            cachedModules = [];
+            return [];
         }
-        
-        console.warn("Aucun module n'a été retourné par l'API");
-        return [];
     } catch (error) {
-        console.error('Erreur lors du chargement des modules:', error);
-        // Ne pas retourner de données fictives en cas d'erreur
-        // pour éviter l'utilisation de fausses données
+        // Silence general errors
+        console.log('Erreur générale lors du chargement des modules - utilisation des modules par défaut');
         cachedModules = [];
         return [];
     }
 };
+
+// Fonction utilitaire pour obtenir un nom de module plus descriptif par ID
+export function getModuleNameById(moduleId) {
+    // D'abord, chercher dans le cache des modules
+    if (cachedModules.length > 0) {
+        const module = cachedModules.find(m => m.id === moduleId);
+        if (module && module.title) {
+            return module.title;
+        }
+    }
+    
+    // Mapping des IDs de modules connus vers des noms plus descriptifs
+    const moduleNames = {
+        1: 'Administration',
+        2: 'Issuer TSP',
+        3: 'Token Manager',
+        4: 'ChargeBack',
+        5: 'Transactions',
+        6: 'Security',
+        7: 'Dashboard',
+        8: 'Settings',
+        9: 'Reports',
+        10: 'Audit',
+    };
+    
+    return moduleNames[moduleId] || `Module ${moduleId}`;
+}
+
+// Fonction utilitaire pour obtenir un code de module par ID
+export function getModuleCodeById(moduleId) {
+    // D'abord, chercher dans le cache des modules
+    if (cachedModules.length > 0) {
+        const module = cachedModules.find(m => m.id === moduleId);
+        if (module && module.code) {
+            return module.code;
+        }
+    }
+    
+    // Mapping des IDs de modules connus vers des codes
+    const moduleCodes = {
+        1: 'ADMIN',
+        2: 'ITSP',
+        3: 'TOKEN',
+        4: 'CHARGEBACK',
+        5: 'TRANSACTIONS',
+        6: 'SECURITY',
+        7: 'DASHBOARD',
+        8: 'SETTINGS',
+        9: 'REPORTS',
+        10: 'AUDIT',
+    };
+    
+    return moduleCodes[moduleId] || `MODULE_${moduleId}`;
+}
 
 /**
  * Charge tous les menus (sous-modules) depuis l'API
@@ -50,24 +115,99 @@ export const loadMenus = async () => {
         }
 
         // Utiliser l'API pour récupérer les menus
-        const menus = await api.getMenus();
-        
-        if (menus && Array.isArray(menus)) {
-            console.log(`${menus.length} menus chargés avec succès`);
-            cachedMenus = menus; // Stocker en cache uniquement les menus provenant de l'API
-            return menus;
+        try {
+            const menus = await api.getMenus();
+            
+            if (menus && Array.isArray(menus)) {
+                console.log(`${menus.length} menus chargés avec succès depuis l'API`);
+                console.log("Menus from API:", menus);
+                cachedMenus = menus; // Stocker en cache uniquement les menus provenant de l'API
+                return menus;
+            }
+            
+            console.warn("Aucun menu n'a été retourné par l'API");
+            return [];
+        } catch (apiError) {
+            // Silence 403 errors
+            if (apiError.response && apiError.response.status === 403) {
+                console.log('Accès refusé (403) lors du chargement des menus - utilisation des menus par défaut');
+                return [];
+            }
+            console.error('Erreur lors du chargement des menus:', apiError);
+            cachedMenus = [];
+            return [];
         }
-        
-        console.warn("Aucun menu n'a été retourné par l'API");
-        return [];
     } catch (error) {
-        console.error('Erreur lors du chargement des menus:', error);
-        // Ne pas retourner de données fictives en cas d'erreur
-        // pour éviter l'utilisation de fausses données
+        // Silence general errors
+        console.log('Erreur générale lors du chargement des menus - utilisation des menus par défaut');
         cachedMenus = [];
         return [];
     }
 };
+
+// Fonction utilitaire pour obtenir un nom de menu plus descriptif par ID
+export function getMenuNameById(menuId) {
+    // D'abord, chercher dans le cache des menus
+    if (cachedMenus.length > 0) {
+        const menu = cachedMenus.find(m => m.id === menuId);
+        if (menu && menu.title) {
+            return menu.title;
+        }
+    }
+    
+    // Mapping des IDs de menus connus vers des noms plus descriptifs
+    const menuNames = {
+        1: 'Profiles',
+        2: 'Users',
+        3: 'Security',
+        4: 'Certificates',
+        5: 'Validation',
+        6: 'Settings',
+        7: 'Tokens',
+        8: 'Distribution',
+        9: 'Monitoring',
+        10: 'Management',
+        11: 'Contracts',
+        12: 'Billing',
+        13: 'Dashboard',
+        14: 'Reports',
+        15: 'Audit',
+    };
+    
+    return menuNames[menuId] || `Menu ${menuId}`;
+}
+
+// Fonction utilitaire pour obtenir un code de menu par ID
+export function getMenuCodeById(menuId) {
+    // D'abord, chercher dans le cache des menus
+    if (cachedMenus.length > 0) {
+        const menu = cachedMenus.find(m => m.id === menuId);
+        if (menu && menu.code) {
+            return menu.code;
+        }
+    }
+    
+    // Mapping des IDs de menus connus vers des codes
+    const menuCodes = {
+        1: 'PROFILES',
+        2: 'USERS',
+        3: 'SECURITY',
+        4: 'CERTIFICATES',
+        5: 'VALIDATION',
+        6: 'SETTINGS',
+        7: 'TOKENS',
+        8: 'DISTRIBUTION',
+        9: 'MONITORING',
+        10: 'MANAGEMENT',
+        11: 'CONTRACTS',
+        12: 'BILLING',
+        13: 'DASHBOARD',
+        14: 'REPORTS',
+        15: 'AUDIT',
+    };
+    
+    return menuCodes[menuId] || `MENU_${menuId}`;
+}
 
 /**
  * Charge à la fois les modules et les menus
@@ -102,17 +242,49 @@ export const getUserModules = (userModuleIds) => {
         return [];
     }
     
-    // Vérifier si le cache de modules est vide
+    // Normaliser les IDs de modules
+    const normalizedIds = userModuleIds.map(moduleId => {
+        // Si moduleId est un objet (comme retourné par l'API)
+        if (typeof moduleId === 'object' && moduleId !== null) {
+            // Retourner directement l'objet module
+            return moduleId;
+        }
+        // Si moduleId est un nombre ou une chaîne
+        return typeof moduleId === 'string' && !isNaN(parseInt(moduleId)) 
+            ? parseInt(moduleId, 10) 
+            : moduleId;
+    }).filter(id => id !== undefined && id !== null);
+    
+    console.log("Normalized module IDs:", normalizedIds);
+    
+    // Si le cache est vide, retourner les modules de l'API directement
     if (cachedModules.length === 0) {
-        console.warn("Cache de modules vide - impossible de récupérer les modules");
+        console.log("Cache de modules vide - utilisation des modules fournis");
+        // Si les modules sont déjà des objets complets (comme retournés par l'API)
+        const apiModules = normalizedIds.filter(module => 
+            typeof module === 'object' && module !== null && (module.id || module.code || module.title)
+        );
+        
+        if (apiModules.length > 0) {
+            console.log("Modules complets trouvés dans les données d'entrée:", apiModules);
+            return apiModules;
+        }
+        
+        console.log("Cache de modules vide - aucun module disponible");
         return [];
     }
     
-    // Filtrer les modules en fonction des IDs fournis
-    const modules = cachedModules.filter(module => userModuleIds.includes(module.id));
-    console.log(`Trouvé ${modules.length} modules correspondant aux IDs`);
-    
-    return modules;
+    // Sinon, filtrer les modules du cache
+    return normalizedIds.map(moduleId => {
+        // Si moduleId est déjà un objet module complet
+        if (typeof moduleId === 'object' && moduleId !== null) {
+            return moduleId;
+        }
+        
+        // Sinon, chercher dans le cache par ID
+        const module = cachedModules.find(m => m.id === moduleId);
+        return module || { id: moduleId, code: `MODULE_${moduleId}`, title: `Module ${moduleId}` };
+    });
 };
 
 /**
@@ -125,100 +297,181 @@ export const getUserMenus = (userMenuIds) => {
     console.log("cachedMenus available:", cachedMenus.length);
     
     if (!userMenuIds || !Array.isArray(userMenuIds) || userMenuIds.length === 0) {
-        console.warn("Aucun ID de menu fourni");
+        console.log("Aucun ID de menu fourni");
         return [];
     }
     
-    // Vérifier si le cache de menus est vide
+    // Normaliser les IDs de menus
+    const normalizedIds = userMenuIds.map(menuId => {
+        // Si menuId est un objet (comme retourné par l'API)
+        if (typeof menuId === 'object' && menuId !== null) {
+            // Retourner directement l'objet menu
+            return menuId;
+        }
+        // Si menuId est un nombre ou une chaîne
+        return typeof menuId === 'string' && !isNaN(parseInt(menuId)) 
+            ? parseInt(menuId, 10) 
+            : menuId;
+    }).filter(id => id !== undefined && id !== null);
+    
+    console.log("Normalized menu IDs:", normalizedIds);
+    
+    // Si le cache est vide, retourner les menus de l'API directement
     if (cachedMenus.length === 0) {
-        console.warn("Cache de menus vide - impossible de récupérer les menus");
+        console.log("Cache de menus vide - utilisation des menus fournis");
+        // Si les menus sont déjà des objets complets (comme retournés par l'API)
+        const apiMenus = normalizedIds.filter(menu => 
+            typeof menu === 'object' && menu !== null && (menu.id || menu.code || menu.title)
+        );
+        
+        if (apiMenus.length > 0) {
+            console.log("Menus complets trouvés dans les données d'entrée:", apiMenus);
+            return apiMenus;
+        }
+        
+        console.log("Cache de menus vide - aucun menu disponible");
         return [];
     }
     
-    // Filtrer les menus en fonction des IDs fournis
-    const menus = cachedMenus.filter(menu => userMenuIds.includes(menu.id));
-    console.log(`Trouvé ${menus.length} menus correspondant aux IDs`);
-    
-    return menus;
+    // Sinon, filtrer les menus du cache
+    return normalizedIds.map(menuId => {
+        // Si menuId est déjà un objet menu complet
+        if (typeof menuId === 'object' && menuId !== null) {
+            return menuId;
+        }
+        
+        // Sinon, chercher dans le cache par ID
+        const menu = cachedMenus.find(m => m.id === menuId);
+        return menu || { id: menuId, code: `MENU_${menuId}`, title: `Menu ${menuId}` };
+    });
 };
 
 /**
- * Construit la structure complète des modules avec leurs sous-menus pour l'utilisateur
+ * Construit la structure des modules et sous-modules pour l'interface
  * @param {Array} userModuleIds - IDs des modules auxquels l'utilisateur a accès
  * @param {Array} userMenuIds - IDs des menus auxquels l'utilisateur a accès
- * @returns {Array} Structure complète pour la sidebar
+ * @returns {Array} Structure des modules et sous-modules pour l'interface
  */
 export const buildModuleStructure = (userModuleIds, userMenuIds) => {
-    console.log("buildModuleStructure called with:", { 
-        userModuleIds: JSON.stringify(userModuleIds), 
-        userMenuIds: JSON.stringify(userMenuIds),
+    console.log("buildModuleStructure called with:", {
+        userModuleIds,
+        userMenuIds,
         cachedModules: cachedModules.length,
         cachedMenus: cachedMenus.length
     });
     
-    // Normalisation des IDs (peut être des objets ou des nombres)
-    const normalizedModuleIds = (userModuleIds || []).map(id => {
-        if (typeof id === 'object' && id !== null) {
-            return id.id;
+    // Normaliser les données d'entrée
+    let normalizedModuleIds = [];
+    let normalizedMenus = [];
+    
+    // Traiter les modules
+    if (userModuleIds) {
+        if (Array.isArray(userModuleIds)) {
+            // Cas 1: userModuleIds est un tableau d'objets ou d'IDs
+            normalizedModuleIds = userModuleIds;
+        } else if (typeof userModuleIds === 'string') {
+            try {
+                // Cas 2: userModuleIds est une chaîne JSON
+                const parsed = JSON.parse(userModuleIds);
+                normalizedModuleIds = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.error('Erreur lors du parsing des modules:', e);
+                normalizedModuleIds = [];
+            }
         }
-        return id;
-    }).filter(id => id !== undefined && id !== null);
-    
-    // Normalisation des menus (peut être des objets avec module ID)
-    const normalizedMenus = (userMenuIds || []).map(menu => {
-        if (typeof menu === 'object' && menu !== null) {
-            return {
-                id: menu.id,
-                code: menu.code,
-                title: menu.title,
-                module: menu.module || menu.moduleId
-            };
-        }
-        return { id: menu };
-    }).filter(menu => menu.id !== undefined && menu.id !== null);
-    
-    console.log("Normalized data:", { 
-        moduleIds: normalizedModuleIds, 
-        menus: normalizedMenus 
-    });
-    
-    // Si aucun module n'est autorisé, ne pas en ajouter automatiquement
-    if (normalizedModuleIds.length === 0) {
-        console.log("Aucun module autorisé pour cet utilisateur");
-        return [];
     }
     
-    // Récupérer les modules de l'utilisateur
-    const userModules = getUserModules(normalizedModuleIds);
-    console.log("Modules récupérés:", userModules);
+    // Traiter les menus
+    if (userMenuIds) {
+        if (Array.isArray(userMenuIds)) {
+            // Cas 1: userMenuIds est un tableau d'objets ou d'IDs
+            normalizedMenus = userMenuIds;
+        } else if (typeof userMenuIds === 'string') {
+            try {
+                // Cas 2: userMenuIds est une chaîne JSON
+                const parsed = JSON.parse(userMenuIds);
+                normalizedMenus = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.error('Erreur lors du parsing des menus:', e);
+                normalizedMenus = [];
+            }
+        }
+    }
     
-    // Construire la structure complète
-    const structure = userModules.map(module => {
-        // Filtrer les sous-menus qui appartiennent à ce module
-        const moduleMenus = normalizedMenus.filter(menu => 
-            menu.module === module.id
-        );
+    console.log("Normalized data:", {
+        moduleIds: normalizedModuleIds,
+        menus: normalizedMenus
+    });
+    
+    // Récupérer les modules complets
+    const modules = getUserModules(normalizedModuleIds);
+    console.log("Modules récupérés:", modules);
+    
+    // Récupérer les menus complets
+    const menus = getUserMenus(normalizedMenus);
+    console.log("Menus récupérés:", menus);
+    
+    // Construire la structure des modules et sous-modules
+    const structure = modules.map(module => {
+        // Trouver les menus associés à ce module
+        const moduleMenus = menus.filter(menu => {
+            // Check if menu is associated with this module by moduleId property
+            if (menu.moduleId && String(menu.moduleId) === String(module.id)) {
+                return true;
+            }
+            
+            // Check if menu is associated with this module by code
+            if (menu.moduleCode && module.code && 
+                menu.moduleCode.toLowerCase() === module.code.toLowerCase()) {
+                return true;
+            }
+            
+            // Check if menu is associated with this module by module property
+            if (menu.module && String(menu.module) === String(module.id)) {
+                return true;
+            }
+            
+            // For menus from API with module property
+            if (normalizedMenus.some(nm => 
+                typeof nm === 'object' && nm !== null &&
+                nm.id === menu.id && 
+                nm.module && 
+                String(nm.module) === String(module.id)
+            )) {
+                return true;
+            }
+            
+            return false;
+        });
         
-        console.log(`Menus pour le module ${module.code}:`, moduleMenus);
+        console.log(`Menus pour le module ${module.code || module.id}:`, moduleMenus);
         
         // Convertir le code du module en chemin URL
         const getModulePath = (code) => {
-            switch(code?.toLowerCase()) {
+            if (!code) return 'module';
+            
+            switch(code.toLowerCase()) {
                 case 'lcm': return 'token-manager';
                 case 'itcp': return 'issuer-tsp';
                 case 'semlali': return 'security';
-                default: return code?.toLowerCase();
+                case 'token': return 'token-manager';  // Fix for TOKEN module code
+                case 'chargeback': return 'chargeback';
+                case 'transactions': return 'transactions';
+                case 'dashboard': return 'dashboard'; // Ensure Dashboard module has correct path
+                default: return code.toLowerCase();
             }
         };
 
         // Convertir le code du menu en chemin URL
         const getMenuPath = (code) => {
-            switch(code?.toLowerCase()) {
+            if (!code) return 'menu';
+            
+            switch(code.toLowerCase()) {
                 case 'risk_mgmt': return 'risk-management';
                 case 'step_up': return 'step-up';
                 case 'fraud_team': return 'fraud-team';
                 case 'call_center': return 'call-center';
-                default: return code?.toLowerCase();
+                default: return code.toLowerCase();
             }
         };
 
@@ -229,15 +482,14 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
             code: module.code || `MODULE_${module.id}`,
             title: module.title || module.name || `Module ${module.id}`,
             icon: module.icon || 'dashboard',
+            path: module.path || `/dashboard/${modulePath}`,
             // Transformer les menus en sous-modules
             submodules: moduleMenus.map(menu => ({
                 id: menu.id,
                 code: menu.code || `MENU_${menu.id}`,
                 title: menu.title || menu.name || `Menu ${menu.id}`,
                 path: `/dashboard/${modulePath}/${getMenuPath(menu.code)}`
-            })),
-            // Chemin direct pour les modules sans sous-menus
-            path: `/dashboard/${modulePath}`
+            }))
         };
     });
     
@@ -251,5 +503,9 @@ export default {
     loadModulesAndMenus,
     getUserModules,
     getUserMenus,
-    buildModuleStructure
-}; 
+    buildModuleStructure,
+    getModuleNameById,
+    getModuleCodeById,
+    getMenuNameById,
+    getMenuCodeById
+};

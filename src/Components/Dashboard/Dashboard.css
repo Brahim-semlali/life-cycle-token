@@ -1,0 +1,182 @@
+.dashboard-container {
+  transition: all 0.3s ease;
+}
+
+.dashboard-container.minimized {
+  margin-left: 5rem;
+  width: calc(100% - 5rem);
+  transition: all 0.3s ease;
+}
+
+.dashboard-container.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #3968d0 0%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0px 4px 12px rgba(79, 70, 229, 0.15);
+  letter-spacing: -0.5px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.dashboard-title {
+  font-size: 3.5rem !important;
+  font-weight: 700 !important;
+  text-align: center;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .dashboard-container {
+    margin-left: 0;
+    width: 100%;
+    padding: 1rem;
+  }
+  .dashboard-title {
+    font-size: 2.5rem !important;
+  }
+}
+
+/* Animation for cards */
+.card-animation {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-animation:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Animations pour les cartes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.MuiCard-root {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Animation pour les champs d'information */
+.MuiGrid-item {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.MuiGrid-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.MuiGrid-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.MuiGrid-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.MuiGrid-item:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.MuiGrid-item:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+/* Style pour les icônes */
+.material-icons {
+  transition: transform 0.2s ease;
+}
+
+.MuiBox-root:hover .material-icons {
+  transform: scale(1.1);
+}
+
+/* Animation pour l'avatar */
+@keyframes pulseAvatar {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.MuiAvatar-root {
+  animation: pulseAvatar 2s infinite;
+}
+
+/* Styles pour le mode sombre */
+.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+.dark-mode .MuiPaper-root {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+}
+
+.dark-mode .MuiTypography-root {
+  color: #e0e0e0;
+}
+
+.dark-mode .MuiBox-root {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Amélioration du formulaire de changement de mot de passe */
+.MuiDialogTitle-root {
+  position: relative;
+}
+
+.MuiTextField-root {
+  transition: transform 0.2s ease;
+}
+
+.MuiTextField-root:focus-within {
+  transform: translateY(-2px);
+}
+
+/* Animation pour le bouton de changement de mot de passe */
+@keyframes buttonPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.MuiButton-containedPrimary:not(:disabled) {
+  animation: buttonPulse 2s infinite;
+}
+
+/* Amélioration des transitions */
+.MuiDialog-paper {
+  transition: transform 0.3s ease !important;
+  transform: scale(0.95);
+}
+
+.MuiDialog-paper.MuiDialog-paperOpen {
+  transform: scale(1);
+} 

@@ -17,6 +17,7 @@ const DEFAULT_ICONS = {
     'CHARGEBACK': 'payments',
     'TRANSACTIONS': 'receipt_long',
     'SEMLALI': 'security',
+    'DASHBOARD': 'dashboard', // Added Dashboard module
     // Ajouter plus d'icônes par défaut si nécessaire
     'DEFAULT': 'dashboard' // Icône par défaut
 };
@@ -49,6 +50,10 @@ const SUBMENU_ICONS = {
 const ROUTE_MAPPING = {
     // Mappings pour corriger les routes singulier/pluriel
     '/dashboard/admin/profile': '/dashboard/admin/profiles',
+    // Fix for token route
+    '/dashboard/token/token': '/dashboard/issuer-tsp/token',
+    // Dashboard route
+    '/dashboard/dashboard': '/dashboard/dashboard',
     // Ajouter d'autres mappings si nécessaire
 };
 
@@ -97,48 +102,29 @@ const Sidebar = () => {
                 return;
             }
             
-            console.log("Tentative de récupération des données d'accès pour l'utilisateur:", user);
+            console.log("Utilisation des modules et menus depuis le contexte d'authentification");
             setIsLoading(true);
+            
             try {
-                // Utiliser la méthode implémentée dans l'API
-                const accessData = await api.getUserProfileAccess(user.id);
-                console.log("User access data:", accessData);
+                // Utiliser directement les modules et menus du contexte d'authentification
+                // qui sont déjà chargés depuis l'API
+                const modules = userModules || [];
+                const menus = userMenus || [];
                 
-                // Correction : extraire les menus depuis les modules
-                let modules = [];
-                let menus = [];
-                
-                if (accessData && Array.isArray(accessData.modules)) {
-                    // Extraire les IDs des modules
-                    modules = accessData.modules.map(m => m.id);
-                    
-                    // Extraire tous les menus imbriqués dans les modules
-                    accessData.modules.forEach(module => {
-                        if (module.menus && Array.isArray(module.menus)) {
-                            menus.push(...module.menus.map(menu => ({
-                                ...menu,
-                                module: module.id  // Ajouter l'ID du module parent
-                            })));
-                        }
-                    });
-                }
-                
-                console.log("Données d'accès extraites:", {
-                    modules: modules,
-                    menus: menus.map(m => ({ id: m.id, code: m.code, moduleId: m.module }))
+                console.log("Données d'accès du contexte:", {
+                    modules: modules.length,
+                    menus: menus.length
                 });
                 
                 setUserAccessData({ modules, menus });
             } catch (error) {
-                console.error("Error fetching user access:", error);
+                console.error("Error processing user access:", error);
                 setUserAccessData(null);
-            } finally {
-                setIsLoading(false);
             }
         };
         
         fetchUserAccess();
-    }, [user, isAuthenticated]);
+    }, [user, isAuthenticated, userModules, userMenus]);
 
     // Initialisation des états d'ouverture des modules
     useEffect(() => {
@@ -218,6 +204,12 @@ const Sidebar = () => {
         
         // Utiliser la route mappée si elle existe
         const normalizedPath = ROUTE_MAPPING[path] || path;
+        
+        // Special case for dashboard module
+        if (code === 'DASHBOARD' && location.pathname === '/dashboard/dashboard') {
+            return true;
+        }
+        
         return location.pathname === normalizedPath || 
                location.pathname.startsWith(normalizedPath + '/') || 
                location.pathname.includes(`/${code.toLowerCase()}`);
@@ -308,19 +300,50 @@ const Sidebar = () => {
                     console.log("Aucun utilisateur authentifié - aucun module affiché");
                     setUserModuleStructure([]);
                 }
+
+                // Always add Dashboard module to the structure
+                setUserModuleStructure(prevStructure => {
+                    // Check if Dashboard module already exists
+                    const dashboardExists = prevStructure.some(module => 
+                        module.code === 'DASHBOARD' || module.code === 'dashboard'
+                    );
+                    
+                    // Remove any existing Dashboard module to avoid duplicates
+                    const filteredStructure = prevStructure.filter(module => 
+                        module.code !== 'DASHBOARD' && module.code !== 'dashboard'
+                    );
+                    
+                    // Create Dashboard module with a unique ID that won't conflict
+                    const dashboardModule = {
+                        id: 'dashboard-module', // Using a string ID to ensure uniqueness
+                        code: 'DASHBOARD',
+                        title: t('dashboard.title', 'Tableau de bord'),
+                        icon: 'dashboard',
+                        path: '/dashboard/dashboard', // Explicit path to dashboard
+                        submodules: []
+                    };
+                    
+                    // Always add Dashboard module at the beginning of the array
+                    return [dashboardModule, ...filteredStructure];
+                });
             } catch (error) {
                 console.error("Erreur lors du chargement des modules et menus:", error);
                 // En cas d'erreur, ne rien afficher plutôt que d'afficher tout
                 setUserModuleStructure([]);
+            } finally {
+                // Set loading to false when finished loading modules
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 800); // Add a small delay to show the loading animation
             }
         };
         
         // Charger les modules uniquement si l'API a terminé de charger les données d'accès
         // ou si nous avons des modules dans le contexte d'authentification
-        if (!isLoading || userModules.length > 0 || allModules.length > 0) {
+        if (userModules.length > 0 || allModules.length > 0) {
             loadModulesData();
         }
-    }, [allModules, allMenus, userModules, userMenus, userAccessData, isLoading, isAuthenticated, user]);
+    }, [allModules, allMenus, userModules, userMenus, userAccessData, isAuthenticated, user]);
 
     // Fonction pour ajouter les icônes et corriger les chemins
     const addIconsToStructure = (moduleStructure) => {
@@ -442,92 +465,108 @@ const Sidebar = () => {
                     )}
                 </div>
                 <div className="sidebar-content">
-                    {userModuleStructure.map((module, moduleIndex) => (
-                        <div key={module.id} className="module-section" style={{"--module-index": moduleIndex}}>
-                            {/* Module principal - Cliquer pour ouvrir ou pour accéder directement si pas de sous-menus */}
-                            {module.submodules && module.submodules.length > 0 ? (
-                                // Module avec sous-menus
-                                <div
-                                    className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
-                                    onClick={(e) => toggleModule(module.code, e)}
-                                >
-                                    <span className="material-icons module-icon">
-                                        {module.icon}
-                                    </span>
-                                    {(!isMinimized || isMobile) && (
-                                        <>
-                                            <div className="module-text">{module.title}</div>
-                                            <span className={`material-icons module-toggle ${isModuleOpen[module.code] ? 'open' : ''}`}>
-                                                expand_more
-                                            </span>
-                                        </>
-                                    )}
-                                    {isMinimized && !isMobile && (
-                                        <>
-                                            <span className="tooltip-text">{module.title}</span>
-                                            
-                                            {/* Sous-menus immédiats en mode minimisé */}
-                                            <div className="module-submenu">
-                                                {module.submodules.map((submodule, index) => (
-                                                    <Link
-                                                        key={submodule.id}
-                                                        to={ROUTE_MAPPING[submodule.path] || submodule.path}
-                                                        className={isSubmoduleActive(submodule.path) ? "active" : ""}
-                                                        style={{"--item-index": index}}
-                                                    >
-                                                        <span className="material-icons submenu-icon">
-                                                            {submodule.icon}
-                                                        </span>
-                                                        <span className="submenu-text">{submodule.title}</span>
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ) : (
-                                // Module sans sous-menus - lien direct
-                                <Link 
-                                    to={ROUTE_MAPPING[module.path] || module.path}
-                                    className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
-                                >
-                                    <span className="material-icons module-icon">
-                                        {module.icon}
-                                    </span>
-                                    {(!isMinimized || isMobile) && (
-                                        <div className="module-text">{module.title}</div>
-                                    )}
-                                    {isMinimized && !isMobile && (
-                                        <span className="tooltip-text">{module.title}</span>
-                                    )}
-                                </Link>
-                            )}
-                            
-                            {/* Sous-menus (si présents) - Visible en mode non-minimisé ou sur mobile */}
-                            {((!isMinimized || isMobile) && module.submodules && module.submodules.length > 0 && isModuleOpen[module.code]) && (
-                                <div className="module-submenu open">
-                                    {module.submodules.map((submodule, index) => (
-                                        <Link
-                                            key={submodule.id}
-                                            to={ROUTE_MAPPING[submodule.path] || submodule.path}
-                                            className={isSubmoduleActive(submodule.path) ? "active" : ""}
-                                            style={{"--item-index": index}}
-                                            onClick={(e) => {
-                                                if (isMobile) {
-                                                    toggleMobileSidebar();
-                                                }
-                                            }}
-                                        >
-                                            <span className="material-icons submenu-icon">
-                                                {submodule.icon}
-                                            </span>
-                                            <span className="submenu-text">{submodule.title}</span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
+                    {isLoading ? (
+                        <div className="sidebar-loading">
+                            <div className="sidebar-loading-spinner"></div>
+                            <div className="sidebar-loading-text">{t('common.loading', 'Chargement...')}</div>
+                            <div className="sidebar-loading-modules">
+                                <div className="sidebar-loading-module"></div>
+                                <div className="sidebar-loading-module"></div>
+                                <div className="sidebar-loading-module"></div>
+                                <div className="sidebar-loading-module"></div>
+                                <div className="sidebar-loading-module"></div>
+                            </div>
                         </div>
-                    ))}
+                    ) : (
+                        <>
+                            {userModuleStructure.map((module, index) => (
+                                <div key={`${module.id}-${module.code}-${index}`} className="module-section" style={{"--module-index": index}}>
+                                    {/* Module principal - Cliquer pour ouvrir ou pour accéder directement si pas de sous-menus */}
+                                    {module.submodules && module.submodules.length > 0 ? (
+                                        // Module avec sous-menus
+                                        <div
+                                            className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
+                                            onClick={(e) => toggleModule(module.code, e)}
+                                        >
+                                            <span className="material-icons module-icon">
+                                                {module.icon}
+                                            </span>
+                                            {(!isMinimized || isMobile) && (
+                                                <>
+                                                    <div className="module-text">{module.title}</div>
+                                                    <span className={`material-icons module-toggle ${isModuleOpen[module.code] ? 'open' : ''}`}>
+                                                        expand_more
+                                                    </span>
+                                                </>
+                                            )}
+                                            {isMinimized && !isMobile && (
+                                                <>
+                                                    <span className="tooltip-text">{module.title}</span>
+                                                    
+                                                    {/* Sous-menus immédiats en mode minimisé */}
+                                                    <div className="module-submenu">
+                                                        {module.submodules.map((submodule, index) => (
+                                                            <Link
+                                                                key={`${submodule.id}-${submodule.code}-${index}`}
+                                                                to={ROUTE_MAPPING[submodule.path] || submodule.path}
+                                                                className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                                                style={{"--item-index": index}}
+                                                            >
+                                                                <span className="material-icons submenu-icon">
+                                                                    {submodule.icon}
+                                                                </span>
+                                                                <span className="submenu-text">{submodule.title}</span>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        // Module sans sous-menus - lien direct
+                                        <Link 
+                                            to={ROUTE_MAPPING[module.path] || module.path}
+                                            className={`module-item ${isModuleActive(module.path, module.code) ? "active" : ""}`}
+                                        >
+                                            <span className="material-icons module-icon">
+                                                {module.icon}
+                                            </span>
+                                            {(!isMinimized || isMobile) && (
+                                                <div className="module-text">{module.title}</div>
+                                            )}
+                                            {isMinimized && !isMobile && (
+                                                <span className="tooltip-text">{module.title}</span>
+                                            )}
+                                        </Link>
+                                    )}
+                                    
+                                    {/* Sous-menus (si présents) - Visible en mode non-minimisé ou sur mobile */}
+                                    {((!isMinimized || isMobile) && module.submodules && module.submodules.length > 0 && isModuleOpen[module.code]) && (
+                                        <div className="module-submenu open">
+                                            {module.submodules.map((submodule, index) => (
+                                                <Link
+                                                    key={`${submodule.id}-${submodule.code}-${index}`}
+                                                    to={ROUTE_MAPPING[submodule.path] || submodule.path}
+                                                    className={isSubmoduleActive(submodule.path) ? "active" : ""}
+                                                    style={{"--item-index": index}}
+                                                    onClick={(e) => {
+                                                        if (isMobile) {
+                                                            toggleMobileSidebar();
+                                                        }
+                                                    }}
+                                                >
+                                                    <span className="material-icons submenu-icon">
+                                                        {submodule.icon}
+                                                    </span>
+                                                    <span className="submenu-text">{submodule.title}</span>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </>
+                    )}
 
                     <div className="sidebar-footer">
                         <div className="settings-link">

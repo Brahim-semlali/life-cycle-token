@@ -85,6 +85,42 @@ const TokenStorage = {
         
         const timeLeft = parseInt(expiryTime, 10) - new Date().getTime();
         return Math.max(0, Math.floor(timeLeft / 1000));
+    },
+
+    // Vérifier si la fonction getUserId existe, sinon l'ajouter
+    // Fonction pour récupérer l'ID de l'utilisateur à partir du token JWT
+    getUserId() {
+        try {
+            const token = this.getToken();
+            if (!token) {
+                console.log('Aucun token trouvé, impossible de récupérer l\'ID utilisateur');
+                return null;
+            }
+            
+            // Décoder le token JWT pour récupérer les données utilisateur
+            const tokenParts = token.split('.');
+            if (tokenParts.length !== 3) {
+                console.warn('Format de token JWT invalide');
+                return null;
+            }
+            
+            // Décoder la partie payload (deuxième partie) du token
+            const payload = JSON.parse(atob(tokenParts[1]));
+            
+            // Récupérer l'ID utilisateur depuis différents champs possibles
+            const userId = payload.user_id || payload.id || payload.sub;
+            
+            if (!userId) {
+                console.warn('Aucun ID utilisateur trouvé dans le token');
+                return null;
+            }
+            
+            console.log(`ID utilisateur récupéré du token: ${userId}`);
+            return userId;
+        } catch (error) {
+            console.error('Erreur lors de la récupération de l\'ID utilisateur:', error);
+            return null;
+        }
     }
 };
 

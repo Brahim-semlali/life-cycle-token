@@ -966,3 +966,124 @@ body.sidebar-open {
         padding-top: 70px !important;
     }
 }
+
+/* Sidebar loading animation */
+.sidebar-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+}
+
+.sidebar-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid rgba(124, 58, 237, 0.1);
+    border-top-color: #7c3aed;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+.sidebar.dark-mode .sidebar-loading-spinner {
+    border: 3px solid rgba(139, 92, 246, 0.2);
+    border-top-color: #a78bfa;
+}
+
+.sidebar-loading-text {
+    font-size: 0.9rem;
+    color: #6b7a99;
+    font-weight: 500;
+    text-align: center;
+    animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+.sidebar.dark-mode .sidebar-loading-text {
+    color: #9ca3af;
+}
+
+.sidebar-loading-modules {
+    width: 100%;
+    padding: 0 20px;
+    margin-top: 20px;
+}
+
+.sidebar-loading-module {
+    height: 14px;
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+    border-radius: 7px;
+    margin-bottom: 12px;
+    animation: pulse-loading 1.5s ease-in-out infinite;
+}
+
+.sidebar.dark-mode .sidebar-loading-module {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+}
+
+.sidebar-loading-module:nth-child(1) {
+    width: 80%;
+    animation-delay: 0.1s;
+}
+
+.sidebar-loading-module:nth-child(2) {
+    width: 65%;
+    animation-delay: 0.2s;
+}
+
+.sidebar-loading-module:nth-child(3) {
+    width: 75%;
+    animation-delay: 0.3s;
+}
+
+.sidebar-loading-module:nth-child(4) {
+    width: 60%;
+    animation-delay: 0.4s;
+}
+
+.sidebar-loading-module:nth-child(5) {
+    width: 70%;
+    animation-delay: 0.5s;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-loading {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes pulse-text {
+    0% { opacity: 0.8; }
+    50% { opacity: 0.5; }
+    100% { opacity: 0.8; }
+}
+
+/* Minimized sidebar loading state */
+.sidebar.minimized .sidebar-loading {
+    padding: 10px;
+}
+
+.sidebar.minimized .sidebar-loading-spinner {
+    width: 40px;
+    height: 40px;
+}
+
+.sidebar.minimized .sidebar-loading-text {
+    display: none;
+}
+
+.sidebar.minimized .sidebar-loading-modules {
+    display: none;
+}
+
+/* Mobile sidebar loading state */
+.sidebar.mobile .sidebar-loading {
+    padding: 30px 20px;
+}

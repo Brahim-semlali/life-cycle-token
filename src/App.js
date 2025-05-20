@@ -23,6 +23,7 @@ import MDES from "./Components/Dashboard/IssuerTSP/MDES";
 import VTS from "./Components/Dashboard/IssuerTSP/VTS";
 import ChargeBack from "./Components/Dashboard/ChargeBack";
 import Transactions from "./Components/Dashboard/Transactions";
+import Dashboard from "./Components/Dashboard/Dashboard";
 
 // Mapping des composants pour les routes dynamiques
 const COMPONENT_MAPPING = {
@@ -46,6 +47,7 @@ const COMPONENT_MAPPING = {
   // Modules sans sous-menus
   'chargeback': ChargeBack,
   'transactions': Transactions,
+  'dashboard': Dashboard,
 };
 
 // Hook qui génère dynamiquement les routes en fonction des modules et sous-menus de l'API
@@ -143,6 +145,13 @@ const DashboardIndex = () => {
         return;
       }
 
+      // Redirect to Dashboard page by default
+      navigate('/dashboard/dashboard');
+      setIsLoading(false);
+      return;
+
+      // Original redirection logic below (commented out)
+      /*
       // Attendre un court instant pour s'assurer que les modules sont chargés
       if (userModules.length === 0 && allModules.length === 0) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -177,6 +186,7 @@ const DashboardIndex = () => {
         navigate('/dashboard/settings');
       }
       setIsLoading(false);
+      */
     };
 
     redirectToFirstAvailablePage();
@@ -244,8 +254,12 @@ function AppContent() {
           <Route path="issuer-tsp/mdes" element={<MDES />} />
           <Route path="issuer-tsp/vts" element={<VTS />} />
           
+          {/* Fix for token route mismatch */}
+          <Route path="token/token" element={<Navigate to="/dashboard/issuer-tsp/token" replace />} />
+          
           <Route path="chargeback" element={<ChargeBack />} />
           <Route path="transactions" element={<Transactions />} />
+          <Route path="dashboard" element={<Dashboard />} />
           
           <Route path="settings" element={<Settings />} />
           
