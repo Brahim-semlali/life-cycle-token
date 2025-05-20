@@ -1349,7 +1349,7 @@ const TokenList = () => {
                                                 Token Information
                                             </Typography>
                                             <Grid container spacing={2}>
-                                                {['id', 'token', 'tokenReferenceId', 'tokenRequestorId', 'tokenType', 'tokenStatus', 'tokenAssuranceMethod'].filter(key => 
+                                                {['id', 'token', 'tokenReferenceId', 'pan_reference_id', 'tokenRequestorId', 'tokenType', 'tokenStatus', 'tokenAssuranceMethod', 'assurance_method_display'].filter(key => 
                                                     detailDialog.token[key] !== undefined
                                                 ).map(key => (
                                                     <Grid item xs={12} small={6} md={4} key={key}>
@@ -1373,6 +1373,46 @@ const TokenList = () => {
                                                                     ? getAssuranceMethodDescription(detailDialog.token[key]) 
                                                                     : 'N/A'
                                                                 : detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
+                                                        </Typography>
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
+                                        </Grid>
+
+                                        {/* Additional Token Info */}
+                                        <Grid item xs={12}>
+                                            <Typography variant="h6" sx={{ 
+                                                fontSize: '1rem', 
+                                                mb: 2, 
+                                                fontWeight: 600,
+                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
+                                                borderBottom: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                                                pb: 1
+                                            }}>
+                                                Additional Information
+                                            </Typography>
+                                            <Grid container spacing={2}>
+                                                {['entity_of_last_action', 'wallet_account_email_address_hash', 'client_wallet_account_id', 'pan_source', 'auto_fill_indicator'].filter(key => 
+                                                    detailDialog.token[key] !== undefined && detailDialog.token[key] !== null && detailDialog.token[key] !== ''
+                                                ).map(key => (
+                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                                        <Typography variant="caption" sx={{ 
+                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            textTransform: 'uppercase',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 600,
+                                                            letterSpacing: 0.5,
+                                                            display: 'block',
+                                                            mb: 0.5
+                                                        }}>
+                                                            {key.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}
+                                                        </Typography>
+                                                        <Typography variant="body2" sx={{ 
+                                                            fontWeight: 500,
+                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
+                                                        }}>
+                                                            {String(detailDialog.token[key])}
                                                         </Typography>
                                                     </Grid>
                                                 ))}
@@ -1822,6 +1862,95 @@ const TokenList = () => {
                                         InputProps={readOnlyInputProps}
                                         variant="outlined"
                                         margin="normal"
+                                    />
+                                </Grid>
+
+                                {/* Additional Token Fields */}
+                                <Grid item xs={12}>
+                                    <Typography variant="subtitle1" sx={{ 
+                                        fontWeight: 600, 
+                                        mb: 1, 
+                                        mt: 2, 
+                                        color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#4b5563',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1
+                                    }}>
+                                        Additional Information
+                                    </Typography>
+                                    <Divider sx={{ mb: 2 }} />
+                                </Grid>
+                                
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="PAN Reference ID"
+                                        name="pan_reference_id"
+                                        value={editDialog.formData.pan_reference_id || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Entity of Last Action"
+                                        name="entity_of_last_action"
+                                        value={editDialog.formData.entity_of_last_action || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Wallet Account Email Hash"
+                                        name="wallet_account_email_address_hash"
+                                        value={editDialog.formData.wallet_account_email_address_hash || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Client Wallet Account ID"
+                                        name="client_wallet_account_id"
+                                        value={editDialog.formData.client_wallet_account_id || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="PAN Source"
+                                        name="pan_source"
+                                        value={editDialog.formData.pan_source || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        label="Auto Fill Indicator"
+                                        name="auto_fill_indicator"
+                                        value={editDialog.formData.auto_fill_indicator || ''}
+                                        onChange={handleEditFormChange}
+                                        variant="outlined"
+                                        margin="normal"
+                                        InputProps={readOnlyInputProps}
                                     />
                                 </Grid>
                             </Grid>

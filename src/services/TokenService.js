@@ -353,6 +353,14 @@ const TokenService = {
             tokenStatus: 'INACTIVE',  // Ajouté pour garantir que la version camelCase est présente
             status_display: '',
             token_assurance_method: '',
+            tokenAssuranceMethod: '',
+            assurance_method_display: '',
+            pan_reference_id: '',
+            entity_of_last_action: '',
+            wallet_account_email_address_hash: '',
+            client_wallet_account_id: '',
+            pan_source: '',
+            auto_fill_indicator: '',
             creation_date: null,
             activation_date: null,
             last_status_update: null,
@@ -377,7 +385,9 @@ const TokenService = {
             'token_reference_id': 'tokenReferenceId',
             'token_requestor_id': 'tokenRequestorId',
             'token_status': 'tokenStatus',  // Ajouté pour la synchronisation
-            'tokenStatus': 'token_status'   // Ajouté pour la synchronisation inverse
+            'tokenStatus': 'token_status',   // Ajouté pour la synchronisation inverse
+            'token_assurance_method': 'tokenAssuranceMethod',
+            'tokenAssuranceMethod': 'token_assurance_method'
         };
         
         // Collect all unique keys from the tokens for logging
@@ -418,6 +428,15 @@ const TokenService = {
                 // If tokenStatus is explicitly set, use it for both fields
                 normalizedToken.tokenStatus = token.tokenStatus;
                 normalizedToken.token_status = token.tokenStatus;
+            }
+            
+            // Special handling for token assurance method
+            if ('token_assurance_method' in token && token.token_assurance_method) {
+                normalizedToken.token_assurance_method = token.token_assurance_method;
+                normalizedToken.tokenAssuranceMethod = token.token_assurance_method;
+            } else if ('tokenAssuranceMethod' in token && token.tokenAssuranceMethod) {
+                normalizedToken.tokenAssuranceMethod = token.tokenAssuranceMethod;
+                normalizedToken.token_assurance_method = token.tokenAssuranceMethod;
             }
             
             // Log the synchronized status values
@@ -1098,6 +1117,13 @@ const TokenService = {
                 { name: 'token_type', dataType: 'character varying', isRequired: true },
                 { name: 'token_status', dataType: 'character varying', isRequired: true },
                 { name: 'token_assurance_method', dataType: 'character varying', isRequired: true },
+                { name: 'assurance_method_display', dataType: 'character varying', isRequired: false },
+                { name: 'pan_reference_id', dataType: 'character varying', isRequired: false },
+                { name: 'entity_of_last_action', dataType: 'character varying', isRequired: false },
+                { name: 'wallet_account_email_address_hash', dataType: 'character varying', isRequired: false },
+                { name: 'client_wallet_account_id', dataType: 'character varying', isRequired: false },
+                { name: 'pan_source', dataType: 'character varying', isRequired: false },
+                { name: 'auto_fill_indicator', dataType: 'character varying', isRequired: false },
                 { name: 'creation_date', dataType: 'timestamp with time zone', isRequired: true },
                 { name: 'activation_date', dataType: 'timestamp with time zone', isRequired: false },
                 { name: 'expiration_month', dataType: 'character varying', isRequired: true },

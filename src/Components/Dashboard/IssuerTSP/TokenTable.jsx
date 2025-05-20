@@ -77,9 +77,16 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             'tokenStatus',
             'token_status',
             'tokenAssuranceMethod',
+            'assurance_method_display',
             'tokenActivationDate',
             'tokenExpirationDate',
-            'lastTokenStatusUpdatedTime'
+            'lastTokenStatusUpdatedTime',
+            'pan_reference_id',
+            'entity_of_last_action',
+            'wallet_account_email_address_hash',
+            'client_wallet_account_id',
+            'pan_source',
+            'auto_fill_indicator'
         ];
         
         let availableKeys = [];
@@ -124,11 +131,18 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             'token',
             'tokenReferenceId',
             'tokenReferenceID',
+            'pan_reference_id',
             'tokenRequestorId',
             'tokenRequestorID',
             'tokenType',
             'tokenStatus',
             'tokenAssuranceMethod',
+            'assurance_method_display',
+            'entity_of_last_action',
+            'wallet_account_email_address_hash',
+            'client_wallet_account_id',
+            'pan_source',
+            'auto_fill_indicator',
             'tokenActivationDate',
             'tokenExpirationDate',
             'lastTokenStatusUpdatedTime'
@@ -198,9 +212,16 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             'tokenStatus': 'Status',
             'tokenType': 'Type',
             'tokenAssuranceMethod': 'Assurance Method',
+            'assurance_method_display': 'Assurance Method Display',
             'tokenActivationDate': 'Activation Date',
             'tokenExpirationDate': 'Expiration Date',
-            'lastTokenStatusUpdatedTime': 'Last Status Update'
+            'lastTokenStatusUpdatedTime': 'Last Status Update',
+            'pan_reference_id': 'PAN Reference ID',
+            'entity_of_last_action': 'Last Action Entity',
+            'wallet_account_email_address_hash': 'Wallet Email Hash',
+            'client_wallet_account_id': 'Wallet Account ID',
+            'pan_source': 'PAN Source',
+            'auto_fill_indicator': 'Auto Fill'
         };
         
         // If we have a custom label for this key, use it
