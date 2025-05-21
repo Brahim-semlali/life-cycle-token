@@ -29,7 +29,9 @@ import {
     CircularProgress,
     Tab,
     Tabs,
-    Tooltip
+    Tooltip,
+    Fab,
+    Badge
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -168,8 +170,31 @@ const TokenList = () => {
         formData: {}
     });
 
+    // New state for reason dialogs
+    const [reasonDialog, setReasonDialog] = useState({
+        open: false,
+        action: null, // 'activate', 'suspend', 'resume', 'deactivate'
+        token: null,
+        reason: '',
+        reasonOptions: [],
+        selectedReason: '',
+        reasonValues: []
+    });
+
     // État pour stocker les statuts modifiés localement
     const [modifiedStatuses, setModifiedStatuses] = useState({});
+
+    // État pour stocker les options d'actions de token
+    const [actionOptions, setActionOptions] = useState({
+        operation_types: [],
+        resume_reasons: [],
+        delete_reasons: [],
+        suspend_reasons: []
+    });
+
+    // État pour les messages de confirmation en attente
+    const [pendingStatusChanges, setPendingStatusChanges] = useState({});
+    const [pendingMessage, setPendingMessage] = useState(null);
 
     // Fonction mise à jour pour ajouter un statut à la liste des statuts modifiés
     const updateLocalStatus = (tokenId, newStatus) => {
@@ -185,6 +210,8 @@ const TokenList = () => {
         fetchTokens();
         // Fetch database schema metadata
         fetchTableMetadata();
+        // Fetch token action options
+        fetchTokenActionOptions();
     }, []);
 
     // Update string dates when date objects change
@@ -695,47 +722,150 @@ const TokenList = () => {
 
     // Handle token status update with local cache
     const handleUpdateStatus = async (token, action) => {
+        // Find the appropriate reason options based on the action
+        const reasonOptions = getReasonOptions(action);
+        
+        // Find the corresponding reason values from the API options
+        let reasonValues = [];
+        if (actionOptions) {
+            switch(action) {
+                case 'suspend':
+                    reasonValues = actionOptions.suspend_reasons || [];
+                    break;
+                case 'resume':
+                    reasonValues = actionOptions.resume_reasons || [];
+                    break;
+                case 'deactivate':
+                    reasonValues = actionOptions.delete_reasons || [];
+                    break;
+                default:
+                    reasonValues = [];
+            }
+        }
+        
+        setReasonDialog({
+            open: true,
+            action,
+            token,
+            reason: '',
+            reasonOptions,
+            selectedReason: reasonOptions.length > 0 ? '' : null,
+            reasonValues: reasonValues // Store the full reason objects from the API
+        });
+    };
+
+    // Process the status update after reason is provided
+    const handleConfirmStatusUpdate = async () => {
         try {
+            const { token, action, reason, selectedReason, reasonValues } = reasonDialog;
             setLoading(true);
+            setReasonDialog(prev => ({ ...prev, open: false }));
             
-            // Determine the new status based on action
-            let newStatus;
-            if (action === 'suspend') {
-                newStatus = 'SUSPENDED';
+            // Get the API reason value corresponding to the selected reason label
+            let apiReasonValue = selectedReason;
+            
+            // If we have reasonValues from the API and a selected reason, find the corresponding value
+            if (reasonValues && reasonValues.length > 0 && selectedReason) {
+                const matchingReason = reasonValues.find(r => r.label === selectedReason || r.value === selectedReason);
+                if (matchingReason) {
+                    apiReasonValue = matchingReason.value;
+                    console.log(`Using API reason value: ${apiReasonValue} for selected reason: ${selectedReason}`);
+                }
+            }
+            
+            const reasonValue = apiReasonValue || '';
+            const messageValue = reason || '';
+
+            // Determine the human-readable action name for the message
+            let actionDisplayName = action.charAt(0).toUpperCase() + action.slice(1);
+            if (action === 'activate') actionDisplayName = "Activation";
+            else if (action === 'suspend') actionDisplayName = "Suspension";
+            else if (action === 'resume') actionDisplayName = "Reprise";
+            else if (action === 'deactivate') actionDisplayName = "Désactivation";
+            
+            // Show confirmation message that the request has been sent
+            setPendingMessage({
+                type: 'info',
+                text: `Demande de ${actionDisplayName} envoyée. Veuillez attendre que l'équipe confirme cette action avant que le statut ne soit mis à jour.`,
+                tokenId: token.id,
+                action: action
+            });
+            
+            // Add this token to the pending status changes
+            setPendingStatusChanges(prev => ({
+                ...prev,
+                [token.id]: {
+                    action,
+                    reason: reasonValue,
+                    message: messageValue,
+                    timestamp: new Date().toISOString()
+                }
+            }));
+            
+            // Call the appropriate API based on action
+            let result;
+            if (action === 'activate') {
+                console.log(`Activating token ${token.id}`);
+                result = await TokenService.activateToken(token.id, messageValue);
+            } else if (action === 'suspend') {
+                console.log(`Suspending token ${token.id} with reason: ${reasonValue}`);
+                result = await TokenService.suspendToken(token.id, reasonValue, messageValue);
+            } else if (action === 'resume') {
+                console.log(`Resuming token ${token.id} with reason: ${reasonValue}`);
+                result = await TokenService.resumeToken(token.id, reasonValue, messageValue);
+            } else if (action === 'deactivate') {
+                console.log(`Deactivating token ${token.id} with reason: ${reasonValue}`);
+                result = await TokenService.deactivateToken(token.id, reasonValue, messageValue);
             } else if (action === 'refresh') {
                 // For refresh, we'll just update the last_status_update timestamp
-                newStatus = token.tokenStatus || token.token_status; 
+                console.log(`Refreshing token ${token.id}`);
+                const currentStatus = token.tokenStatus || token.token_status;
+                result = await TokenService.updateTokenStatus(token.id, currentStatus, 'Manual refresh');
             }
-
-            console.log(`Updating token status directly to: ${newStatus} for token ID: ${token.id}`);
             
-            // Mettre à jour la cache locale immédiatement
-            updateLocalStatus(token.id, newStatus);
-            
-            // Create a normalized token data object with both status formats
-            const tokenData = {
-                id: token.id,
-                tokenStatus: newStatus,
-                token_status: newStatus
-            };
-            
-            // Call the TokenService to update the token status
-            const result = await TokenService.updateTokenStatus(token.id, newStatus);
-            
-            if (result.success) {
-                console.log('Token status updated successfully, refreshing token list');
-                // Force a refresh of the tokens
-                await fetchTokens();
+            if (result && result.success) {
+                console.log('Token status change request sent successfully');
+                
+                // For immediate feedback, we will NOT update the local status cache
+                // Instead we'll wait for confirmation from the team
+                if (action !== 'refresh') {
+                    // Refresh the tokens list to show it's pending
+                    await fetchTokens();
+                }
             } else {
-                console.error('Failed to update token status via API:', result.error);
-                setError(result.error);
+                console.error('Failed to send token status change request:', result?.error);
+                setError(result?.error || 'Failed to send token status change request');
+                // Clear the pending message
+                setPendingMessage(null);
+                // Remove from pending changes
+                setPendingStatusChanges(prev => {
+                    const newState = { ...prev };
+                    delete newState[token.id];
+                    return newState;
+                });
             }
         } catch (err) {
-            console.error('Error in handleUpdateStatus:', err);
-            setError('Failed to update token status');
+            console.error('Error in handleConfirmStatusUpdate:', err);
+            setError('Failed to send token status change request');
+            // Clear the pending message
+            setPendingMessage(null);
         } finally {
             setLoading(false);
         }
+    };
+    
+    // Handle reason dialog close
+    const handleReasonDialogClose = () => {
+        setReasonDialog(prev => ({ ...prev, open: false }));
+    };
+    
+    // Handle reason input
+    const handleReasonChange = (e) => {
+        const { name, value } = e.target;
+        setReasonDialog(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
     // Close token detail dialog
@@ -763,6 +893,128 @@ const TokenList = () => {
         return descriptions[code] || `Code ${code}`;
     };
 
+    // Define reason options for different actions
+    const getReasonOptions = (action) => {
+        // Utiliser les options récupérées de l'API si disponibles
+        if (actionOptions) {
+            switch(action) {
+                case 'activate':
+                    return []; // Pour l'activation, pas de raisons spécifiques requises
+                case 'suspend':
+                    if (actionOptions.suspend_reasons && actionOptions.suspend_reasons.length > 0) {
+                        return actionOptions.suspend_reasons.map(reason => reason.label || reason.value);
+                    }
+                    break;
+                case 'resume':
+                    if (actionOptions.resume_reasons && actionOptions.resume_reasons.length > 0) {
+                        return actionOptions.resume_reasons.map(reason => reason.label || reason.value);
+                    }
+                    break;
+                case 'deactivate':
+                    if (actionOptions.delete_reasons && actionOptions.delete_reasons.length > 0) {
+                        return actionOptions.delete_reasons.map(reason => reason.label || reason.value);
+                    }
+                    break;
+                default:
+                    return [];
+            }
+        }
+        
+        // Valeurs par défaut si les options de l'API ne sont pas disponibles
+        switch(action) {
+            case 'activate':
+                return []; // Pour l'activation, pas de raisons spécifiques requises
+            case 'suspend':
+                return ['Lost', 'Stolen', 'Fraudulent use', 'Account Closed', 'Other'];
+            case 'resume':
+                return ['Found', 'Fraudulent use denied', 'Other'];
+            case 'deactivate':
+                return ['Lost', 'Stolen', 'Fraudulent use', 'Account Closed', 'Other'];
+            default:
+                return [];
+        }
+    };
+
+    // Fonction pour récupérer les options d'actions de token
+    const fetchTokenActionOptions = async () => {
+        try {
+            console.log('Fetching token action options');
+            const result = await TokenService.getTokenActionOptions();
+            
+            if (result.success && result.data) {
+                console.log('Token action options:', result.data);
+                setActionOptions(result.data);
+            } else {
+                console.error('Failed to fetch token action options');
+            }
+        } catch (error) {
+            console.error('Error fetching token action options:', error);
+        }
+    };
+
+    // Ajouter une fonction pour simuler la confirmation de l'équipe
+    const handleSimulateConfirmation = async (tokenId) => {
+        try {
+            setLoading(true);
+            
+            // Récupérer les détails de la demande en attente
+            const pendingChange = pendingStatusChanges[tokenId];
+            if (!pendingChange) {
+                setError("Aucune demande en attente trouvée pour ce token");
+                return;
+            }
+            
+            console.log(`Simulation de confirmation pour le token ${tokenId}, action: ${pendingChange.action}`);
+            
+            // Déterminer le nouveau statut en fonction de l'action
+            let newStatus;
+            switch(pendingChange.action) {
+                case 'activate':
+                    newStatus = 'ACTIVE';
+                    break;
+                case 'suspend':
+                    newStatus = 'SUSPENDED';
+                    break;
+                case 'resume':
+                    newStatus = 'ACTIVE'; // Resume sets status back to ACTIVE
+                    break;
+                case 'deactivate':
+                    newStatus = 'DEACTIVATED';
+                    break;
+                default:
+                    newStatus = null;
+            }
+            
+            if (newStatus) {
+                // Mettre à jour le statut local
+                updateLocalStatus(tokenId, newStatus);
+                
+                // Afficher un message de confirmation
+                setPendingMessage({
+                    type: 'success',
+                    text: `Demande confirmée par l'équipe: Le token a été mis à jour avec le statut ${newStatus}`,
+                    tokenId: tokenId,
+                    action: pendingChange.action
+                });
+                
+                // Supprimer de la liste des demandes en attente
+                setPendingStatusChanges(prev => {
+                    const newState = { ...prev };
+                    delete newState[tokenId];
+                    return newState;
+                });
+                
+                // Rafraîchir la liste des tokens
+                await fetchTokens();
+            }
+        } catch (err) {
+            console.error('Error in handleSimulateConfirmation:', err);
+            setError('Failed to simulate confirmation');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
             <Box sx={{ padding: '1rem' }}>
@@ -777,6 +1029,62 @@ const TokenList = () => {
                             {error}
                         </Alert>
                     </Snackbar>
+
+                    {/* Pending status change message */}
+                    <Snackbar
+                        open={!!pendingMessage}
+                        autoHideDuration={10000}
+                        onClose={() => setPendingMessage(null)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert 
+                            onClose={() => setPendingMessage(null)} 
+                            severity={pendingMessage?.type || "info"}
+                            sx={{ 
+                                width: '100%',
+                                '& .MuiAlert-message': {
+                                    fontWeight: 500
+                                }
+                            }}
+                        >
+                            {pendingMessage?.text}
+                        </Alert>
+                    </Snackbar>
+
+                    {/* FOR DEMO ONLY: Button to simulate team confirmation */}
+                    {Object.keys(pendingStatusChanges).length > 0 && (
+                        <Box sx={{ 
+                            position: 'fixed', 
+                            bottom: 20, 
+                            right: 20, 
+                            zIndex: 1000 
+                        }}>
+                            <Tooltip title="DÉMO: Simuler la confirmation par l'équipe">
+                                <Badge 
+                                    badgeContent={Object.keys(pendingStatusChanges).length} 
+                                    color="secondary"
+                                    sx={{
+                                        '& .MuiBadge-badge': {
+                                            fontSize: '0.9rem',
+                                            height: '22px',
+                                            minWidth: '22px'
+                                        }
+                                    }}
+                                >
+                                    <Fab 
+                                        color="primary" 
+                                        variant="extended"
+                                        onClick={() => handleSimulateConfirmation(Object.keys(pendingStatusChanges)[0])}
+                                        sx={{
+                                            textTransform: 'none'
+                                        }}
+                                    >
+                                        Simuler confirmation
+                                    </Fab>
+                                </Badge>
+                            </Tooltip>
+                        </Box>
+                    )}
 
                     {/* Search Form */}
                 <Box
@@ -1231,12 +1539,13 @@ const TokenList = () => {
                         rowsPerPage={rowsPerPage}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
-                    onViewDetails={handleViewDetails}
-                    onEditToken={handleEditToken}
-                    onDeleteToken={handleDeleteToken}
-                    onUpdateStatus={handleUpdateStatus}
-                    tableMetadata={tableMetadata}
-                />
+                        onViewDetails={handleViewDetails}
+                        onEditToken={handleEditToken}
+                        onDeleteToken={handleDeleteToken}
+                        onUpdateStatus={handleUpdateStatus}
+                        tableMetadata={tableMetadata}
+                        pendingStatusChanges={pendingStatusChanges}
+                    />
 
                 {/* Token Detail Dialog */}
                 <Dialog 
@@ -1989,6 +2298,90 @@ const TokenList = () => {
                             }}
                         >
                             Save Changes
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Reason Dialog */}
+                <Dialog
+                    open={reasonDialog.open}
+                    onClose={handleReasonDialogClose}
+                    maxWidth="sm"
+                    fullWidth
+                    PaperProps={{
+                        sx: {
+                            borderRadius: '8px',
+                            overflow: 'hidden'
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{ 
+                        borderBottom: '1px solid',
+                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                        pb: 2
+                    }}>
+                        {reasonDialog.action && `${reasonDialog.action.charAt(0).toUpperCase() + reasonDialog.action.slice(1)} reason`}
+                    </DialogTitle>
+                    <DialogContent sx={{ pt: 3 }}>
+                        {reasonDialog.reasonOptions && reasonDialog.reasonOptions.length > 0 && (
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                    Reason
+                                </Typography>
+                                <FormControl fullWidth>
+                                    <Select
+                                        value={reasonDialog.selectedReason}
+                                        name="selectedReason"
+                                        onChange={handleReasonChange}
+                                        displayEmpty
+                                        sx={{ mb: 2 }}
+                                    >
+                                        <MenuItem value="" disabled>Select a reason...</MenuItem>
+                                        {reasonDialog.reasonOptions.map(option => (
+                                            <MenuItem key={option} value={option}>{option}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        )}
+                        <Box>
+                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                Message
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                name="reason"
+                                value={reasonDialog.reason}
+                                onChange={handleReasonChange}
+                                multiline
+                                rows={4}
+                                variant="outlined"
+                                placeholder={reasonDialog.action === 'activate' ? 'Enter activation reason...' : ''}
+                            />
+                        </Box>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2, borderTop: '1px solid', borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)' }}>
+                        <Button 
+                            onClick={handleReasonDialogClose}
+                            sx={{ 
+                                color: theme => theme.palette.text.secondary
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleConfirmStatusUpdate}
+                            variant="contained"
+                            sx={{
+                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#6366f1',
+                                color: '#fff',
+                                '&:hover': {
+                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#4f46e5'
+                                },
+                                px: 3
+                            }}
+                        >
+                            OK
                         </Button>
                     </DialogActions>
                 </Dialog>

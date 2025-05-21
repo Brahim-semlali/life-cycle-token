@@ -7,7 +7,13 @@ const API_ENDPOINTS = {
     GET_TOKEN_DETAILS: '/token/detail/',
     CREATE_TOKEN: '/token/create/',
     UPDATE_TOKEN_STATUS: '/token/status/update/',
-    EXPORT_TOKENS: '/token/export/'
+    EXPORT_TOKENS: '/token/export/',
+    // Nouveaux endpoints pour les actions spécifiques
+    ACTIVATE_TOKEN: '/token/status/activate/',
+    DEACTIVATE_TOKEN: '/token/status/deactivate/',
+    RESUME_TOKEN: '/token/status/resume/',
+    SUSPEND_TOKEN: '/token/status/suspend/',
+    TOKEN_ACTION_OPTIONS: '/token/token-action-options/'
     // Completely removed metadata endpoint reference
 };
 
@@ -796,11 +802,12 @@ const TokenService = {
 
     /**
      * Updates token status
-     * @param {string} id - Token ID
+     * @param {string|number} id - Token ID
      * @param {string} status - New status
+     * @param {string} changeReason - Reason for the status change
      * @returns {Promise<Object>} - Success status with data or error
      */
-    async updateTokenStatus(id, status) {
+    async updateTokenStatus(id, status, changeReason = '') {
         try {
             console.log(`TokenService.updateTokenStatus: Updating token ${id} status to ${status}`);
             
@@ -808,6 +815,7 @@ const TokenService = {
             const statusData = {
                 token_id: parseInt(id, 10) || id,
                 new_status: status,
+                change_reason: changeReason,
                 // Ajouter un timestamp pour éviter la mise en cache
                 _timestamp: new Date().getTime()
             };
@@ -829,6 +837,7 @@ const TokenService = {
                 if (response.data) {
                     response.data.token_status = status;
                     response.data.tokenStatus = status;
+                    response.data.change_reason = changeReason;
                     console.log('TokenService.updateTokenStatus: Forced status in response to:', status);
                 }
 
@@ -842,6 +851,7 @@ const TokenService = {
                     // Force le statut à être celui demandé dans la réponse finale aussi
                     refreshResult.data.token_status = status;
                     refreshResult.data.tokenStatus = status;
+                    refreshResult.data.change_reason = changeReason;
                     console.log('TokenService.updateTokenStatus: Forced status in refetched data to:', status);
                     
                     return {
@@ -874,6 +884,7 @@ const TokenService = {
                         id, 
                         token_status: status,
                         tokenStatus: status,
+                        change_reason: changeReason,
                         last_status_update: new Date().toISOString()
                     },
                     simulated: true
@@ -1197,6 +1208,383 @@ const TokenService = {
         }
         
         return tokens;
+    },
+
+    /**
+     * Active un token (statut -> ACTIVE)
+     * @param {string|number} id - ID du token
+     * @param {string} message - Message optionnel pour l'activation
+     * @returns {Promise<Object>} - Statut de succès avec données ou erreur
+     */
+    async activateToken(id, message = '') {
+        try {
+            console.log(`TokenService.activateToken: Activating token ${id}`);
+            
+            const payload = {
+                token_id: parseInt(id, 10) || id,
+                reason: '', // Pas de raison requise pour l'activation
+                message: message
+            };
+            
+            console.log('TokenService.activateToken: Sending data:', payload);
+            const response = await apiClient.post(API_ENDPOINTS.ACTIVATE_TOKEN, payload);
+            
+            if (response.data) {
+                console.log('TokenService.activateToken: Response:', response.data);
+                
+                // Obtenir les détails du token mis à jour
+                const refreshResult = await this.getTokenDetails(id, true);
+                if (refreshResult.success) {
+                    // Forcer le statut à ACTIVE
+                    refreshResult.data.tokenStatus = 'ACTIVE';
+                    refreshResult.data.token_status = 'ACTIVE';
+                    return {
+                        success: true,
+                        data: refreshResult.data
+                    };
+                }
+                
+                return {
+                    success: true,
+                    data: {
+                        ...response.data,
+                        id,
+                        tokenStatus: 'ACTIVE',
+                        token_status: 'ACTIVE'
+                    }
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to activate token'
+            };
+        } catch (error) {
+            console.error('TokenService.activateToken: Error:', error);
+            
+            // Pour le développement, simulons une activation réussie
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    success: true,
+                    data: {
+                        id,
+                        tokenStatus: 'ACTIVE',
+                        token_status: 'ACTIVE',
+                        last_status_update: new Date().toISOString(),
+                        message: 'Token activated successfully (simulated)'
+                    },
+                    simulated: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to activate token',
+                details: error.message
+            };
+        }
+    },
+    
+    /**
+     * Suspend un token (statut -> SUSPENDED)
+     * @param {string|number} id - ID du token
+     * @param {string} reason - Raison de la suspension (requise)
+     * @param {string} message - Message additionnel
+     * @returns {Promise<Object>} - Statut de succès avec données ou erreur
+     */
+    async suspendToken(id, reason, message = '') {
+        try {
+            console.log(`TokenService.suspendToken: Suspending token ${id} with reason: ${reason}`);
+            
+            const payload = {
+                token_id: parseInt(id, 10) || id,
+                reason: reason, // Raison requise
+                message: message
+            };
+            
+            console.log('TokenService.suspendToken: Sending data:', payload);
+            const response = await apiClient.post(API_ENDPOINTS.SUSPEND_TOKEN, payload);
+            
+            if (response.data) {
+                console.log('TokenService.suspendToken: Response:', response.data);
+                
+                // Obtenir les détails du token mis à jour
+                const refreshResult = await this.getTokenDetails(id, true);
+                if (refreshResult.success) {
+                    // Forcer le statut à SUSPENDED
+                    refreshResult.data.tokenStatus = 'SUSPENDED';
+                    refreshResult.data.token_status = 'SUSPENDED';
+                    return {
+                        success: true,
+                        data: refreshResult.data
+                    };
+                }
+                
+                return {
+                    success: true,
+                    data: {
+                        ...response.data,
+                        id,
+                        tokenStatus: 'SUSPENDED',
+                        token_status: 'SUSPENDED'
+                    }
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to suspend token'
+            };
+        } catch (error) {
+            console.error('TokenService.suspendToken: Error:', error);
+            
+            // Pour le développement, simulons une suspension réussie
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    success: true,
+                    data: {
+                        id,
+                        tokenStatus: 'SUSPENDED',
+                        token_status: 'SUSPENDED',
+                        reason,
+                        message,
+                        last_status_update: new Date().toISOString(),
+                        message: 'Token suspended successfully (simulated)'
+                    },
+                    simulated: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to suspend token',
+                details: error.message
+            };
+        }
+    },
+    
+    /**
+     * Reprend un token suspendu (statut -> INACTIVE)
+     * @param {string|number} id - ID du token
+     * @param {string} reason - Raison de la reprise (requise)
+     * @param {string} message - Message additionnel
+     * @returns {Promise<Object>} - Statut de succès avec données ou erreur
+     */
+    async resumeToken(id, reason, message = '') {
+        try {
+            console.log(`TokenService.resumeToken: Resuming token ${id} with reason: ${reason}`);
+            
+            const payload = {
+                token_id: parseInt(id, 10) || id,
+                reason: reason, // Raison requise
+                message: message
+            };
+            
+            console.log('TokenService.resumeToken: Sending data:', payload);
+            const response = await apiClient.post(API_ENDPOINTS.RESUME_TOKEN, payload);
+            
+            if (response.data) {
+                console.log('TokenService.resumeToken: Response:', response.data);
+                
+                // Obtenir les détails du token mis à jour
+                const refreshResult = await this.getTokenDetails(id, true);
+                if (refreshResult.success) {
+                    // Forcer le statut à INACTIVE (comportement spécifique à cette API)
+                    refreshResult.data.tokenStatus = 'ACTIVE';
+                    refreshResult.data.token_status = 'ACTIVE';
+                    return {
+                        success: true,
+                        data: refreshResult.data
+                    };
+                }
+                
+                return {
+                    success: true,
+                    data: {
+                        ...response.data,
+                        id,
+                        tokenStatus: 'ACTIVE',
+                        token_status: 'ACTIVE'
+                    }
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to resume token'
+            };
+        } catch (error) {
+            console.error('TokenService.resumeToken: Error:', error);
+            
+            // Pour le développement, simulons une reprise réussie
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    success: true,
+                    data: {
+                        id,
+                        tokenStatus: 'ACTIVE',
+                        token_status: 'ACTIVE',
+                        reason,
+                        message,
+                        last_status_update: new Date().toISOString(),
+                        message: 'Token resumed successfully (simulated)'
+                    },
+                    simulated: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to resume token',
+                details: error.message
+            };
+        }
+    },
+    
+    /**
+     * Désactive un token (statut -> DEACTIVATED)
+     * @param {string|number} id - ID du token
+     * @param {string} reason - Raison de la désactivation (requise)
+     * @param {string} message - Message additionnel
+     * @returns {Promise<Object>} - Statut de succès avec données ou erreur
+     */
+    async deactivateToken(id, reason, message = '') {
+        try {
+            console.log(`TokenService.deactivateToken: Deactivating token ${id} with reason: ${reason}`);
+            
+            const payload = {
+                token_id: parseInt(id, 10) || id,
+                reason: reason, // Raison requise
+                message: message
+            };
+            
+            console.log('TokenService.deactivateToken: Sending data:', payload);
+            const response = await apiClient.post(API_ENDPOINTS.DEACTIVATE_TOKEN, payload);
+            
+            if (response.data) {
+                console.log('TokenService.deactivateToken: Response:', response.data);
+                
+                // Obtenir les détails du token mis à jour
+                const refreshResult = await this.getTokenDetails(id, true);
+                if (refreshResult.success) {
+                    // Forcer le statut à DEACTIVATED
+                    refreshResult.data.tokenStatus = 'DEACTIVATED';
+                    refreshResult.data.token_status = 'DEACTIVATED';
+                    return {
+                        success: true,
+                        data: refreshResult.data
+                    };
+                }
+                
+                return {
+                    success: true,
+                    data: {
+                        ...response.data,
+                        id,
+                        tokenStatus: 'DEACTIVATED',
+                        token_status: 'DEACTIVATED'
+                    }
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to deactivate token'
+            };
+        } catch (error) {
+            console.error('TokenService.deactivateToken: Error:', error);
+            
+            // Pour le développement, simulons une désactivation réussie
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    success: true,
+                    data: {
+                        id,
+                        tokenStatus: 'DEACTIVATED',
+                        token_status: 'DEACTIVATED',
+                        reason,
+                        message,
+                        last_status_update: new Date().toISOString(),
+                        message: 'Token deactivated successfully (simulated)'
+                    },
+                    simulated: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to deactivate token',
+                details: error.message
+            };
+        }
+    },
+    
+    /**
+     * Récupère les options disponibles pour les actions sur les tokens
+     * @returns {Promise<Object>} - Statut de succès avec données ou erreur
+     */
+    async getTokenActionOptions() {
+        try {
+            console.log('TokenService.getTokenActionOptions: Fetching token action options');
+            
+            const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION_OPTIONS);
+            
+            if (response.data) {
+                console.log('TokenService.getTokenActionOptions: Response:', response.data);
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to fetch token action options'
+            };
+        } catch (error) {
+            console.error('TokenService.getTokenActionOptions: Error:', error);
+            
+            // Pour le développement, simulons des options par défaut
+            if (process.env.NODE_ENV === 'development') {
+                return {
+                    success: true,
+                    data: {
+                        operation_types: [
+                            { value: 'activate', label: 'Activation' },
+                            { value: 'suspend', label: 'Suspension' },
+                            { value: 'resume', label: 'Reprise' },
+                            { value: 'deactivate', label: 'Désactivation' }
+                        ],
+                        resume_reasons: [
+                            { value: 'found', label: 'Found' },
+                            { value: 'fraud_denied', label: 'Fraudulent use denied' },
+                            { value: 'other', label: 'Other' }
+                        ],
+                        delete_reasons: [
+                            { value: 'lost', label: 'Lost' },
+                            { value: 'stolen', label: 'Stolen' },
+                            { value: 'fraud', label: 'Fraudulent use' },
+                            { value: 'account_closed', label: 'Account Closed' },
+                            { value: 'other', label: 'Other' }
+                        ],
+                        suspend_reasons: [
+                            { value: 'lost', label: 'Lost' },
+                            { value: 'stolen', label: 'Stolen' },
+                            { value: 'fraud', label: 'Fraudulent use' },
+                            { value: 'account_closed', label: 'Account Closed' },
+                            { value: 'other', label: 'Other' }
+                        ]
+                    },
+                    simulated: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to fetch token action options',
+                details: error.message
+            };
+        }
     }
 };
 

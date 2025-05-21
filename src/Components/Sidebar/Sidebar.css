@@ -334,6 +334,21 @@
     justify-content: center;
     position: relative;
     z-index: 1;
+    color: inherit;
+}
+
+.sidebar.dark-mode .module-icon {
+    color: #e2e8f0;
+}
+
+.module-item:hover .module-icon,
+.module-item.active .module-icon {
+    color: #7c3aed;
+}
+
+.sidebar.dark-mode .module-item:hover .module-icon,
+.sidebar.dark-mode .module-item.active .module-icon {
+    color: #a78bfa;
 }
 
 .module-text {
@@ -583,6 +598,7 @@
 
 .sidebar.minimized .module-icon {
     margin-right: 0;
+    font-size: 22px;
 }
 
 .sidebar.minimized .sidebar-footer {

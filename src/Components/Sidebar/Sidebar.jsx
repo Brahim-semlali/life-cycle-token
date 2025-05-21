@@ -11,13 +11,17 @@ import "./Sidebar.css";
 
 // Correspondance d'icônes par défaut pour les modules
 const DEFAULT_ICONS = {
-    'ADMIN': 'admin_panel_settings',
+    'ADMIN': 'settings',
     'LCM': 'manage_accounts',
-    'ITCP': 'token',
-    'CHARGEBACK': 'payments',
+    'ITCP': 'credit_card',
+    'CHARGEBACK': 'payment',
     'TRANSACTIONS': 'receipt_long',
     'SEMLALI': 'security',
-    'DASHBOARD': 'dashboard', // Added Dashboard module
+    'DASHBOARD': 'dashboard',
+    'TOKEN_MANAGER': 'token',
+    'ISSUER_TSP': 'credit_score',
+    'BRAHIM': 'person',
+    'DODA': 'public',
     // Ajouter plus d'icônes par défaut si nécessaire
     'DEFAULT': 'dashboard' // Icône par défaut
 };
@@ -41,6 +45,8 @@ const SUBMENU_ICONS = {
     'TOKEN': 'token',
     'MDES': 'credit_card',
     'VTS': 'contactless',
+    'CHARGEBACK': 'payments',
+    'TRANSACTIONS': 'receipt_long',
     
     // Default
     'DEFAULT': 'chevron_right'
@@ -347,13 +353,60 @@ const Sidebar = () => {
 
     // Fonction pour ajouter les icônes et corriger les chemins
     const addIconsToStructure = (moduleStructure) => {
-        return moduleStructure.map(module => ({
+        return moduleStructure.map(module => {
+            // Special handling for Issuer TSP and its submodules
+            let moduleIcon = module.icon;
+            
+            // Case insensitive check for module code and title
+            const moduleCodeUpper = module.code?.toUpperCase() || '';
+            const moduleTitleLower = module.title?.toLowerCase() || '';
+            
+            if (moduleCodeUpper === 'ISSUER_TSP' || moduleCodeUpper === 'ITCP' || 
+                moduleTitleLower.includes('issuer tsp')) {
+                moduleIcon = 'credit_score';
+            } else if (moduleCodeUpper === 'CHARGEBACK' || 
+                      moduleTitleLower.includes('chargeback') || 
+                      moduleTitleLower.includes('charge back')) {
+                moduleIcon = 'payments';
+            } else if (moduleCodeUpper === 'TRANSACTIONS' || 
+                      moduleTitleLower.includes('transaction')) {
+                moduleIcon = 'receipt_long';
+            } else if (moduleCodeUpper === 'TOKEN_MANAGER' || moduleCodeUpper === 'TOKEN' ||
+                      moduleTitleLower.includes('token manager')) {
+                moduleIcon = 'token';
+            } else if (moduleCodeUpper === 'DASHBOARD' || 
+                      moduleTitleLower.includes('dashboard') || 
+                      moduleTitleLower.includes('tableau de bord')) {
+                moduleIcon = 'dashboard';
+            } else if (moduleCodeUpper === 'ADMIN' || 
+                      moduleTitleLower.includes('admin') || 
+                      moduleTitleLower.includes('administration')) {
+                moduleIcon = 'settings';
+            } else {
+                moduleIcon = module.icon || DEFAULT_ICONS[module.code] || DEFAULT_ICONS.DEFAULT;
+            }
+            
+            return {
                 ...module,
-                icon: module.icon || DEFAULT_ICONS[module.code] || DEFAULT_ICONS.DEFAULT,
+                icon: moduleIcon,
                 // Corriger les sous-modules pour les cas spéciaux et ajouter des icônes
                 submodules: module.submodules.map(submenu => {
-                    // Déterminer l'icône du sous-menu
-                    const submenuIcon = SUBMENU_ICONS[submenu.code] || SUBMENU_ICONS.DEFAULT;
+                    // Déterminer l'icône du sous-menu avec vérification insensible à la casse
+                    const submenuCodeUpper = submenu.code?.toUpperCase() || '';
+                    const submenuTitleLower = submenu.title?.toLowerCase() || '';
+                    
+                    let submenuIcon = submenu.icon || SUBMENU_ICONS[submenu.code] || SUBMENU_ICONS.DEFAULT;
+                    
+                    // Special handling for specific submodules
+                    if (submenuCodeUpper === 'TOKEN' || submenuTitleLower.includes('token')) {
+                        submenuIcon = 'token';
+                    } else if (submenuCodeUpper === 'MDES' || submenuTitleLower.includes('mdes')) {
+                        submenuIcon = 'credit_card';
+                    } else if (submenuCodeUpper === 'VTS' || submenuTitleLower.includes('vts')) {
+                        submenuIcon = 'contactless';
+                    } else if (submenuCodeUpper === 'CHARGEBACK' || submenuTitleLower.includes('chargeback')) {
+                        submenuIcon = 'payments';
+                    }
                     
                     // Pour le sous-module "Profil", s'assurer qu'il pointe vers "profiles" (pluriel)
                     if (submenu.title === 'Profil' && module.code === 'ADMIN') {
@@ -368,7 +421,8 @@ const Sidebar = () => {
                         icon: submenuIcon
                     };
                 })
-            }));
+            };
+        });
     };
 
     const handleLogout = () => {

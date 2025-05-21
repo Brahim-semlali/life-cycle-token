@@ -19,7 +19,8 @@ import {
     MenuItem,
     ListItemIcon,
     ListItemText,
-    useTheme
+    useTheme,
+    Button
 } from '@mui/material';
 import { 
     Visibility as ViewIcon,
@@ -27,10 +28,15 @@ import {
     MoreVert as MoreIcon,
     Delete as DeleteIcon,
     Refresh as RefreshIcon,
-    Block as BlockIcon
+    Block as BlockIcon,
+    PowerSettingsNew as DeactivateIcon,
+    PlayArrow as ActivateIcon,
+    Replay as ResumeIcon,
+    PendingOutlined as PendingIcon,
+    HourglassTop as WaitingIcon
 } from '@mui/icons-material';
 
-const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPerPageChange, onViewDetails, onEditToken, onDeleteToken, onUpdateStatus, tableMetadata }) => {
+const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPerPageChange, onViewDetails, onEditToken, onDeleteToken, onUpdateStatus, tableMetadata, pendingStatusChanges }) => {
     // MUI theme for consistent styling
     const theme = useTheme();
     
@@ -253,47 +259,93 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         return descriptions[code] || `Code ${code}`;
     };
 
-    // Status style handler
-    const getStatusStyle = (status) => {
+    // Check if a token has a pending status change
+    const hasPendingStatusChange = (token) => {
+        return pendingStatusChanges && pendingStatusChanges[token.id];
+    };
+    
+    // Get human-readable pending action name
+    const getPendingActionName = (token) => {
+        if (!pendingStatusChanges || !pendingStatusChanges[token.id]) return '';
+        
+        const action = pendingStatusChanges[token.id].action;
+        if (action === 'activate') return 'Activation';
+        if (action === 'suspend') return 'Suspension'; 
+        if (action === 'resume') return 'Reprise';
+        if (action === 'deactivate') return 'Désactivation';
+        return action.charAt(0).toUpperCase() + action.slice(1);
+    };
+
+    // Status style handler with pending status indicator
+    const getStatusStyle = (status, token) => {
+        // Check if token has pending status change
+        const isPending = hasPendingStatusChange(token);
+        
         if (!status) return getDefaultStyle();
         
         const statusStr = String(status).toLowerCase();
         
+        // Base style
+        let style = {
+            backgroundColor: 'rgba(107, 114, 128, 0.12)',
+            color: '#6b7280',
+            borderColor: 'rgba(107, 114, 128, 0.25)',
+            fontWeight: 500
+        };
+        
+        // Set style based on current status
         switch (statusStr) {
             case 'active':
             case 'ac':
-                return {
+                style = {
                     backgroundColor: 'rgba(52, 211, 153, 0.12)',
                     color: '#10b981',
                     borderColor: 'rgba(16, 185, 129, 0.25)',
                     fontWeight: 600
                 };
+                break;
             case 'suspended':
             case 'su':
-                return {
+                style = {
                     backgroundColor: 'rgba(245, 158, 11, 0.12)',
                     color: '#f59e0b',
                     borderColor: 'rgba(245, 158, 11, 0.25)',
                     fontWeight: 600
                 };
+                break;
             case 'inactive':
             case 'in':
-                return {
+                style = {
                     backgroundColor: 'rgba(239, 68, 68, 0.12)',
                     color: '#ef4444',
                     borderColor: 'rgba(239, 68, 68, 0.25)',
                     fontWeight: 600
                 };
+                break;
             case 'deactivated':
-                return {
+                style = {
                     backgroundColor: 'rgba(107, 114, 128, 0.15)',
                     color: '#6b7280',
                     borderColor: 'rgba(107, 114, 128, 0.3)',
                     fontWeight: 600
                 };
+                break;
             default:
-                return getDefaultStyle();
+                // Use default style
+                break;
         }
+        
+        // Modify style if pending
+        if (isPending) {
+            style = {
+                ...style,
+                opacity: 0.7,
+                border: '1px dashed',
+                fontStyle: 'italic'
+            };
+        }
+        
+        return style;
     };
 
     // Score style handler
@@ -382,6 +434,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     };
     
     const handleUpdateStatus = (token, action) => {
+        // Actions include: activate, suspend, resume, deactivate, refresh
         if (onUpdateStatus) onUpdateStatus(token, action);
         handleMenuClose();
     };
@@ -425,18 +478,36 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
             return value === true ? 'Yes' : 'No';
         } else if (column.isStatus) {
             return (
-                <Chip 
-                    label={value || 'Unknown'} 
-                    size="small"
-                    sx={{
-                        ...getStatusStyle(value),
-                        fontSize: '0.75rem',
-                        height: '24px',
-                        borderRadius: '4px',
-                        textTransform: 'uppercase',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Chip 
+                        label={value || 'Unknown'} 
+                        size="small"
+                        sx={{
+                            ...getStatusStyle(value, token),
+                            fontSize: '0.75rem',
+                            height: '24px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                        }}
+                    />
+                    {hasPendingStatusChange(token) && (
+                        <Tooltip title={`Demande de ${getPendingActionName(token)} en attente de confirmation`}>
+                            <WaitingIcon 
+                                fontSize="small" 
+                                sx={{ 
+                                    color: '#6366f1',
+                                    animation: 'pulse 1.5s infinite ease-in-out',
+                                    '@keyframes pulse': {
+                                        '0%': { opacity: 0.6 },
+                                        '50%': { opacity: 1 },
+                                        '100%': { opacity: 0.6 }
+                                    }
+                                }} 
+                            />
+                        </Tooltip>
+                    )}
+                </Box>
             );
         } else if (column.isScore) {
             return (
@@ -517,6 +588,12 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
 
     // Check if we have any data to display
     const hasNoDataToDisplay = (!tokens || tokens.length === 0);
+
+    // Helper function to get the normalized status
+    const getNormalizedStatus = (token) => {
+        const status = token.tokenStatus || token.token_status || '';
+        return status.toLowerCase();
+    };
 
     return (
         <Fade in={!loading} timeout={300}>
@@ -638,24 +715,142 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                         <ViewIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-                                                <Tooltip title="More options">
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={(e) => handleMenuOpen(e, token)}
-                                                        sx={{
-                                                                color: theme.palette.text.secondary,
-                                                            '&:hover': {
-                                                                    backgroundColor: theme.palette.mode === 'dark' 
-                                                                        ? 'rgba(255, 255, 255, 0.08)' 
-                                                                        : 'rgba(0, 0, 0, 0.04)'
-                                                                }
-                                                        }}
-                                                    >
-                                                        <MoreIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
+                                                
+                                                {/* Vérifier s'il y a une action en attente */}
+                                                {hasPendingStatusChange(token) ? (
+                                                    <Tooltip title={`Demande de ${getPendingActionName(token)} en attente de confirmation`}>
+                                                        <Box sx={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: 1,
+                                                            bgcolor: 'rgba(99, 102, 241, 0.1)',
+                                                            borderRadius: '4px',
+                                                            py: 0.5,
+                                                            px: 1
+                                                        }}>
+                                                            <WaitingIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                                                            <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 500 }}>
+                                                                En attente
+                                                            </Typography>
+                                                        </Box>
+                                                    </Tooltip>
+                                                ) : (
+                                                    /* Display appropriate action buttons based on token status */
+                                                    <>
+                                                    {getNormalizedStatus(token) === 'inactive' && (
+                                                        <>
+                                                            <Tooltip title="Activate token">
+                                                                <Button 
+                                                                    startIcon={<ActivateIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'activate')}
+                                                                    sx={{
+                                                                        color: '#10b981',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Activate
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip title="Deactivate token">
+                                                                <Button 
+                                                                    startIcon={<DeactivateIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                    sx={{
+                                                                        color: '#6b7280',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Deactivate
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </>
+                                                    )}
+                                                    
+                                                    {getNormalizedStatus(token) === 'active' && (
+                                                        <>
+                                                            <Tooltip title="Suspend token">
+                                                                <Button 
+                                                                    startIcon={<BlockIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'suspend')}
+                                                                    sx={{
+                                                                        color: '#f59e0b',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(245, 158, 11, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Suspend
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip title="Deactivate token">
+                                                                <Button 
+                                                                    startIcon={<DeactivateIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                    sx={{
+                                                                        color: '#6b7280',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Deactivate
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </>
+                                                    )}
+                                                    
+                                                    {getNormalizedStatus(token) === 'suspended' && (
+                                                        <>
+                                                            <Tooltip title="Resume token">
+                                                                <Button 
+                                                                    startIcon={<ResumeIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'resume')}
+                                                                    sx={{
+                                                                        color: '#3b82f6',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Resume
+                                                                </Button>
+                                                            </Tooltip>
+                                                            <Tooltip title="Deactivate token">
+                                                                <Button 
+                                                                    startIcon={<DeactivateIcon fontSize="small" />}
+                                                                    size="small"
+                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                    sx={{
+                                                                        color: '#6b7280',
+                                                                        minWidth: 'auto',
+                                                                        '&:hover': {
+                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Deactivate
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </>
+                                                    )}
+                                                    </>
+                                                )}
+                                                </Box>
+                                            </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
@@ -716,48 +911,6 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                 />
                     </Box>
                 </Paper>
-                
-                {/* Action menu */}
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleMenuClose}
-                    PaperProps={{
-                        elevation: 3,
-                        sx: {
-                            overflow: 'visible',
-                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
-                            mt: 1.5,
-                            borderRadius: '8px',
-                            '& .MuiMenuItem-root': {
-                                px: 2,
-                                py: 1,
-                                fontSize: '0.875rem'
-                            }
-                        }
-                    }}
-                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                >
-                    <MenuItem onClick={() => handleDeleteToken(selectedToken)}>
-                        <ListItemIcon>
-                            <DeleteIcon fontSize="small" sx={{ color: '#ef4444' }} />
-                        </ListItemIcon>
-                        <ListItemText primary="Delete token" />
-                    </MenuItem>
-                    <MenuItem onClick={() => handleUpdateStatus(selectedToken, 'suspend')}>
-                        <ListItemIcon>
-                            <BlockIcon fontSize="small" sx={{ color: '#f59e0b' }} />
-                        </ListItemIcon>
-                        <ListItemText primary="Suspend token" />
-                    </MenuItem>
-                    <MenuItem onClick={() => handleUpdateStatus(selectedToken, 'refresh')}>
-                        <ListItemIcon>
-                            <RefreshIcon fontSize="small" sx={{ color: '#3b82f6' }} />
-                        </ListItemIcon>
-                        <ListItemText primary="Refresh status" />
-                    </MenuItem>
-                </Menu>
             </Box>
         </Fade>
     );
