@@ -1214,16 +1214,36 @@ const TokenService = {
      * Active un token (statut -> ACTIVE)
      * @param {string|number} id - ID du token
      * @param {string} message - Message optionnel pour l'activation
+     * @param {string} reason - Raison optionnelle pour l'activation
      * @returns {Promise<Object>} - Statut de succès avec données ou erreur
      */
-    async activateToken(id, message = '') {
+    async activateToken(id, message = '', reason = '') {
         try {
             console.log(`TokenService.activateToken: Activating token ${id}`);
             
+            // Récupérer les détails du token pour avoir tokenRequestorID et tokenReferenceID
+            const tokenDetails = await this.getTokenDetails(id);
+            if (!tokenDetails.success) {
+                console.error('Could not get token details for activate operation');
+                return {
+                    success: false,
+                    error: 'Failed to retrieve token details'
+                };
+            }
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : 'unknown';
+            
+            // Créer le payload au format attendu par le backend
             const payload = {
-                token_id: parseInt(id, 10) || id,
-                reason: '', // Pas de raison requise pour l'activation
-                message: message
+                token_id: parseInt(id, 10) || id, // Pour compatibilité
+                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || "",
+                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                operatorID: operatorID,
+                reason: reason,
+                Message: message,
+                operationType: "ACTIVATE"
             };
             
             console.log('TokenService.activateToken: Sending data:', payload);
@@ -1296,10 +1316,29 @@ const TokenService = {
         try {
             console.log(`TokenService.suspendToken: Suspending token ${id} with reason: ${reason}`);
             
+            // Récupérer les détails du token pour avoir tokenRequestorID et tokenReferenceID
+            const tokenDetails = await this.getTokenDetails(id);
+            if (!tokenDetails.success) {
+                console.error('Could not get token details for suspend operation');
+                return {
+                    success: false,
+                    error: 'Failed to retrieve token details'
+                };
+            }
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : 'unknown';
+            
+            // Créer le payload au format attendu par le backend
             const payload = {
-                token_id: parseInt(id, 10) || id,
-                reason: reason, // Raison requise
-                message: message
+                token_id: parseInt(id, 10) || id, // Pour compatibilité
+                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || "",
+                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                operatorID: operatorID,
+                reason: reason,
+                Message: message,
+                operationType: "SUSPEND"
             };
             
             console.log('TokenService.suspendToken: Sending data:', payload);
@@ -1374,10 +1413,29 @@ const TokenService = {
         try {
             console.log(`TokenService.resumeToken: Resuming token ${id} with reason: ${reason}`);
             
+            // Récupérer les détails du token pour avoir tokenRequestorID et tokenReferenceID
+            const tokenDetails = await this.getTokenDetails(id);
+            if (!tokenDetails.success) {
+                console.error('Could not get token details for resume operation');
+                return {
+                    success: false,
+                    error: 'Failed to retrieve token details'
+                };
+            }
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : 'unknown';
+            
+            // Créer le payload au format attendu par le backend
             const payload = {
-                token_id: parseInt(id, 10) || id,
-                reason: reason, // Raison requise
-                message: message
+                token_id: parseInt(id, 10) || id, // Pour compatibilité
+                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || "",
+                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                operatorID: operatorID,
+                reason: reason,
+                Message: message,
+                operationType: "RESUME"
             };
             
             console.log('TokenService.resumeToken: Sending data:', payload);
@@ -1452,10 +1510,29 @@ const TokenService = {
         try {
             console.log(`TokenService.deactivateToken: Deactivating token ${id} with reason: ${reason}`);
             
+            // Récupérer les détails du token pour avoir tokenRequestorID et tokenReferenceID
+            const tokenDetails = await this.getTokenDetails(id);
+            if (!tokenDetails.success) {
+                console.error('Could not get token details for deactivate operation');
+                return {
+                    success: false,
+                    error: 'Failed to retrieve token details'
+                };
+            }
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : 'unknown';
+            
+            // Créer le payload au format attendu par le backend
             const payload = {
-                token_id: parseInt(id, 10) || id,
-                reason: reason, // Raison requise
-                message: message
+                token_id: parseInt(id, 10) || id, // Pour compatibilité
+                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || "",
+                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                operatorID: operatorID,
+                reason: reason,
+                Message: message,
+                operationType: "DEACTIVATE"
             };
             
             console.log('TokenService.deactivateToken: Sending data:', payload);
@@ -1554,6 +1631,13 @@ const TokenService = {
                             { value: 'suspend', label: 'Suspension' },
                             { value: 'resume', label: 'Reprise' },
                             { value: 'deactivate', label: 'Désactivation' }
+                        ],
+                        activate_reasons: [
+                            { value: 'normal_use', label: 'Normal Use' },
+                            { value: 'replacement', label: 'Card Replacement' },
+                            { value: 'found', label: 'Lost Card Found' },
+                            { value: 'new_request', label: 'New Token Request' },
+                            { value: 'other', label: 'Other' }
                         ],
                         resume_reasons: [
                             { value: 'found', label: 'Found' },

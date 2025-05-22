@@ -186,7 +186,9 @@ const TokenList = () => {
 
     // État pour stocker les options d'actions de token
     const [actionOptions, setActionOptions] = useState({
+        isLoading: true,
         operation_types: [],
+        activate_reasons: [],
         resume_reasons: [],
         delete_reasons: [],
         suspend_reasons: []
@@ -805,8 +807,8 @@ const TokenList = () => {
             // Call the appropriate API based on action
             let result;
             if (action === 'activate') {
-                console.log(`Activating token ${token.id}`);
-                result = await TokenService.activateToken(token.id, messageValue);
+                console.log(`Activating token ${token.id} with reason: ${reasonValue}`);
+                result = await TokenService.activateToken(token.id, messageValue, reasonValue);
             } else if (action === 'suspend') {
                 console.log(`Suspending token ${token.id} with reason: ${reasonValue}`);
                 result = await TokenService.suspendToken(token.id, reasonValue, messageValue);
@@ -895,60 +897,112 @@ const TokenList = () => {
 
     // Define reason options for different actions
     const getReasonOptions = (action) => {
-        // Utiliser les options récupérées de l'API si disponibles
+        // Uniquement utiliser les options récupérées de l'API
         if (actionOptions) {
-        switch(action) {
-            case 'activate':
-                    return []; // Pour l'activation, pas de raisons spécifiques requises
-            case 'suspend':
+            switch(action) {
+                case 'activate':
+                    if (actionOptions.activate_reasons && actionOptions.activate_reasons.length > 0) {
+                        return actionOptions.activate_reasons.map(reason => reason.label || reason.value);
+                    }
+                    console.warn(`Aucune option d'activation trouvée dans l'API`);
+                    return [];
+                    
+                case 'suspend':
                     if (actionOptions.suspend_reasons && actionOptions.suspend_reasons.length > 0) {
                         return actionOptions.suspend_reasons.map(reason => reason.label || reason.value);
                     }
-                    break;
-            case 'resume':
+                    console.warn(`Aucune raison de suspension trouvée dans l'API`);
+                    return [];
+                    
+                case 'resume':
                     if (actionOptions.resume_reasons && actionOptions.resume_reasons.length > 0) {
                         return actionOptions.resume_reasons.map(reason => reason.label || reason.value);
                     }
-                    break;
-            case 'deactivate':
+                    console.warn(`Aucune raison de reprise trouvée dans l'API`);
+                    return [];
+                    
+                case 'deactivate':
                     if (actionOptions.delete_reasons && actionOptions.delete_reasons.length > 0) {
                         return actionOptions.delete_reasons.map(reason => reason.label || reason.value);
                     }
-                    break;
+                    console.warn(`Aucune raison de désactivation trouvée dans l'API`);
+                    return [];
+                    
                 default:
                     return [];
             }
         }
         
-        // Valeurs par défaut si les options de l'API ne sont pas disponibles
-        switch(action) {
-            case 'activate':
-                return []; // Pour l'activation, pas de raisons spécifiques requises
-            case 'suspend':
-                return ['Lost', 'Stolen', 'Fraudulent use', 'Account Closed', 'Other'];
-            case 'resume':
-                return ['Found', 'Fraudulent use denied', 'Other'];
-            case 'deactivate':
-                return ['Lost', 'Stolen', 'Fraudulent use', 'Account Closed', 'Other'];
-            default:
-                return [];
-        }
+        console.warn(`Options d'action non disponibles depuis l'API`);
+        return [];
     };
 
     // Fonction pour récupérer les options d'actions de token
     const fetchTokenActionOptions = async () => {
         try {
             console.log('Fetching token action options');
+            setError(null);
+            
+            // Indiquer que les options sont en cours de chargement
+            setActionOptions({
+                isLoading: true,
+                operation_types: [],
+                activate_reasons: [],
+                resume_reasons: [],
+                delete_reasons: [],
+                suspend_reasons: []
+            });
+            
             const result = await TokenService.getTokenActionOptions();
             
             if (result.success && result.data) {
-                console.log('Token action options:', result.data);
-                setActionOptions(result.data);
+                console.log('Token action options récupérées avec succès:', result.data);
+                
+                // Vérifier la présence de chaque type d'options
+                if (!result.data.activate_reasons || result.data.activate_reasons.length === 0) {
+                    console.warn('Aucune raison d\'activation retournée par l\'API');
+                }
+                if (!result.data.suspend_reasons || result.data.suspend_reasons.length === 0) {
+                    console.warn('Aucune raison de suspension retournée par l\'API');
+                }
+                if (!result.data.resume_reasons || result.data.resume_reasons.length === 0) {
+                    console.warn('Aucune raison de reprise retournée par l\'API');
+                }
+                if (!result.data.delete_reasons || result.data.delete_reasons.length === 0) {
+                    console.warn('Aucune raison de désactivation retournée par l\'API');
+                }
+                
+                // Mettre à jour avec les données de l'API
+                setActionOptions({
+                    ...result.data,
+                    isLoading: false
+                });
             } else {
-                console.error('Failed to fetch token action options');
+                console.error('Échec de récupération des options d\'action:', result.error);
+                setError(`Impossible de charger les options d'action pour les tokens: ${result.error}`);
+                
+                // Réinitialiser avec un objet vide mais marqué comme non chargement
+                setActionOptions({
+                    isLoading: false,
+                    operation_types: [],
+                    activate_reasons: [],
+                    resume_reasons: [],
+                    delete_reasons: [],
+                    suspend_reasons: []
+                });
             }
         } catch (error) {
-            console.error('Error fetching token action options:', error);
+            console.error('Erreur lors de la récupération des options d\'action:', error);
+            setError(`Erreur lors du chargement des options d'action: ${error.message}`);
+            
+            setActionOptions({
+                isLoading: false,
+                operation_types: [],
+                activate_reasons: [],
+                resume_reasons: [],
+                delete_reasons: [],
+                suspend_reasons: []
+            });
         }
     };
 
@@ -2323,8 +2377,7 @@ const TokenList = () => {
                         {reasonDialog.action && `${reasonDialog.action.charAt(0).toUpperCase() + reasonDialog.action.slice(1)} reason`}
                     </DialogTitle>
                     <DialogContent sx={{ pt: 3 }}>
-                        {reasonDialog.reasonOptions && reasonDialog.reasonOptions.length > 0 && (
-                            <Box sx={{ mb: 3 }}>
+                        <Box sx={{ mb: 3 }}>
                                 <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                                     Reason
                                 </Typography>
@@ -2337,13 +2390,25 @@ const TokenList = () => {
                                         sx={{ mb: 2 }}
                                     >
                                         <MenuItem value="" disabled>Select a reason...</MenuItem>
-                                        {reasonDialog.reasonOptions.map(option => (
-                                            <MenuItem key={option} value={option}>{option}</MenuItem>
-                                        ))}
+                                        {reasonDialog.reasonOptions.length > 0 ? (
+                                            reasonDialog.reasonOptions.map(option => (
+                                                <MenuItem key={option} value={option}>{option}</MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem value="" disabled>
+                                                {actionOptions.isLoading ? 
+                                                  "Chargement des options..." : 
+                                                  "Aucune option disponible depuis l'API"}
+                                            </MenuItem>
+                                        )}
                                     </Select>
+                                    {reasonDialog.reasonOptions.length === 0 && !actionOptions.isLoading && (
+                                        <Typography variant="caption" color="error" sx={{ mt: -1, ml: 1 }}>
+                                            Impossible de charger les options. Vérifiez la connexion API.
+                                        </Typography>
+                                    )}
                                 </FormControl>
                             </Box>
-                        )}
                         <Box>
                             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                                 Message
