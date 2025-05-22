@@ -1272,7 +1272,7 @@ const TokenService = {
             // Créer le payload au format attendu par le backend
             const payload = {
                 tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
-                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0,
+                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0),
                 operatorID: operatorID,
                 operationType: "ACTIVATE",
                 reason: reason || "Account reopened",
@@ -1370,7 +1370,7 @@ const TokenService = {
             // Créer le payload au format attendu par le backend
             const payload = {
                 tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
-                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0,
+                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0),
                 operatorID: operatorID,
                 operationType: "SUSPEND",
                 reason: reason,
@@ -1470,7 +1470,7 @@ const TokenService = {
             // Créer le payload au format attendu par le backend
             const payload = {
                 tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
-                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0,
+                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0),
                 operatorID: operatorID,
                 operationType: "RESUME",
                 reason: reason || "Found", // Valeur par défaut si non fournie
@@ -1573,7 +1573,7 @@ const TokenService = {
             // Créer le payload au format attendu par le backend
             const payload = {
                 tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
-                tokenRequestorID: tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0,
+                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || 0),
                 operatorID: operatorID,
                 operationType: "DELETE", // Notez le changement de DEACTIVATE à DELETE
                 reason: reason,
