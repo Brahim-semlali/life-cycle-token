@@ -69,46 +69,68 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         if ((!tokens || tokens.length === 0) && !tableMetadata) return [];
         
         // Colonnes à exclure de l'affichage
-        const excludedColumns = ['_id', '__v', 'id', 'id']; 
+        const excludedColumns = ['_id', '__v']; 
         
         // Définir les colonnes que nous voulons spécifiquement afficher
-        // en se basant sur le schéma PostgreSQL
         const columnsToDisplay = [
             'token',
-            'tokenReferenceId',
-            'tokenReferenceID',
-            'tokenRequestorId',
-            'tokenRequestorID',
             'tokenType',
             'tokenStatus',
             'token_status',
+            'tokenReferenceID',
+            'tokenReferenceId',
+            'tokenRequestorID',
+            'tokenRequestorId',
             'tokenAssuranceMethod',
             'assurance_method_display',
-            'tokenActivationDate',
-            'tokenExpirationDate',
-            'lastTokenStatusUpdatedTime',
+            'panReferenceID',
             'pan_reference_id',
+            'entityOfLastAction',
             'entity_of_last_action',
+            'walletAccountEmailAddressHash',
             'wallet_account_email_address_hash',
+            'clientWalletAccountID',
             'client_wallet_account_id',
+            'panSource',
             'pan_source',
-            'auto_fill_indicator'
+            'autoFillIndicator',
+            'auto_fill_indicator',
+            'tokenActivationDate',
+            'activation_date',
+            'tokenExpirationDate',
+            'expiration_date',
+            'lastTokenStatusUpdatedTime',
+            'last_status_update'
         ];
         
+        // Groupes de champs équivalents (différentes conventions de nommage)
+        const fieldGroups = {
+            'token': ['token', 'token_value'],
+            'tokenStatus': ['tokenStatus', 'token_status'],
+            'tokenReferenceID': ['tokenReferenceID', 'tokenReferenceId', 'pan_reference_id'],
+            'tokenRequestorID': ['tokenRequestorID', 'tokenRequestorId', 'token_requestor_id'],
+            'panReferenceID': ['panReferenceID', 'pan_reference_id'],
+            'entityOfLastAction': ['entityOfLastAction', 'entity_of_last_action'],
+            'walletAccountEmailAddressHash': ['walletAccountEmailAddressHash', 'wallet_account_email_address_hash'],
+            'clientWalletAccountID': ['clientWalletAccountID', 'client_wallet_account_id'],
+            'panSource': ['panSource', 'pan_source'],
+            'autoFillIndicator': ['autoFillIndicator', 'auto_fill_indicator'],
+            'tokenActivationDate': ['tokenActivationDate', 'activation_date'],
+            'tokenExpirationDate': ['tokenExpirationDate', 'expiration_date'],
+            'lastTokenStatusUpdatedTime': ['lastTokenStatusUpdatedTime', 'last_status_update', 'last_token_status_updated_time']
+        };
+        
+        // Déterminer quelles colonnes sont disponibles dans les données
         let availableKeys = [];
         
-        // Priorité 1: Obtenir les colonnes à partir des métadonnées de la table PostgreSQL
+        // Priorité 1: Obtenir les colonnes à partir des métadonnées de la table
         if (tableMetadata && tableMetadata.columns) {
             availableKeys = tableMetadata.columns
                 .map(col => col.name || col.column_name)
-                .filter(key => !excludedColumns.includes(key))
-                // Filtrer pour n'inclure que les colonnes que nous voulons afficher
-                .filter(key => columnsToDisplay.includes(key));
-                
-            console.log('Available columns from metadata (filtered):', availableKeys);
+                .filter(key => !excludedColumns.includes(key) && columnsToDisplay.includes(key));
         }
         
-        // Priorité 2: Si pas de métadonnées ou pour compléter, utiliser les clés des données réelles
+        // Priorité 2: Obtenir les colonnes à partir des données réelles
         if (tokens && tokens.length > 0) {
             // Collecter toutes les clés uniques de tous les tokens
             const allKeys = new Set();
@@ -120,9 +142,6 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                 });
             });
             
-            // Log the keys we found in the tokens
-            console.log('Keys from token data (filtered):', Array.from(allKeys));
-            
             // Convertir le Set en array et ajouter les clés qui ne sont pas déjà présentes
             Array.from(allKeys).forEach(key => {
                 if (!availableKeys.includes(key)) {
@@ -132,77 +151,96 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         }
         
         // Définir un ordre préférentiel pour les colonnes les plus importantes
-        // Celles-ci seront affichées dans l'ordre du schéma PostgreSQL
         const preferredOrder = [
             'token',
-            'tokenReferenceId',
-            'tokenReferenceID',
-            'pan_reference_id',
-            'tokenRequestorId',
-            'tokenRequestorID',
             'tokenType',
             'tokenStatus',
             'tokenAssuranceMethod',
-            'assurance_method_display',
-            'entity_of_last_action',
-            'wallet_account_email_address_hash',
-            'client_wallet_account_id',
-            'pan_source',
-            'auto_fill_indicator',
+            'tokenReferenceID',
+            'tokenRequestorID', 
+            'panReferenceID',
+            'entityOfLastAction',
+            'walletAccountEmailAddressHash',
+            'clientWalletAccountID',
+            'panSource',
+            'autoFillIndicator',
             'tokenActivationDate',
             'tokenExpirationDate',
             'lastTokenStatusUpdatedTime'
         ];
         
-        // Filtrer pour éviter les doublons entre tokenStatus et token_status
-        if (availableKeys.includes('tokenStatus') && availableKeys.includes('token_status')) {
-            // Garder seulement tokenStatus pour l'affichage
-            availableKeys = availableKeys.filter(key => key !== 'token_status');
-        }
+        // Dédupliquer les champs qui peuvent exister en plusieurs formats
+        const uniqueColumns = [];
+        const addedColumnGroups = new Set();
         
-        // Filtrer pour éviter les doublons entre tokenReferenceId et tokenReferenceID
-        if (availableKeys.includes('tokenReferenceId') && availableKeys.includes('tokenReferenceID')) {
-            // Garder seulement tokenReferenceID pour l'affichage
-            availableKeys = availableKeys.filter(key => key !== 'tokenReferenceId');
-        }
+        // Ajouter chaque colonne préférée en premier (si disponible)
+        preferredOrder.forEach(preferredKey => {
+            // Si c'est un champ qui a des alternatives
+            if (fieldGroups[preferredKey]) {
+                // Si on n'a pas déjà ajouté une colonne de ce groupe
+                if (!addedColumnGroups.has(preferredKey)) {
+                    // Trouver la première alternative disponible
+                    const availableAlternative = fieldGroups[preferredKey].find(alt => 
+                        availableKeys.includes(alt)
+                    );
+                    
+                    if (availableAlternative) {
+                        uniqueColumns.push(availableAlternative);
+                        addedColumnGroups.add(preferredKey);
+                    } else if (availableKeys.includes(preferredKey)) {
+                        uniqueColumns.push(preferredKey);
+                        addedColumnGroups.add(preferredKey);
+                    }
+                }
+            } 
+            // Si c'est un champ normal sans alternatives
+            else if (availableKeys.includes(preferredKey) && !uniqueColumns.includes(preferredKey)) {
+                uniqueColumns.push(preferredKey);
+            }
+        });
         
-        // Filtrer pour éviter les doublons entre tokenRequestorId et tokenRequestorID
-        if (availableKeys.includes('tokenRequestorId') && availableKeys.includes('tokenRequestorID')) {
-            // Garder seulement tokenRequestorID pour l'affichage
-            availableKeys = availableKeys.filter(key => key !== 'tokenRequestorId');
-        }
-        
-        // Trier les colonnes disponibles selon l'ordre préférentiel
-        const sortedKeys = [...availableKeys].sort((a, b) => {
-            const indexA = preferredOrder.indexOf(a);
-            const indexB = preferredOrder.indexOf(b);
+        // Ajouter les colonnes restantes qui n'ont pas été traitées
+        availableKeys.forEach(key => {
+            // Vérifier si cette clé fait partie d'un groupe
+            let isPartOfGroup = false;
+            let groupName = null;
             
-            // Si les deux clés sont dans l'ordre préférentiel, respecter cet ordre
-            if (indexA !== -1 && indexB !== -1) {
-                return indexA - indexB;
+            for (const [group, alternatives] of Object.entries(fieldGroups)) {
+                if (alternatives.includes(key)) {
+                    isPartOfGroup = true;
+                    groupName = group;
+                    break;
+                }
             }
             
-            // Si seulement une clé est dans l'ordre préférentiel, la mettre en premier
-            if (indexA !== -1) return -1;
-            if (indexB !== -1) return 1;
+            // Si c'est une clé de groupe et qu'on a déjà ajouté une colonne de ce groupe, on l'ignore
+            if (isPartOfGroup && addedColumnGroups.has(groupName)) {
+                return;
+            }
             
-            // Sinon, trier par ordre alphabétique
-            return a.localeCompare(b);
+            // Sinon, on l'ajoute si elle n'est pas déjà présente
+            if (!uniqueColumns.includes(key)) {
+                uniqueColumns.push(key);
+            
+                // Si c'est une clé de groupe, marquer ce groupe comme traité
+                if (isPartOfGroup) {
+                    addedColumnGroups.add(groupName);
+                }
+            }
         });
         
         // Convertir les clés en objets de colonne
-        const finalColumns = sortedKeys.map(key => ({
+        const finalColumns = uniqueColumns.map(key => ({
             id: key,
             label: formatColumnLabel(key),
             isDate: key.includes('Date') || key.includes('Time'),
             isStatus: key === 'tokenStatus' || key === 'token_status',
             isDisplay: key.toLowerCase().includes('display'),
             isAssurance: key.includes('Assurance'),
-            isScore: key.toLowerCase().includes('score'),
-            isBoolean: key === 'is_deleted' || (tokens.length > 0 && typeof tokens.find(t => t[key] !== undefined)?.[key] === 'boolean')
+            isBoolean: key === 'autoFillIndicator' || key === 'auto_fill_indicator' || 
+                     (tokens.length > 0 && typeof tokens.find(t => t[key] !== undefined)?.[key] === 'boolean')
         }));
         
-        console.log('Final columns for table:', finalColumns.map(c => c.id));
         return finalColumns;
     };
     
@@ -443,6 +481,39 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     const renderCellContent = (token, column) => {
         // Check if the property exists in the token object
         if (!(column.id in token)) {
+            // Essayer de faire correspondre les cas camelCase et snake_case
+            let value = null;
+            
+            // Correspondance des noms de champs entre backend et frontend
+            const fieldMappings = {
+                'panReferenceID': ['pan_reference_id', 'panReferencesID'],
+                'panSource': ['pan_source', 'tokenPanSource'],
+                'entityOfLastAction': ['entity_of_last_action', 'lastActionEntity'],
+                'clientWalletAccountID': ['client_wallet_account_id', 'walletAccountID'],
+                'walletAccountEmailAddressHash': ['wallet_account_email_address_hash', 'emailHash'],
+                'autoFillIndicator': ['auto_fill_indicator', 'autoFill'],
+                'tokenActivationDate': ['activation_date', 'tokenActivation'],
+                'tokenStatus': ['token_status'],
+                'token_status': ['tokenStatus']
+                // Ajoutez d'autres mappages au besoin
+            };
+            
+            // Vérifier les mappages possibles
+            if (fieldMappings[column.id]) {
+                for (const altName of fieldMappings[column.id]) {
+                    if (altName in token) {
+                        value = token[altName];
+                        break;
+                    }
+                }
+            }
+            
+            // Si on a trouvé une valeur via le mappage, on l'utilise
+            if (value !== null) {
+                // Utiliser une version récursive pour traiter la valeur trouvée
+                return renderCellContent({...token, [column.id]: value}, column);
+            }
+            
             // For tokenStatus, try token_status as a fallback
             if (column.id === 'tokenStatus' && 'token_status' in token) {
                 return renderCellContent({...token, tokenStatus: token.token_status}, column);
@@ -460,7 +531,8 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                 return renderCellContent({...token, tokenRequestorId: token.tokenRequestorID}, column);
             }
             
-            console.log(`Property ${column.id} not found in token:`, token);
+            // Log détaillé pour aider au débogage
+            console.log(`Champ manquant: ${column.id}, clés disponibles:`, Object.keys(token));
             return 'N/A';
         }
         
@@ -479,18 +551,18 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         } else if (column.isStatus) {
             return (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Chip 
-                        label={value || 'Unknown'} 
-                        size="small"
-                        sx={{
+                <Chip 
+                    label={value || 'Unknown'} 
+                    size="small"
+                    sx={{
                             ...getStatusStyle(value, token),
-                            fontSize: '0.75rem',
-                            height: '24px',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                        }}
-                    />
+                        fontSize: '0.75rem',
+                        height: '24px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                />
                     {hasPendingStatusChange(token) && (
                         <Tooltip title={`Demande de ${getPendingActionName(token)} en attente de confirmation`}>
                             <WaitingIcon 
@@ -535,7 +607,8 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                     {value}
                 </Typography>
             );
-        } else if (column.id === 'tokenReferenceId' || column.id === 'tokenRequestorId') {
+        } else if (column.id === 'tokenReferenceId' || column.id === 'tokenRequestorId' || 
+                  column.id === 'tokenReferenceID' || column.id === 'tokenRequestorID') {
             return (
                 <Typography 
                     variant="body2" 
@@ -737,114 +810,114 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                 ) : (
                                                     /* Display appropriate action buttons based on token status */
                                                     <>
-                                                    {getNormalizedStatus(token) === 'inactive' && (
-                                                        <>
-                                                            <Tooltip title="Activate token">
-                                                                <Button 
-                                                                    startIcon={<ActivateIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'activate')}
-                                                                    sx={{
-                                                                        color: '#10b981',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(16, 185, 129, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Activate
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip title="Deactivate token">
-                                                                <Button 
-                                                                    startIcon={<DeactivateIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
-                                                                    sx={{
-                                                                        color: '#6b7280',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Deactivate
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </>
-                                                    )}
-                                                    
-                                                    {getNormalizedStatus(token) === 'active' && (
-                                                        <>
-                                                            <Tooltip title="Suspend token">
-                                                                <Button 
-                                                                    startIcon={<BlockIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'suspend')}
-                                                                    sx={{
-                                                                        color: '#f59e0b',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(245, 158, 11, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Suspend
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip title="Deactivate token">
-                                                                <Button 
-                                                                    startIcon={<DeactivateIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
-                                                                    sx={{
-                                                                        color: '#6b7280',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Deactivate
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </>
-                                                    )}
-                                                    
-                                                    {getNormalizedStatus(token) === 'suspended' && (
-                                                        <>
-                                                            <Tooltip title="Resume token">
-                                                                <Button 
-                                                                    startIcon={<ResumeIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'resume')}
-                                                                    sx={{
-                                                                        color: '#3b82f6',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(59, 130, 246, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Resume
-                                                                </Button>
-                                                            </Tooltip>
-                                                            <Tooltip title="Deactivate token">
-                                                                <Button 
-                                                                    startIcon={<DeactivateIcon fontSize="small" />}
-                                                                    size="small"
-                                                                    onClick={() => handleUpdateStatus(token, 'deactivate')}
-                                                                    sx={{
-                                                                        color: '#6b7280',
-                                                                        minWidth: 'auto',
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    Deactivate
-                                                                </Button>
-                                                            </Tooltip>
+                                                {getNormalizedStatus(token) === 'inactive' && (
+                                                    <>
+                                                        <Tooltip title="Activate token">
+                                                            <Button 
+                                                                startIcon={<ActivateIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'activate')}
+                                                                sx={{
+                                                                    color: '#10b981',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Activate
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip title="Deactivate token">
+                                                            <Button 
+                                                                startIcon={<DeactivateIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                sx={{
+                                                                    color: '#6b7280',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Deactivate
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                                
+                                                {getNormalizedStatus(token) === 'active' && (
+                                                    <>
+                                                        <Tooltip title="Suspend token">
+                                                            <Button 
+                                                                startIcon={<BlockIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'suspend')}
+                                                                sx={{
+                                                                    color: '#f59e0b',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(245, 158, 11, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Suspend
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip title="Deactivate token">
+                                                            <Button 
+                                                                startIcon={<DeactivateIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                sx={{
+                                                                    color: '#6b7280',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Deactivate
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
+                                                
+                                                {getNormalizedStatus(token) === 'suspended' && (
+                                                    <>
+                                                        <Tooltip title="Resume token">
+                                                            <Button 
+                                                                startIcon={<ResumeIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'resume')}
+                                                                sx={{
+                                                                    color: '#3b82f6',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Resume
+                                                            </Button>
+                                                        </Tooltip>
+                                                        <Tooltip title="Deactivate token">
+                                                            <Button 
+                                                                startIcon={<DeactivateIcon fontSize="small" />}
+                                                                size="small"
+                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                sx={{
+                                                                    color: '#6b7280',
+                                                                    minWidth: 'auto',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(107, 114, 128, 0.1)'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Deactivate
+                                                            </Button>
+                                                        </Tooltip>
                                                         </>
                                                     )}
                                                     </>

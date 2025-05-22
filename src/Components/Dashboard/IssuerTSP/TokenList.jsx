@@ -830,7 +830,7 @@ const TokenList = () => {
                 // Instead we'll wait for confirmation from the team
                 if (action !== 'refresh') {
                     // Refresh the tokens list to show it's pending
-                    await fetchTokens();
+                await fetchTokens();
                 }
             } else {
                 console.error('Failed to send token status change request:', result?.error);
@@ -897,20 +897,20 @@ const TokenList = () => {
     const getReasonOptions = (action) => {
         // Utiliser les options récupérées de l'API si disponibles
         if (actionOptions) {
-            switch(action) {
-                case 'activate':
+        switch(action) {
+            case 'activate':
                     return []; // Pour l'activation, pas de raisons spécifiques requises
-                case 'suspend':
+            case 'suspend':
                     if (actionOptions.suspend_reasons && actionOptions.suspend_reasons.length > 0) {
                         return actionOptions.suspend_reasons.map(reason => reason.label || reason.value);
                     }
                     break;
-                case 'resume':
+            case 'resume':
                     if (actionOptions.resume_reasons && actionOptions.resume_reasons.length > 0) {
                         return actionOptions.resume_reasons.map(reason => reason.label || reason.value);
                     }
                     break;
-                case 'deactivate':
+            case 'deactivate':
                     if (actionOptions.delete_reasons && actionOptions.delete_reasons.length > 0) {
                         return actionOptions.delete_reasons.map(reason => reason.label || reason.value);
                     }
@@ -1539,13 +1539,13 @@ const TokenList = () => {
                         rowsPerPage={rowsPerPage}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
-                        onViewDetails={handleViewDetails}
-                        onEditToken={handleEditToken}
-                        onDeleteToken={handleDeleteToken}
-                        onUpdateStatus={handleUpdateStatus}
-                        tableMetadata={tableMetadata}
+                    onViewDetails={handleViewDetails}
+                    onEditToken={handleEditToken}
+                    onDeleteToken={handleDeleteToken}
+                    onUpdateStatus={handleUpdateStatus}
+                    tableMetadata={tableMetadata}
                         pendingStatusChanges={pendingStatusChanges}
-                    />
+                />
 
                 {/* Token Detail Dialog */}
                 <Dialog 
