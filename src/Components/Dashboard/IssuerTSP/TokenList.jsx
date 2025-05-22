@@ -201,6 +201,27 @@ const TokenList = () => {
     // Fonction mise à jour pour ajouter un statut à la liste des statuts modifiés
     const updateLocalStatus = (tokenId, newStatus) => {
         console.log(`Caching local status for token ${tokenId}: ${newStatus}`);
+        
+        // Gestion spéciale pour SUSPENDED et DEACTIVATED pour assurer l'affichage immédiat
+        if (newStatus === 'SUSPENDED' || newStatus === 'DEACTIVATED') {
+            console.log(`Mise à jour spéciale pour statut: ${newStatus}`);
+            
+            // Mettre à jour l'état local des tokens immédiatement
+            setTokens(currentTokens => {
+                return currentTokens.map(token => {
+                    if (token.id === tokenId) {
+                        return {
+                            ...token,
+                            tokenStatus: newStatus,
+                            token_status: newStatus
+                        };
+                    }
+                    return token;
+                });
+            });
+        }
+        
+        // Mettre à jour la cache des statuts modifiés
         setModifiedStatuses(prev => ({
             ...prev,
             [tokenId]: newStatus
@@ -302,7 +323,7 @@ const TokenList = () => {
         }
     };
 
-    const fetchTokens = async () => {
+    const fetchTokens = async (forceRefresh = false) => {
         setLoading(true);
         setError(null);
         
@@ -333,6 +354,12 @@ const TokenList = () => {
             
             // Force refresh from server by adding a timestamp
             queryParams._ts = Date.now();
+            
+            // Forcer un rafraîchissement complet si demandé
+            if (forceRefresh) {
+                queryParams._cache = 'no-cache';
+                console.log('Forçage du rafraîchissement complet des données');
+            }
             
             // Use the TokenService to fetch tokens directly from the database
             const result = await TokenService.listTokens(queryParams);
@@ -724,6 +751,9 @@ const TokenList = () => {
 
     // Handle token status update with local cache
     const handleUpdateStatus = async (token, action) => {
+        // Log l'action pour débuggage
+        console.log(`Demande de changement de statut: ${action} pour le token ${token.id}`);
+        
         // Find the appropriate reason options based on the action
         const reasonOptions = getReasonOptions(action);
         
@@ -731,29 +761,90 @@ const TokenList = () => {
         let reasonValues = [];
         if (actionOptions) {
             switch(action) {
+                case 'activate':
+                    reasonValues = actionOptions.activate_reasons || [];
+                    break;
                 case 'suspend':
                     reasonValues = actionOptions.suspend_reasons || [];
                     break;
                 case 'resume':
                     reasonValues = actionOptions.resume_reasons || [];
                     break;
-                case 'deactivate':
-                    reasonValues = actionOptions.delete_reasons || [];
+                case 'deactivate': // UI nom
+                    reasonValues = actionOptions.delete_reasons || []; // API nom
                     break;
                 default:
                     reasonValues = [];
             }
         }
         
+        // Si aucune raison n'est disponible depuis l'API, proposer des valeurs par défaut basées sur le modèle Django
+        if (reasonValues.length === 0) {
+            switch(action) {
+                case 'activate':
+                    reasonValues = [
+                        { value: 'Account reopened', label: 'Account reopened' },
+                        { value: 'Fraud resolved', label: 'Fraud resolved' },
+                        { value: 'Other', label: 'Other (Active)' }
+                    ];
+                    break;
+                case 'suspend':
+                    reasonValues = [
+                        { value: 'lost', label: 'Lost' },
+                        { value: 'stolen', label: 'Stolen' },
+                        { value: 'Fraudulent use', label: 'Fraudulent use' },
+                        { value: 'Account Closed', label: 'Account Closed' },
+                        { value: 'Other', label: 'Other (Suspend)' }
+                    ];
+                    break;
+                case 'resume':
+                    reasonValues = [
+                        { value: 'Found', label: 'Found' },
+                        { value: 'Fraudulent use denied', label: 'Fraudulent use denied' },
+                        { value: 'Other', label: 'Other (Resume)' }
+                    ];
+                    break;
+                case 'deactivate':
+                    reasonValues = [
+                        { value: 'lost', label: 'Lost' },
+                        { value: 'stolen', label: 'Stolen' },
+                        { value: 'Fraudulent use', label: 'Fraudulent use' },
+                        { value: 'Account Closed', label: 'Account Closed' },
+                        { value: 'Other', label: 'Other (Delete)' }
+                    ];
+                    break;
+                default:
+                    reasonValues = [];
+            }
+        }
+        
+        const reasonOptionsForUI = reasonValues.map(r => r.label || r.value);
+        
         setReasonDialog({
             open: true,
             action,
             token,
             reason: '',
-            reasonOptions,
-            selectedReason: reasonOptions.length > 0 ? '' : null,
-            reasonValues: reasonValues // Store the full reason objects from the API
+            reasonOptions: reasonOptionsForUI,
+            selectedReason: reasonOptionsForUI.length > 0 ? '' : null,
+            reasonValues: reasonValues // Stocker les objets de raison complets de l'API
         });
+    };
+
+    // Fonction pour convertir les noms d'actions de l'UI vers les valeurs API
+    const getApiOperationType = (uiAction) => {
+        switch(uiAction) {
+            case 'activate':
+                return 'ACTIVATE'; // Changé de CALL_CENTER_ACTIVATION à ACTIVATE
+            case 'suspend':
+                return 'SUSPEND';
+            case 'resume':
+                return 'RESUME';
+            case 'deactivate':
+                return 'DELETE';
+            default:
+                return uiAction.toUpperCase();
+        }
     };
 
     // Process the status update after reason is provided
@@ -777,6 +868,7 @@ const TokenList = () => {
             
             const reasonValue = apiReasonValue || '';
             const messageValue = reason || '';
+            const apiOperationType = getApiOperationType(action);
 
             // Determine the human-readable action name for the message
             let actionDisplayName = action.charAt(0).toUpperCase() + action.slice(1);
@@ -784,6 +876,8 @@ const TokenList = () => {
             else if (action === 'suspend') actionDisplayName = "Suspension";
             else if (action === 'resume') actionDisplayName = "Reprise";
             else if (action === 'deactivate') actionDisplayName = "Désactivation";
+            
+            console.log(`Action UI: ${action}, API operation: ${apiOperationType}, Display: ${actionDisplayName}`);
             
             // Show confirmation message that the request has been sent
             setPendingMessage({
@@ -806,45 +900,96 @@ const TokenList = () => {
             
             // Call the appropriate API based on action
             let result;
-            if (action === 'activate') {
-                console.log(`Activating token ${token.id} with reason: ${reasonValue}`);
-                result = await TokenService.activateToken(token.id, messageValue, reasonValue);
-            } else if (action === 'suspend') {
-                console.log(`Suspending token ${token.id} with reason: ${reasonValue}`);
-                result = await TokenService.suspendToken(token.id, reasonValue, messageValue);
-            } else if (action === 'resume') {
-                console.log(`Resuming token ${token.id} with reason: ${reasonValue}`);
-                result = await TokenService.resumeToken(token.id, reasonValue, messageValue);
-            } else if (action === 'deactivate') {
-                console.log(`Deactivating token ${token.id} with reason: ${reasonValue}`);
-                result = await TokenService.deactivateToken(token.id, reasonValue, messageValue);
-            } else if (action === 'refresh') {
-                // For refresh, we'll just update the last_status_update timestamp
-                console.log(`Refreshing token ${token.id}`);
-                const currentStatus = token.tokenStatus || token.token_status;
-                result = await TokenService.updateTokenStatus(token.id, currentStatus, 'Manual refresh');
-            }
-            
-            if (result && result.success) {
+            try {
+                if (action === 'activate') {
+                    console.log(`Activating token ${token.id} with reason: ${reasonValue}`);
+                    result = await TokenService.activateToken(token.id, messageValue, reasonValue);
+                } else if (action === 'suspend') {
+                    console.log(`Suspending token ${token.id} with reason: ${reasonValue}`);
+                    result = await TokenService.suspendToken(token.id, reasonValue, messageValue);
+                } else if (action === 'resume') {
+                    console.log(`Resuming token ${token.id} with reason: ${reasonValue}`);
+                    result = await TokenService.resumeToken(token.id, reasonValue, messageValue);
+                } else if (action === 'deactivate') {
+                    console.log(`Deactivating token ${token.id} with reason: ${reasonValue}`);
+                    result = await TokenService.deactivateToken(token.id, reasonValue, messageValue);
+                } else if (action === 'refresh') {
+                    // For refresh, we'll just update the last_status_update timestamp
+                    console.log(`Refreshing token ${token.id}`);
+                    const currentStatus = token.tokenStatus || token.token_status;
+                    result = await TokenService.updateTokenStatus(token.id, currentStatus, 'Manual refresh');
+                }
+                
+                if (!result.success) {
+                    // La requête a échoué avec une réponse d'erreur
+                    // Retirer le token des changements en attente
+                    setPendingStatusChanges(prev => {
+                        const newState = { ...prev };
+                        delete newState[token.id];
+                        return newState;
+                    });
+                    
+                    // Afficher le message d'erreur spécifique de l'API
+                    const errorMsg = result.details?.message || result.error || 'Votre demande de changement de statut a été refusée.';
+                    
+                    setPendingMessage({
+                        type: 'error',
+                        text: errorMsg,
+                        tokenId: token.id,
+                        action: action
+                    });
+                    
+                    // Log l'erreur pour debug
+                    console.error(`Erreur lors du changement de statut: ${errorMsg}`);
+                    
+                    return;
+                }
+                
                 console.log('Token status change request sent successfully');
+                
+                // Pour les actions suspend et deactivate, mettre à jour localement le statut immédiatement
+                // pour éviter d'avoir à rafraîchir la page
+                if (action === 'suspend' || action === 'deactivate') {
+                    const newStatus = action === 'suspend' ? 'SUSPENDED' : 'DEACTIVATED';
+                    console.log(`Mise à jour locale du statut pour ${token.id} à ${newStatus}`);
+                    updateLocalStatus(token.id, newStatus);
+                } else if (action === 'resume') {
+                    // Pour l'action resume, le statut doit être INACTIVE (et non ACTIVE)
+                    console.log(`Mise à jour locale du statut pour ${token.id} à INACTIVE après resume`);
+                    updateLocalStatus(token.id, 'INACTIVE');
+                }
                 
                 // For immediate feedback, we will NOT update the local status cache
                 // Instead we'll wait for confirmation from the team
                 if (action !== 'refresh') {
                     // Refresh the tokens list to show it's pending
-                await fetchTokens();
+                    await fetchTokens(true); // Force un rafraîchissement complet
                 }
-            } else {
-                console.error('Failed to send token status change request:', result?.error);
-                setError(result?.error || 'Failed to send token status change request');
-                // Clear the pending message
-                setPendingMessage(null);
-                // Remove from pending changes
+            } catch (err) {
+                console.error('Error in handleConfirmStatusUpdate:', err);
+                
+                // En cas d'erreur, on nettoie l'état de demande en attente
                 setPendingStatusChanges(prev => {
                     const newState = { ...prev };
                     delete newState[token.id];
                     return newState;
                 });
+                
+                // Afficher un message d'erreur plus convivial
+                const errorMessage = err.response?.data?.message || 
+                                    err.response?.data?.error || 
+                                    'Votre demande de changement de statut a été refusée.';
+                
+                setPendingMessage({
+                    type: 'error',
+                    text: errorMessage,
+                    tokenId: token.id,
+                    action: action
+                });
+                
+                setError(`Échec de la demande de changement de statut: ${errorMessage}`);
+            } finally {
+                setLoading(false);
             }
         } catch (err) {
             console.error('Error in handleConfirmStatusUpdate:', err);
@@ -1030,7 +1175,7 @@ const TokenList = () => {
                     newStatus = 'SUSPENDED';
                     break;
                 case 'resume':
-                    newStatus = 'ACTIVE'; // Resume sets status back to ACTIVE
+                    newStatus = 'INACTIVE'; // Resume sets status to INACTIVE instead of ACTIVE
                     break;
                 case 'deactivate':
                     newStatus = 'DEACTIVATED';
