@@ -45,6 +45,7 @@ const SUBMENU_ICONS = {
     'TOKEN': 'token',
     'MDES': 'credit_card',
     'VTS': 'contactless',
+    'SIMULATEUR': 'science',
     'CHARGEBACK': 'payments',
     'TRANSACTIONS': 'receipt_long',
     
@@ -406,6 +407,8 @@ const Sidebar = () => {
                         submenuIcon = 'contactless';
                     } else if (submenuCodeUpper === 'CHARGEBACK' || submenuTitleLower.includes('chargeback')) {
                         submenuIcon = 'payments';
+                    } else if (submenuCodeUpper === 'SIMULATEUR' || submenuTitleLower.includes('simulateur')) {
+                        submenuIcon = 'science';
                     }
                     
                     // Pour le sous-module "Profil", s'assurer qu'il pointe vers "profiles" (pluriel)

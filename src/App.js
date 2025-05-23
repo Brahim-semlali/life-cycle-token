@@ -21,6 +21,7 @@ import CallCenter from "./Components/Dashboard/TokenManager/CallCenter";
 import Token from "./Components/Dashboard/IssuerTSP/Token";
 import MDES from "./Components/Dashboard/IssuerTSP/MDES";
 import VTS from "./Components/Dashboard/IssuerTSP/VTS";
+import Simulateur from "./Components/Dashboard/IssuerTSP/Simulateur";
 import ChargeBack from "./Components/Dashboard/ChargeBack";
 import Transactions from "./Components/Dashboard/Transactions";
 import Dashboard from "./Components/Dashboard/Dashboard";
@@ -43,6 +44,7 @@ const COMPONENT_MAPPING = {
   'issuer-tsp/token': Token,
   'issuer-tsp/mdes': MDES,
   'issuer-tsp/vts': VTS,
+  'issuer-tsp/simulateur': Simulateur,
   
   // Modules sans sous-menus
   'chargeback': ChargeBack,
@@ -253,6 +255,7 @@ function AppContent() {
           <Route path="issuer-tsp/token" element={<Token />} />
           <Route path="issuer-tsp/mdes" element={<MDES />} />
           <Route path="issuer-tsp/vts" element={<VTS />} />
+          <Route path="issuer-tsp/simulateur" element={<Simulateur />} />
           
           {/* Fix for token route mismatch */}
           <Route path="token/token" element={<Navigate to="/dashboard/issuer-tsp/token" replace />} />

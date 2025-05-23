@@ -10,7 +10,9 @@ const API_ENDPOINTS = {
     EXPORT_TOKENS: '/token/export/',
     // Nouvel endpoint unifié pour les actions sur les tokens
     TOKEN_ACTION: '/token/action/',
-    TOKEN_ACTION_OPTIONS: '/token/token-action-options/'
+    TOKEN_ACTION_OPTIONS: '/token/token-action-options/',
+    // Nouvel endpoint pour l'issuance TSP
+    ISSUE_TSP_TOKEN: '/tsp/send/'
 };
 
 // Définition de l'URL de base de l'API
@@ -56,6 +58,55 @@ apiClient.interceptors.response.use(
 export const axiosInstance = apiClient;
 
 const TokenService = {
+    /**
+     * Issue a token via TSP (Token Service Provider)
+     * @param {Object} tokenData - Data required for token issuance
+     * @returns {Promise<Object>} - Success status with data or error
+     */
+    async issueTspToken(tokenData) {
+        try {
+            console.log('TokenService.issueTspToken: Issuing token via TSP', tokenData);
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : '';
+            
+            // Préparer les données au format attendu par l'API
+            const payload = {
+                tsp: tokenData.tsp,
+                tokenRequestor: tokenData.tokenRequestor,
+                pan: tokenData.pan,
+                expiryMonth: tokenData.expiryMonth || tokenData.expiryDate?.month,
+                expiryYear: tokenData.expiryYear || tokenData.expiryDate?.year,
+                cvv: tokenData.cvv || tokenData.cvv2,
+                panSource: tokenData.panSource,
+                operatorID: operatorID
+            };
+            
+            // Appel à l'API
+            const response = await apiClient.post(API_ENDPOINTS.ISSUE_TSP_TOKEN, payload);
+            
+            if (response.data) {
+                console.log('TokenService.issueTspToken: Response:', response.data);
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
+            
+            return {
+                success: false,
+                error: 'Failed to issue token via TSP'
+            };
+        } catch (error) {
+            console.error('TokenService.issueTspToken: Error:', error);
+            return {
+                success: false,
+                error: error.response?.data?.detail || error.message || 'An error occurred during token issuance'
+            };
+        }
+    },
+    
     /**
      * Lists tokens with optional filters
      * @param {Object} filters - Query parameters for filtering tokens
@@ -1719,4 +1770,4 @@ const TokenService = {
     }
 };
 
-export default TokenService; 
+export default TokenService;
