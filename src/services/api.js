@@ -13,7 +13,7 @@ const api = {
     // Helper method to log only in debug mode
     log(message, ...args) {
         if (this.debugMode) {
-            console.log(message, ...args);
+            console.debug(message, ...args);
         }
     },
 
@@ -231,22 +231,20 @@ const api = {
     
     // Méthode pour faire des requêtes API (compatibilité avec l'ancien code)
     async request(endpoint, method = 'GET', data = null) {
-        console.log(`API Request: ${method} ${this.baseURL}${endpoint}`, data);
+        this.log(`API Request: ${method} ${endpoint}`, data);
         
         // Special handling for user data endpoint
         if (endpoint === '/user/get/' && method.toUpperCase() === 'POST') {
-            console.log('Fetching current user data with special handling');
             try {
                 const response = await apiClient.post(endpoint, data);
-                console.log('User data fetch successful:', response.status);
                 return response.data;
             } catch (error) {
-                console.error('Error fetching user data:', error.message);
+                this.log('Error fetching user data:', error.message);
                 
                 // Check if we have auth user data in localStorage as fallback
                 const storedUser = TokenStorage.getUser();
                 if (storedUser) {
-                    console.log('Using stored user data as fallback');
+                    this.log('Using stored user data as fallback');
                     return storedUser;
                 }
                 
@@ -276,9 +274,8 @@ const api = {
             
             return response.data;
         } catch (error) {
-            console.error(`API Error: ${method} ${endpoint}`, error);
             if (error.response) {
-                console.error('Error response data:', error.response.data);
+                this.log(`API Error: ${method} ${endpoint}`, error.response.data);
                 throw {
                     response: {
                         status: error.response.status,
@@ -379,133 +376,98 @@ const api = {
     async getModules() {
         // Check if user is authenticated
         if (!TokenStorage.isTokenValid()) {
-            console.log('Not authenticated, returning empty modules array');
             return [];
         }
         
         try {
-            // Utiliser l'endpoint qui fonctionne
             const response = await apiClient.post('/profile/listmodule/');
             const modules = response.data;
             
             if (modules && Array.isArray(modules)) {
-                console.log(`${modules.length} modules récupérés de l'API:`, modules);
-                // Retourner les modules tels quels, sans modification
                 return modules;
             }
             
-            console.warn("Format de réponse incorrect pour les modules");
             return [];
         } catch (error) {
-            // Si l'erreur est 403, essayer d'utiliser /profile/access/ comme fallback
             if (error.response && error.response.status === 403) {
-                console.log('Accès refusé (403) lors du chargement des modules - utilisation de profile/access comme fallback');
                 try {
-                    // Récupérer l'ID de l'utilisateur actuel
                     const userId = TokenStorage.getUserId();
                     if (userId) {
                         const userAccess = await this.getUserProfileAccess(userId);
                         if (userAccess && userAccess.modules && Array.isArray(userAccess.modules)) {
-                            console.log(`${userAccess.modules.length} modules récupérés via profile/access`);
                             return userAccess.modules;
                         }
                     }
                 } catch (fallbackError) {
                     console.error('Erreur lors de la récupération des modules via fallback:', fallbackError);
                 }
-            } else {
-                console.error('Failed to fetch modules:', error);
             }
-            return []; // Return empty array on error
+            return [];
         }
     },
     
     // Méthode pour récupérer les menus
     async getMenus() {
-        // Check if user is authenticated
         if (!TokenStorage.isTokenValid()) {
-            console.log('Not authenticated, returning empty menus array');
             return [];
         }
         
         try {
-            // Essayer l'endpoint spécifique pour les menus
             const response = await apiClient.post('/profile/listmenu/');
             const menus = response.data;
             
             if (menus && Array.isArray(menus)) {
-                console.log(`${menus.length} menus récupérés de l'API`);
-                // Retourner les menus tels quels, sans modification
                 return menus;
             }
             
-            console.warn("Format de réponse incorrect ou aucun menu retourné");
             return [];
         } catch (error) {
-            // Si l'erreur est 403, essayer d'utiliser /profile/access/ comme fallback
             if (error.response && error.response.status === 403) {
-                console.log('Accès refusé (403) lors du chargement des menus - utilisation de profile/access comme fallback');
                 try {
-                    // Récupérer l'ID de l'utilisateur actuel
                     const userId = TokenStorage.getUserId();
                     if (userId) {
                         const userAccess = await this.getUserProfileAccess(userId);
                         if (userAccess && userAccess.menus && Array.isArray(userAccess.menus)) {
-                            console.log(`${userAccess.menus.length} menus récupérés via profile/access`);
                             return userAccess.menus;
                         }
                     }
                 } catch (fallbackError) {
                     console.error('Erreur lors de la récupération des menus via fallback:', fallbackError);
                 }
-            } else {
-                console.error('Failed to fetch menus:', error);
             }
-            return []; // Return empty array on error
+            return [];
         }
     },
     
-    // Méthode pour récupérer les accès d'un utilisateur en fonction de son profil
+    // Méthode pour récupérer les accès d'un utilisateur
     async getUserProfileAccess(userId) {
-        console.log(`Fetching access for user: ${userId}`);
-        
-        // Check if user is authenticated before making API call
         if (!TokenStorage.isTokenValid()) {
-            console.log('Not authenticated, returning empty access data');
             return { modules: [], menus: [] };
         }
         
         try {
-            // Utiliser uniquement l'endpoint API spécifique
             const response = await apiClient.post('/profile/access/', { userId });
             const userAccess = response.data;
-            console.log('Access data from API:', userAccess);
             
-            // Vérifier et normaliser les données de réponse
             let modules = [];
             let menus = [];
             
-            // Cas 1: Format standard avec modules et menus séparés
             if (userAccess && Array.isArray(userAccess.modules)) {
                 modules = userAccess.modules;
             } else if (userAccess && typeof userAccess.modules === 'object') {
-                // Cas 2: Les modules sont dans un objet
                 modules = Object.values(userAccess.modules).filter(m => m && typeof m === 'object');
             }
             
             if (userAccess && Array.isArray(userAccess.menus)) {
                 menus = userAccess.menus;
             } else if (userAccess && typeof userAccess.menus === 'object') {
-                // Les menus sont dans un objet
                 menus = Object.values(userAccess.menus).filter(m => m && typeof m === 'object');
             }
             
-            // Cas 3: Les modules contiennent les menus
             const extractedMenus = [];
             if (modules.length > 0) {
                 modules = modules.map(module => {
                     if (module && Array.isArray(module.menus)) {
-                        // Ajouter l'ID du module à chaque menu pour l'association
                         const moduleMenus = module.menus.map(menu => ({
                             ...menu,
                             module: module.id,
@@ -515,37 +477,29 @@ const api = {
                         
                         extractedMenus.push(...moduleMenus);
                         
-                        // Retourner le module sans les menus pour éviter la duplication
                         const { menus, ...moduleWithoutMenus } = module;
                         return moduleWithoutMenus;
                     }
                     return module;
                 });
                 
-                // Combiner les menus extraits avec les menus existants
                 if (extractedMenus.length > 0) {
                     menus = [...menus, ...extractedMenus];
                 }
             }
             
-            // Cas 4: La réponse est un tableau de modules
             if (Array.isArray(userAccess) && userAccess.length > 0 && !modules.length) {
                 modules = userAccess.filter(item => 
                     item && typeof item === 'object' && (item.id || item.code || item.title)
                 );
             }
             
-            console.log(`Profile access data: ${modules.length} modules, ${menus.length} menus`);
             return { modules, menus };
         } catch (error) {
-            // Ne pas afficher les erreurs 403 dans la console
             if (error.response && error.response.status === 403) {
-                console.log('Access denied (403) when fetching user profile access');
-            } else {
-                console.error('Failed to fetch user access:', error);
+                return { modules: [], menus: [] };
             }
-            
-            // Renvoyer une structure vide en cas d'erreur
+            console.error('Failed to fetch user access:', error);
             return { modules: [], menus: [] };
         }
     },

@@ -13,7 +13,6 @@ export const loadModules = async () => {
     try {
         // Vérifier si l'utilisateur est authentifié
         if (!TokenStorage.isTokenValid()) {
-            console.log('Utilisateur non authentifié - pas de chargement des modules');
             return [];
         }
 
@@ -22,18 +21,14 @@ export const loadModules = async () => {
             const modules = await api.getModules();
             
             if (modules && Array.isArray(modules)) {
-                console.log(`${modules.length} modules chargés avec succès depuis l'API`);
-                console.log("Modules from API:", modules);
-                cachedModules = modules; // Stocker en cache uniquement les modules provenant de l'API
+                cachedModules = modules;
                 return modules;
             }
             
-            console.warn("Aucun module n'a été retourné par l'API");
             return [];
         } catch (apiError) {
             // Silence 403 errors
             if (apiError.response && apiError.response.status === 403) {
-                console.log('Accès refusé (403) lors du chargement des modules - utilisation des modules par défaut');
                 return [];
             }
             console.error('Erreur lors du chargement des modules:', apiError);
@@ -41,8 +36,6 @@ export const loadModules = async () => {
             return [];
         }
     } catch (error) {
-        // Silence general errors
-        console.log('Erreur générale lors du chargement des modules - utilisation des modules par défaut');
         cachedModules = [];
         return [];
     }
@@ -110,7 +103,6 @@ export const loadMenus = async () => {
     try {
         // Vérifier si l'utilisateur est authentifié
         if (!TokenStorage.isTokenValid()) {
-            console.log('Utilisateur non authentifié - pas de chargement des menus');
             return [];
         }
 
@@ -119,18 +111,14 @@ export const loadMenus = async () => {
             const menus = await api.getMenus();
             
             if (menus && Array.isArray(menus)) {
-                console.log(`${menus.length} menus chargés avec succès depuis l'API`);
-                console.log("Menus from API:", menus);
-                cachedMenus = menus; // Stocker en cache uniquement les menus provenant de l'API
+                cachedMenus = menus;
                 return menus;
             }
             
-            console.warn("Aucun menu n'a été retourné par l'API");
             return [];
         } catch (apiError) {
             // Silence 403 errors
             if (apiError.response && apiError.response.status === 403) {
-                console.log('Accès refusé (403) lors du chargement des menus - utilisation des menus par défaut');
                 return [];
             }
             console.error('Erreur lors du chargement des menus:', apiError);
@@ -138,8 +126,6 @@ export const loadMenus = async () => {
             return [];
         }
     } catch (error) {
-        // Silence general errors
-        console.log('Erreur générale lors du chargement des menus - utilisation des menus par défaut');
         cachedMenus = [];
         return [];
     }
@@ -234,11 +220,7 @@ export const loadModulesAndMenus = async () => {
  * @returns {Array} Modules complets accessibles à l'utilisateur
  */
 export const getUserModules = (userModuleIds) => {
-    console.log("getUserModules called with:", userModuleIds);
-    console.log("cachedModules available:", cachedModules.length);
-    
     if (!userModuleIds || !Array.isArray(userModuleIds) || userModuleIds.length === 0) {
-        console.warn("Aucun ID de module fourni");
         return [];
     }
     
@@ -255,22 +237,17 @@ export const getUserModules = (userModuleIds) => {
             : moduleId;
     }).filter(id => id !== undefined && id !== null);
     
-    console.log("Normalized module IDs:", normalizedIds);
-    
     // Si le cache est vide, retourner les modules de l'API directement
     if (cachedModules.length === 0) {
-        console.log("Cache de modules vide - utilisation des modules fournis");
         // Si les modules sont déjà des objets complets (comme retournés par l'API)
         const apiModules = normalizedIds.filter(module => 
             typeof module === 'object' && module !== null && (module.id || module.code || module.title)
         );
         
         if (apiModules.length > 0) {
-            console.log("Modules complets trouvés dans les données d'entrée:", apiModules);
             return apiModules;
         }
         
-        console.log("Cache de modules vide - aucun module disponible");
         return [];
     }
     
@@ -293,11 +270,7 @@ export const getUserModules = (userModuleIds) => {
  * @returns {Array} Menus complets accessibles à l'utilisateur
  */
 export const getUserMenus = (userMenuIds) => {
-    console.log("getUserMenus called with:", userMenuIds);
-    console.log("cachedMenus available:", cachedMenus.length);
-    
     if (!userMenuIds || !Array.isArray(userMenuIds) || userMenuIds.length === 0) {
-        console.log("Aucun ID de menu fourni");
         return [];
     }
     
@@ -314,22 +287,17 @@ export const getUserMenus = (userMenuIds) => {
             : menuId;
     }).filter(id => id !== undefined && id !== null);
     
-    console.log("Normalized menu IDs:", normalizedIds);
-    
     // Si le cache est vide, retourner les menus de l'API directement
     if (cachedMenus.length === 0) {
-        console.log("Cache de menus vide - utilisation des menus fournis");
         // Si les menus sont déjà des objets complets (comme retournés par l'API)
         const apiMenus = normalizedIds.filter(menu => 
             typeof menu === 'object' && menu !== null && (menu.id || menu.code || menu.title)
         );
         
         if (apiMenus.length > 0) {
-            console.log("Menus complets trouvés dans les données d'entrée:", apiMenus);
             return apiMenus;
         }
         
-        console.log("Cache de menus vide - aucun menu disponible");
         return [];
     }
     
@@ -353,13 +321,6 @@ export const getUserMenus = (userMenuIds) => {
  * @returns {Array} Structure des modules et sous-modules pour l'interface
  */
 export const buildModuleStructure = (userModuleIds, userMenuIds) => {
-    console.log("buildModuleStructure called with:", {
-        userModuleIds,
-        userMenuIds,
-        cachedModules: cachedModules.length,
-        cachedMenus: cachedMenus.length
-    });
-    
     // Normaliser les données d'entrée
     let normalizedModuleIds = [];
     let normalizedMenus = [];
@@ -367,11 +328,9 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
     // Traiter les modules
     if (userModuleIds) {
         if (Array.isArray(userModuleIds)) {
-            // Cas 1: userModuleIds est un tableau d'objets ou d'IDs
             normalizedModuleIds = userModuleIds;
         } else if (typeof userModuleIds === 'string') {
             try {
-                // Cas 2: userModuleIds est une chaîne JSON
                 const parsed = JSON.parse(userModuleIds);
                 normalizedModuleIds = Array.isArray(parsed) ? parsed : [];
             } catch (e) {
@@ -384,11 +343,9 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
     // Traiter les menus
     if (userMenuIds) {
         if (Array.isArray(userMenuIds)) {
-            // Cas 1: userMenuIds est un tableau d'objets ou d'IDs
             normalizedMenus = userMenuIds;
         } else if (typeof userMenuIds === 'string') {
             try {
-                // Cas 2: userMenuIds est une chaîne JSON
                 const parsed = JSON.parse(userMenuIds);
                 normalizedMenus = Array.isArray(parsed) ? parsed : [];
             } catch (e) {
@@ -398,18 +355,11 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
         }
     }
     
-    console.log("Normalized data:", {
-        moduleIds: normalizedModuleIds,
-        menus: normalizedMenus
-    });
-    
     // Récupérer les modules complets
     const modules = getUserModules(normalizedModuleIds);
-    console.log("Modules récupérés:", modules);
     
     // Récupérer les menus complets
     const menus = getUserMenus(normalizedMenus);
-    console.log("Menus récupérés:", menus);
     
     // Construire la structure des modules et sous-modules
     const structure = modules.map(module => {
@@ -444,8 +394,6 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
             return false;
         });
         
-        console.log(`Menus pour le module ${module.code || module.id}:`, moduleMenus);
-        
         // Convertir le code du module en chemin URL
         const getModulePath = (code) => {
             if (!code) return 'module';
@@ -454,10 +402,10 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
                 case 'lcm': return 'token-manager';
                 case 'itcp': return 'issuer-tsp';
                 case 'semlali': return 'security';
-                case 'token': return 'token-manager';  // Fix for TOKEN module code
+                case 'token': return 'token-manager';
                 case 'chargeback': return 'chargeback';
                 case 'transactions': return 'transactions';
-                case 'dashboard': return 'dashboard'; // Ensure Dashboard module has correct path
+                case 'dashboard': return 'dashboard';
                 default: return code.toLowerCase();
             }
         };
@@ -483,7 +431,6 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
             title: module.title || module.name || `Module ${module.id}`,
             icon: module.icon || 'dashboard',
             path: module.path || `/dashboard/${modulePath}`,
-            // Transformer les menus en sous-modules
             submodules: moduleMenus.map(menu => ({
                 id: menu.id,
                 code: menu.code || `MENU_${menu.id}`,
@@ -493,7 +440,6 @@ export const buildModuleStructure = (userModuleIds, userMenuIds) => {
         };
     });
     
-    console.log("Structure finale des modules:", structure);
     return structure;
 };
 

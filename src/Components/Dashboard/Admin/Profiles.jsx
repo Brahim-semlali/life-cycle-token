@@ -477,11 +477,11 @@ const Profiles = () => {
             flex: 1.5,
             minWidth: 200,
             renderCell: (params) => {
-                const profileModules = params.value || [];
+                const profileModules = Array.isArray(params.value) ? params.value : [];
                 
                 // Fusionner avec modules pour obtenir les titres
                 let moduleNames = [];
-                if (Array.isArray(profileModules) && profileModules.length > 0) {
+                if (profileModules.length > 0) {
                     moduleNames = profileModules.map(moduleId => {
                         const module = modules.find(m => m.id === moduleId);
                         return module ? module.title : `Module ${moduleId}`;
@@ -960,7 +960,7 @@ const Profiles = () => {
 
         try {
             // Convertir les modules et sous-modules en format API
-            const { modules: moduleIds, menus: menuIds } = convertModulesToApiFormat(profileToSave.modules);
+            const { modules: moduleIds, menus: menuIds } = convertModulesToApiFormat(profileToSave.modules || {});
             
             const apiProfile = {
                 name: profileToSave.name,
@@ -975,12 +975,12 @@ const Profiles = () => {
 
             let success = false;
 
-        if (editingProfile !== null) {
+            if (editingProfile !== null) {
                 apiProfile.id = profileToSave.id;
                 const updated = await updateProfile(apiProfile.id, apiProfile);
-            if (updated) {
+                if (updated) {
                     // Assurer que les modules retournés sont bien un tableau
-                    if (updated.modules && !Array.isArray(updated.modules)) {
+                    if (!Array.isArray(updated.modules)) {
                         updated.modules = [];
                     }
                     
@@ -989,10 +989,10 @@ const Profiles = () => {
                         newProfiles[editingProfile] = updated;
                         return newProfiles;
                     });
-                setEditingProfile(null);
+                    setEditingProfile(null);
                     success = true;
-            }
-        } else {
+                }
+            } else {
                 const created = await createProfile(apiProfile);
                 if (created) {
                     // Assurer que les modules retournés sont bien un tableau
@@ -1032,7 +1032,12 @@ const Profiles = () => {
     const handleEdit = (id) => {
         const index = profiles.findIndex(p => p.id === id);
         if (index !== -1) {
-            const profileToEdit = profiles[index];
+            const profileToEdit = {...profiles[index]};
+            
+            // S'assurer que les modules sont un tableau
+            if (!Array.isArray(profileToEdit.modules)) {
+                profileToEdit.modules = [];
+            }
             
             // Créer une copie du profil avec les modules et sous-modules correctement initialisés
             const initializedModules = {};
@@ -1052,51 +1057,110 @@ const Profiles = () => {
                 }
             });
 
-            // Mettre à jour les valeurs en fonction des modules du profil
-            try {
-                if (profileToEdit.modules && Array.isArray(profileToEdit.modules)) {
-                    profileToEdit.modules.forEach(moduleId => {
-                        try {
-                            // Si moduleId est un objet
-                            if (typeof moduleId === 'object' && moduleId !== null) {
-                                const moduleName = moduleId.id || moduleId.name || moduleId.code;
-                                if (moduleName && initializedModules[moduleName]) {
-                                    initializedModules[moduleName].access = true;
-                                }
-                                return;
-                            }
-                            
-                            // Si moduleId est une chaîne
-                            if (typeof moduleId === 'string') {
-                                if (moduleId.includes('.')) {
-                                    const [moduleName, subModuleName] = moduleId.split('.');
-                                    if (initializedModules[moduleName] && initializedModules[moduleName].subModules) {
-                                        initializedModules[moduleName].subModules[subModuleName] = true;
-                                        initializedModules[moduleName].access = true;
-                                    }
-                                } else {
-                                    if (initializedModules[moduleId]) {
-                                        initializedModules[moduleId].access = true;
-                                    }
-                                }
-                            }
-                        } catch (err) {
-                            console.error('Error processing module:', moduleId, err);
-                        }
+            // Créer un mapping des codes de module en minuscules vers leurs IDs
+            const moduleCodeToId = {};
+            modules.forEach(module => {
+                if (module.code) {
+                    // Stocker plusieurs variations du code pour la correspondance
+                    const variations = [
+                        module.code.toLowerCase(),
+                        module.code.toLowerCase().replace(/_/g, ''),
+                        module.code.toLowerCase().replace(/-/g, ''),
+                        module.code.toLowerCase().replace(/\s+/g, '')
+                    ];
+                    variations.forEach(variation => {
+                        moduleCodeToId[variation] = module.id;
                     });
                 }
-            } catch (err) {
-                console.error('Error processing modules:', err);
+            });
+
+            // Créer un mapping des codes de menu en minuscules vers leurs IDs
+            const menuCodeToId = {};
+            menus.forEach(menu => {
+                if (menu.code) {
+                    // Stocker plusieurs variations du code pour la correspondance
+                    const variations = [
+                        menu.code.toLowerCase(),
+                        menu.code.toLowerCase().replace(/_/g, ''),
+                        menu.code.toLowerCase().replace(/-/g, ''),
+                        menu.code.toLowerCase().replace(/\s+/g, '')
+                    ];
+                    variations.forEach(variation => {
+                        menuCodeToId[variation] = {
+                            id: menu.id,
+                            moduleId: menu.module
+                        };
+                    });
+                }
+            });
+
+            // Mettre à jour les valeurs en fonction des modules du profil
+            if (profileToEdit.modules && Array.isArray(profileToEdit.modules)) {
+                profileToEdit.modules.forEach(moduleId => {
+                    // Trouver le module correspondant dans la liste des modules
+                    const module = modules.find(m => m.id === moduleId);
+                    if (module && module.code) {
+                        // Normaliser le code du module
+                        const moduleKey = Object.keys(moduleStructureState).find(key => {
+                            const normalizedKey = key.toLowerCase().replace(/[_-\s]/g, '');
+                            const normalizedCode = module.code.toLowerCase().replace(/[_-\s]/g, '');
+                            return normalizedKey === normalizedCode;
+                        });
+                        
+                        if (moduleKey && initializedModules[moduleKey]) {
+                            initializedModules[moduleKey].access = true;
+                        }
+                    }
+                });
+            }
+
+            // Mettre à jour les valeurs en fonction des menus du profil
+            if (profileToEdit.menus && Array.isArray(profileToEdit.menus)) {
+                profileToEdit.menus.forEach(menuId => {
+                    // Trouver le menu correspondant dans la liste des menus
+                    const menu = menus.find(m => m.id === menuId);
+                    if (menu && menu.module) {
+                        // Trouver le module parent
+                        const parentModule = modules.find(m => m.id === menu.module);
+                        if (parentModule && parentModule.code) {
+                            // Normaliser le code du module
+                            const moduleKey = Object.keys(moduleStructureState).find(key => {
+                                const normalizedKey = key.toLowerCase().replace(/[_-\s]/g, '');
+                                const normalizedCode = parentModule.code.toLowerCase().replace(/[_-\s]/g, '');
+                                return normalizedKey === normalizedCode;
+                            });
+                            
+                            if (moduleKey && initializedModules[moduleKey]) {
+                                // Normaliser le code du menu
+                                const menuKey = Object.keys(moduleStructureState[moduleKey].subModules).find(key => {
+                                    const normalizedKey = key.toLowerCase().replace(/[_-\s]/g, '');
+                                    const normalizedCode = menu.code.toLowerCase().replace(/[_-\s]/g, '');
+                                    return normalizedKey === normalizedCode;
+                                });
+                                
+                                if (menuKey) {
+                                    initializedModules[moduleKey].subModules[menuKey] = true;
+                                    initializedModules[moduleKey].access = true;
+                                }
+                            }
+                        }
+                    }
+                });
             }
 
             // Mettre à jour le profil avec les modules initialisés
-            const updatedProfile = {
-                ...profileToEdit,
-                modules: initializedModules
-            };
+            profileToEdit.modules = initializedModules;
 
+            // Mettre à jour l'état
             setEditingProfile(index);
-            setNewProfile(updatedProfile);
+            const updatedProfiles = [...profiles];
+            updatedProfiles[index] = profileToEdit;
+            setProfiles(updatedProfiles);
+            
+            // Mettre à jour les refs pour le nom et la description
+            nameInputRef.current = profileToEdit.name || '';
+            descriptionInputRef.current = profileToEdit.description || '';
+            
             setOpenDialog(true);
         }
     };
@@ -1457,138 +1521,126 @@ const Profiles = () => {
     
     // Add new function to render dashboard view
     const renderDashboardView = () => (
-        <div className="dashboard-view">
-            {filteredProfiles.length === 0 ? (
-                <Box className="no-results-container" sx={{ 
-                    width: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    p: 5
-                }}>
-                    <Box className="no-results-icon">
-                        <SearchOffIcon sx={{ fontSize: 60 }} />
-                    </Box>
-                    <Typography variant="h5" sx={{ mt: 2, fontWeight: 600 }}>No profiles found</Typography>
-                    <Typography sx={{ mt: 1, color: 'text.secondary' }}>Try adjusting your search or filters</Typography>
-                </Box>
-            ) : (
-                filteredProfiles.map((profile, index) => (
-                    <div 
-                        className="dashboard-profile-item" 
-                        key={profile.id} 
-                        style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                        <div className="dashboard-profile-header">
-                            <div className="dashboard-profile-avatar">
+        <div className="dashboard-card-view">
+            {profiles.map(profile => (
+                <div 
+                    key={profile.id} 
+                    className="dashboard-profile-card"
+                    onClick={() => handleViewDetails(profile)}
+                >
+                    <div className="dashboard-profile-header">
+                        <div className="dashboard-profile-info">
+                            <Avatar
+                                sx={{
+                                    bgcolor: getAvatarColor(profile.id),
+                                    width: 40,
+                                    height: 40,
+                                    fontSize: '1rem'
+                                }}
+                            >
                                 {getInitials(profile.name)}
-                            </div>
-                            <div className="dashboard-profile-info">
-                                <h3 className="dashboard-profile-name">{profile.name}</h3>
-                                <div 
-                                    className={`dashboard-profile-status ${profile.status ? profile.status.toLowerCase() : 'inactive'}`}
-                                >
-                                    {profile.status ? profile.status.charAt(0).toUpperCase() + profile.status.slice(1).toLowerCase() : 'Inactive'}
-                                </div>
-                            </div>
-                            <Checkbox
-                                checked={selectedProfiles.includes(profile.id)}
-                                onChange={(e) => {
-                                    e.stopPropagation();
-                                    const newSelected = selectedProfiles.includes(profile.id)
-                                        ? selectedProfiles.filter(id => id !== profile.id)
-                                        : [...selectedProfiles, profile.id];
-                                    setSelectedProfiles(newSelected);
-                                }}
-                                size="small"
-                                edge="end"
-                            />
-                        </div>
-                        
-                        <div className="dashboard-profile-content">
-                            <div className="dashboard-profile-section">
-                                <div className="dashboard-profile-section-title">
-                                    <DescriptionIcon fontSize="small" /> Description
-                                </div>
-                                <div className="dashboard-profile-description">
-                                    {profile.description || 'No description provided.'}
-                                </div>
-                            </div>
-                            
-                            <div className="dashboard-profile-section">
-                                <div className="dashboard-profile-section-title">
-                                    <ExtensionIcon fontSize="small" /> Modules
-                                </div>
-                                <div className="dashboard-profile-modules">
-                                    {profile.modules && profile.modules.length > 0 ? (
-                                        profile.modules.slice(0, 4).map(moduleId => (
-                                            <span className="dashboard-profile-module" key={moduleId}>
-                                                {getModuleDisplayName(moduleId)}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                            No modules assigned
-                                        </span>
-                                    )}
-                                    {profile.modules && profile.modules.length > 4 && (
-                                        <span className="dashboard-profile-module">
-                                            +{profile.modules.length - 4} more
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="dashboard-profile-stats">
-                                <div className="dashboard-profile-stat">
-                                    <span className="dashboard-profile-stat-value">{getUserCountByProfile(profile.id)}</span>
-                                    <span className="dashboard-profile-stat-label">Users</span>
-                                </div>
-                                <div className="dashboard-profile-stat">
-                                    <span className="dashboard-profile-stat-value">{profile.permissions?.length || 0}</span>
-                                    <span className="dashboard-profile-stat-label">Permissions</span>
-                                </div>
-                                <div className="dashboard-profile-stat">
-                                    <span className="dashboard-profile-stat-value">{profile.modules?.length || 0}</span>
-                                    <span className="dashboard-profile-stat-label">Modules</span>
+                            </Avatar>
+                            <div>
+                                <Typography variant="h6" className="dashboard-profile-name">
+                                    {profile.name}
+                                </Typography>
+                                <div className="dashboard-profile-status">
+                                    <StatusBadge status={profile.status} />
                                 </div>
                             </div>
                         </div>
+                        <IconButton
+                            className="dashboard-profile-selection"
+                            checked={selectedProfiles.includes(profile.id)}
+                            onChange={() => {
+                                const newSelected = selectedProfiles.includes(profile.id)
+                                    ? selectedProfiles.filter(id => id !== profile.id)
+                                    : [...selectedProfiles, profile.id];
+                                setSelectedProfiles(newSelected);
+                            }}
+                            size="small"
+                            edge="end"
+                        />
+                    </div>
+                    
+                    <div className="dashboard-profile-content">
+                        <div className="dashboard-profile-section">
+                            <div className="dashboard-profile-section-title">
+                                <DescriptionIcon fontSize="small" /> Description
+                            </div>
+                            <div className="dashboard-profile-description">
+                                {profile.description || 'No description provided.'}
+                            </div>
+                        </div>
                         
-                        <div className="dashboard-profile-actions">
-                            <button 
-                                className="dashboard-profile-btn primary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleProfileClick(profile, { target: { dataset: { action: 'view-details' }}});
-                                }}
-                                data-action="view-details"
-                            >
-                                <InfoIcon fontSize="small" /> View
-                            </button>
-                            <button 
-                                className="dashboard-profile-btn primary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(profile.id);
-                                }}
-                            >
-                                <EditIcon fontSize="small" /> Edit
-                            </button>
-                            <button 
-                                className="dashboard-profile-btn secondary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(profile.id);
-                                }}
-                            >
-                                <DeleteIcon fontSize="small" /> Delete
-                            </button>
+                        <div className="dashboard-profile-section">
+                            <div className="dashboard-profile-section-title">
+                                <ExtensionIcon fontSize="small" /> Modules
+                            </div>
+                            <div className="dashboard-profile-modules">
+                                {Array.isArray(profile.modules) && profile.modules.length > 0 ? (
+                                    profile.modules.slice(0, 4).map(moduleId => (
+                                        <span className="dashboard-profile-module" key={moduleId}>
+                                            {getModuleDisplayName(moduleId)}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                        No modules assigned
+                                    </span>
+                                )}
+                                {Array.isArray(profile.modules) && profile.modules.length > 4 && (
+                                    <span className="dashboard-profile-module">
+                                        +{profile.modules.length - 4} more
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="dashboard-profile-stats">
+                            <div className="dashboard-profile-stat">
+                                <span className="dashboard-profile-stat-value">{getUserCountByProfile(profile.id)}</span>
+                                <span className="dashboard-profile-stat-label">Users</span>
+                            </div>
+                            <div className="dashboard-profile-stat">
+                                <span className="dashboard-profile-stat-value">{Array.isArray(profile.modules) ? profile.modules.length : 0}</span>
+                                <span className="dashboard-profile-stat-label">Modules</span>
+                            </div>
                         </div>
                     </div>
-                ))
-            )}
+                    
+                    <div className="dashboard-profile-actions">
+                        <button 
+                            className="dashboard-profile-btn primary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleProfileClick(profile, { target: { dataset: { action: 'view-details' }}});
+                            }}
+                            data-action="view-details"
+                        >
+                            <InfoIcon fontSize="small" /> View
+                        </button>
+                        <button 
+                            className="dashboard-profile-btn primary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(profile.id);
+                            }}
+                        >
+                            <EditIcon fontSize="small" /> Edit
+                        </button>
+                        <button 
+                            className="dashboard-profile-btn secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(profile.id);
+                            }}
+                        >
+                            <DeleteIcon fontSize="small" /> Delete
+                        </button>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 
@@ -2316,7 +2368,7 @@ const Profiles = () => {
                                         fontSize: '0.875rem'
                                     }}>
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                            {profile.modules?.slice(0, 2).map(moduleId => {
+                                            {Array.isArray(profile.modules) && profile.modules.slice(0, 2).map(moduleId => {
                                                 const module = modules.find(m => m.id === moduleId);
                                                 return module ? (
                                                     <Chip
@@ -2334,7 +2386,7 @@ const Profiles = () => {
                                                     />
                                                 ) : null;
                                             })}
-                                            {profile.modules?.length > 2 && (
+                                            {Array.isArray(profile.modules) && profile.modules.length > 2 && (
                                                 <Chip
                                                     label={`+${profile.modules.length - 2}`}
                                                     size="small"
@@ -2348,7 +2400,7 @@ const Profiles = () => {
                                                     }}
                                                 />
                                             )}
-                                            {(!profile.modules || profile.modules.length === 0) && (
+                                            {(!profile.modules || !Array.isArray(profile.modules) || profile.modules.length === 0) && (
                                                 <Typography variant="body2" color="text.secondary">
                                                     No modules
                                                 </Typography>

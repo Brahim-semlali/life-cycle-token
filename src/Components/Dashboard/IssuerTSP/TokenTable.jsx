@@ -472,6 +472,12 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     };
     
     const handleUpdateStatus = (token, action) => {
+        // Vérifier si l'action est définie
+        if (!action) {
+            console.error('Action non spécifiée pour la mise à jour du statut');
+            return;
+        }
+        
         // Actions include: activate, suspend, resume, deactivate, refresh
         if (onUpdateStatus) onUpdateStatus(token, action);
         handleMenuClose();

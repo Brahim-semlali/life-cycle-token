@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
                     }
                   }
                 } catch (apiError) {
-                  console.log("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
+                  console.error("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
                   // Continue with default empty modules/menus
                 }
                 
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
                 setUserModules(profileModules || []);
                 setUserMenus(profileMenus || []);
               } catch (error) {
-                console.log("Erreur lors du chargement des accès utilisateur au démarrage:", error.message);
+                console.error("Erreur lors du chargement des accès utilisateur:", error);
                 // En cas d'erreur, ne pas ajouter de modules par défaut
                 setUserModules([]);
                 setUserMenus([]);
@@ -113,7 +113,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
           }
         } catch (error) {
-          console.log("Erreur lors de la récupération des données utilisateur:", error.message);
+          console.error("Erreur lors de la récupération des données utilisateur:", error);
           // En cas d'erreur, supposer que le token est invalide
           TokenStorage.clear();
           setUser(null);
@@ -179,23 +179,18 @@ export const AuthProvider = ({ children }) => {
   // Mettre à jour les modules et menus de l'utilisateur lorsque l'utilisateur change
   useEffect(() => {
     const loadUserAccess = async () => {
-      console.log("Mise à jour des modules utilisateur. Utilisateur connecté:", !!user);
       if (user && TokenStorage.isTokenValid()) {
         try {
-          // Récupérer les modules et menus depuis l'API en fonction du profil utilisateur
           const userId = user.id;
           let userAccess = { modules: [], menus: [] };
           
           try {
             userAccess = await authService.getUserProfileAccess(userId);
             
-            // If userAccess contains profile data with menus inside modules, extract them
             if (userAccess.modules && Array.isArray(userAccess.modules)) {
-              // Check if modules have menus property
               const extractedMenus = [];
               userAccess.modules = userAccess.modules.map(module => {
                 if (module && module.menus && Array.isArray(module.menus)) {
-                  // Add module ID to each menu for proper association
                   const moduleMenus = module.menus.map(menu => ({
                     ...menu,
                     module: module.id,
@@ -205,14 +200,12 @@ export const AuthProvider = ({ children }) => {
                   
                   extractedMenus.push(...moduleMenus);
                   
-                  // Return the module without menus to avoid duplication
                   const { menus, ...moduleWithoutMenus } = module;
                   return moduleWithoutMenus;
                 }
                 return module;
               });
               
-              // Combine extracted menus with any existing menus
               if (extractedMenus.length > 0) {
                 userAccess.menus = [
                   ...(userAccess.menus || []),
@@ -221,42 +214,25 @@ export const AuthProvider = ({ children }) => {
               }
             }
           } catch (apiError) {
-            console.log("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
-            // Continue with default empty modules/menus
+            console.error("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
           }
           
           const { modules: profileModules = [], menus: profileMenus = [] } = userAccess;
           
-          console.log("Modules et menus récupérés depuis l'API:", { 
-            profileModules: profileModules?.length || 0, 
-            profileMenus: profileMenus?.length || 0 
-          });
-          
-          // Utiliser uniquement les modules provenant de l'API
           setUserModules(profileModules || []);
           setUserMenus(profileMenus || []);
           
-          console.log("Modules et menus finaux pour l'utilisateur:", { 
-            modules: profileModules?.length || 0, 
-            menus: profileMenus?.length || 0 
-          });
         } catch (error) {
-          console.log("Erreur lors du chargement des accès utilisateur:", error.message);
-          // En cas d'erreur, ne pas ajouter de modules par défaut
+          console.error("Erreur lors du chargement des accès utilisateur:", error);
           setUserModules([]);
           setUserMenus([]);
         }
-      } else if (!TokenStorage.isTokenValid()) {
-        // Lorsque l'utilisateur n'est pas authentifié, ne pas lui donner accès aux modules/menus
-        console.log("Utilisateur non authentifié - aucun module/menu attribué");
-        setUserModules([]);
-        setUserMenus([]);
-      } else if (!user) {
+      } else {
         setUserModules([]);
         setUserMenus([]);
       }
     };
-    
+
     loadUserAccess();
   }, [user]);
 
@@ -337,7 +313,7 @@ export const AuthProvider = ({ children }) => {
               }
             }
           } catch (apiError) {
-            console.log("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
+            console.error("Erreur API lors de la récupération des accès utilisateur:", apiError.message);
             // Continue with default empty modules/menus
           }
           
@@ -357,7 +333,7 @@ export const AuthProvider = ({ children }) => {
             menus: profileMenus?.length || 0 
           });
         } catch (error) {
-          console.log("Erreur lors du chargement des accès utilisateur:", error.message);
+          console.error("Erreur lors du chargement des accès utilisateur:", error);
           // En cas d'erreur, ne pas ajouter de modules par défaut
           setUserModules([]);
           setUserMenus([]);

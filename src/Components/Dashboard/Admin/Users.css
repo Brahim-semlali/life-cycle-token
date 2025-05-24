@@ -1,12 +1,12 @@
 .users-container {
     background: linear-gradient(135deg, #f0f4fa 0%, #e4e9f7 100%);
     min-height: 100vh;
-    width: calc(100% - 250px);
+    width: calc(100% - 265px);
     box-sizing: border-box;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    padding: 2.5rem;
+    padding: 1.5rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-left: 250px;
+    margin-left: 265px;
     position: fixed;
     top: 0;
     right: 0;
@@ -52,16 +52,16 @@
 }
 
 .users-container.minimized {
-    margin-left: 60px;
-    width: calc(100% - 60px);
+    margin-left: 75px;
+    width: calc(100% - 75px);
 }
 
 .users-container h1 {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #4f46e5;
-    margin-bottom: 2rem;
-    padding: 0.5rem 0 1rem;
+    margin-bottom: 1rem;
+    padding: 0.25rem 0 0.5rem;
     position: relative;
     display: inline-block;
     letter-spacing: -0.5px;
@@ -158,8 +158,8 @@
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border-radius: 20px;
-    padding: 24px 28px;
-    margin-bottom: 30px;
+    padding: 16px 28px;
+    margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -517,39 +517,186 @@
 
 @media (max-width: 768px) {
     .users-container {
-        padding: 1.5rem !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 1rem !important;
     }
 
     .users-header {
-        padding: 20px !important;
         flex-direction: column !important;
-        gap: 20px !important;
+        gap: 1rem !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .users-container h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .controls-container {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.75rem !important;
     }
 
     .search-container {
         width: 100% !important;
+        margin-bottom: 0.5rem !important;
     }
 
     .users-actions {
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        gap: 12px;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.75rem !important;
     }
 
     .create-button {
         width: 100% !important;
-        order: -1;
-        margin-bottom: 12px;
+        margin-bottom: 0.5rem !important;
+        order: -1 !important;
+    }
+
+    .export-button {
+        width: 100% !important;
+    }
+
+    .view-selector {
+        width: 100% !important;
+        justify-content: center !important;
+        margin-top: 0.5rem !important;
+    }
+
+    /* Amélioration du tableau en vue mobile */
+    .contact-table {
+        display: block !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 12px !important;
     }
 
     .contact-table th,
     .contact-table td {
-        padding: 15px 12px;
+        padding: 0.75rem !important;
+        font-size: 0.875rem !important;
     }
 
+    /* Style pour les badges de statut en mobile */
+    .status-badge {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Ajustement des boutons d'action en mobile */
     .action-buttons {
-        gap: 6px;
+        display: flex !important;
+        gap: 0.5rem !important;
+        justify-content: flex-end !important;
+    }
+
+    .action-button {
+        padding: 0.5rem !important;
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* Style pour les avatars en mobile */
+    .user-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.875rem !important;
+    }
+
+    .name-cell {
+        gap: 0.5rem !important;
+    }
+
+    /* Amélioration de la navigation mobile */
+    .mobile-nav-container {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background: white !important;
+        padding: 0.75rem !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+        display: flex !important;
+        justify-content: space-around !important;
+        z-index: 1000 !important;
+    }
+
+    /* Style pour le mode sombre en mobile */
+    .dark-mode .mobile-nav-container {
+        background: #1e293b !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Ajustement de la hauteur de la table pour éviter le chevauchement avec la navigation mobile */
+    .users-table-container {
+        height: calc(100vh - 280px) !important;
+        margin-bottom: 60px !important;
+    }
+
+    /* Amélioration de la recherche en mobile */
+    .search-container {
+        height: 40px !important;
+    }
+
+    .search-container input {
+        font-size: 0.875rem !important;
+    }
+
+    /* Style pour les en-têtes de colonnes en mobile */
+    .contact-table th {
+        white-space: nowrap !important;
+        background: #f8fafc !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+    }
+
+    /* Amélioration de la lisibilité des emails en mobile */
+    .email-cell {
+        max-width: 200px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    /* Amélioration de l'affichage des numéros de téléphone en mobile */
+    .phone-cell {
+        white-space: nowrap !important;
+    }
+}
+
+/* Styles spécifiques pour les très petits écrans */
+@media (max-width: 380px) {
+    .users-container {
+        padding: 0.75rem !important;
+    }
+
+    .users-container h1 {
+        font-size: 1.25rem !important;
+    }
+
+    .contact-table th,
+    .contact-table td {
+        padding: 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .action-button {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .user-avatar {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.75rem !important;
     }
 }
 
@@ -642,10 +789,10 @@
     display: flex;
     align-items: center;
     padding: 0 8px 0 24px;
-    height: 50px;
+    height: 42px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
     transition: all 0.4s ease;
-    width: 320px;
+    width: 280px;
     overflow: hidden;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -728,7 +875,7 @@
 .view-selector {
     background: rgba(255, 255, 255, 0.9);
     border-radius: 14px;
-    padding: 4px;
+    padding: 3px;
     border: 2px solid rgba(229, 231, 235, 0.8);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -743,7 +890,7 @@
 
 .view-button {
     min-width: 45px !important;
-    height: 40px !important;
+    height: 36px !important;
     border-radius: 10px !important;
     transition: all 0.3s ease !important;
 }
@@ -763,11 +910,11 @@
 .export-button {
     background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%) !important;
     border-radius: 14px !important;
-    padding: 10px 20px !important;
-    height: 46px !important;
+    padding: 8px 20px !important;
+    height: 42px !important;
     color: white !important;
     font-weight: 600 !important;
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
     box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important;
     transition: all 0.3s ease !important;
     text-transform: none !important;
@@ -850,17 +997,17 @@
     display: flex;
     flex-direction: column;
     transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
-    margin-top: 16px;
+    margin-top: 12px;
 }
 
 .create-button {
     background: linear-gradient(45deg, #4338ca 0%, #6d28d9 100%) !important;
     border-radius: 16px !important;
-    padding: 12px 28px !important;
-    height: 50px !important;
+    padding: 8px 20px !important;
+    height: 42px !important;
     color: white !important;
     font-weight: 700 !important;
-    font-size: 1rem !important;
+    font-size: 0.9rem !important;
     box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4) !important;
     transition: all 0.4s ease !important;
     text-transform: none !important;
@@ -1985,7 +2132,7 @@ th .selection-button {
     overflow: hidden !important;
     background: linear-gradient(45deg, #4338ca 0%, #6d28d9 100%) !important;
     border-radius: 12px !important;
-    padding: 10px 28px !important;
+    padding: 8px 20px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
     text-transform: none !important;

@@ -129,8 +129,8 @@ const SimulateurContent = () => {
         throw new Error('La date d\'expiration doit être dans le futur');
       }
       
-      // Appel au service pour l'issuance TSP
-      const result = await TokenService.issueTspToken({
+      // Préparer les données exactement comme le backend les attend
+      const payload = {
         tsp: formData.tsp,
         tokenRequestor: formData.tokenRequestor,
         pan: formData.pan,
@@ -138,12 +138,21 @@ const SimulateurContent = () => {
         expiryYear: formData.expiryDate.year,
         cvv: formData.cvv2,
         panSource: formData.panSource
-      });
+      };
+
+      console.log('Sending payload to backend:', payload);
+      
+      // Appel au service pour l'issuance TSP
+      const result = await TokenService.issueTspToken(payload);
       
       if (result.success) {
+        // Afficher le message de succès du backend
+        const message = result.data?.message || 'Tokenisation approuvée avec succès!';
+        const externalMessage = result.data?.['message externe'];
+        
         setNotification({
           open: true,
-          message: `Tokenisation approuvée avec succès! ID: ${result.data.issuance_id}`,
+          message: externalMessage ? `${message}\nRéponse externe: ${externalMessage}` : message,
           severity: 'success'
         });
         
@@ -160,6 +169,7 @@ const SimulateurContent = () => {
           panSource: '',
         });
       } else {
+        // Afficher le message d'erreur du backend
         throw new Error(result.error || 'Échec de la tokenisation');
       }
     } catch (error) {
@@ -177,64 +187,45 @@ const SimulateurContent = () => {
   return (
     <div className={`simulateur-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
       <Paper className="simulateur-form-paper" elevation={0}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 2 }}>
-            <SecurityIcon sx={{ fontSize: '2rem', color: '#6366f1' }} />
-            <Chip 
-              label="SECURE TOKENIZATION" 
-              variant="outlined" 
-              sx={{ 
-                borderColor: '#6366f1', 
-                color: '#6366f1',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                background: 'rgba(99, 102, 241, 0.05)'
-              }} 
-            />
-            <VerifiedIcon sx={{ fontSize: '2rem', color: '#06b6d4' }} />
-          </Box>
-          <Typography 
-            variant="h1"
-            className="simulateur-title"
-          >
-            APPROVE
-            <br />
-            TOKENIZATION
-          </Typography>
-        </Box>
+        <div className="form-header">
+          <div className="header-title">
+            <SecurityIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+            <Typography variant="h6">APPROVE TOKENIZATION</Typography>
+          </div>
+          <Chip 
+            label="SECURE TOKENIZATION" 
+            className="secure-badge"
+          />
+        </div>
         
         <form onSubmit={handleSubmit}>
           <div className="form-content">
-            {/* TSP and Token Requestor Row */}
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <FormControl fullWidth className="simulateur-form-field">
-                <InputLabel id="tsp-label">Token Service Provider (TSP)</InputLabel>
+            <div className="form-group-left">
+              <FormControl className="simulateur-form-field">
+                <InputLabel id="tsp-label">TSP</InputLabel>
                 <Select
                   labelId="tsp-label"
                   id="tsp"
                   name="tsp"
                   value={formData.tsp}
-                  label="Token Service Provider (TSP)"
+                  label="TSP"
                   onChange={handleChange}
                   required
                   startAdornment={
                     <InputAdornment position="start">
-                      <ShieldIcon />
+                      <ShieldIcon sx={{ fontSize: '1.2rem' }} />
                     </InputAdornment>
                   }
                 >
                   {tspOptions.map(option => (
                     <MenuItem key={option.value} value={option.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <ShieldIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
-                        {option.label}
-                      </Box>
+                      {option.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth className="simulateur-form-field">
+              <FormControl className="simulateur-form-field">
                 <InputLabel id="token-requestor-label">Token Requestor</InputLabel>
                 <Select
                   labelId="token-requestor-label"
@@ -246,87 +237,49 @@ const SimulateurContent = () => {
                   required
                   startAdornment={
                     <InputAdornment position="start">
-                      <CreditCardIcon />
+                      <CreditCardIcon sx={{ fontSize: '1.2rem' }} />
                     </InputAdornment>
                   }
                 >
                   {tokenRequestorOptions.map(option => (
                     <MenuItem key={option.value} value={option.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CreditCardIcon sx={{ fontSize: '1.2rem', color: '#8b5cf6' }} />
-                        {option.label}
-                      </Box>
+                      {option.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-            </Box>
 
-            <Divider sx={{ 
-              my: 2, 
-              background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)',
-              height: '2px',
-              border: 'none'
-            }} />
-
-            {/* PAN Input */}
-            <TextField
-              fullWidth
-              className="simulateur-form-field"
-              label="Card Number (PAN)"
-              name="pan"
-              value={formData.pan}
-              onChange={handleChange}
-              variant="outlined"
-              required
-              inputProps={{
-                maxLength: 16,
-                pattern: '[0-9]{16}'
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CreditCardIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton edge="end" size="small">
-                      <InfoOutlinedIcon />
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-              helperText="Enter a valid 16-digit card number"
-            />
-
-            {/* Card Details Group */}
-            <Box className="card-input-group">
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  gridColumn: '1 / -1', 
-                  mb: 2, 
-                  color: '#374151',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
+              <TextField
+                className="simulateur-form-field pan-input"
+                label="Card Number (PAN)"
+                name="pan"
+                value={formData.pan}
+                onChange={handleChange}
+                variant="outlined"
+                required
+                inputProps={{
+                  maxLength: 16,
+                  pattern: '[0-9]{16}'
                 }}
-              >
-                <SecurityIcon sx={{ color: '#6366f1' }} />
-                Card Security Details
-              </Typography>
-              
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CreditCardIcon sx={{ fontSize: '1.2rem' }} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </div>
+
+            <div className="form-group-right">
               <FormControl className="simulateur-form-field">
-                <InputLabel id="month-label">Expiry Month</InputLabel>
+                <InputLabel id="month-label">Month</InputLabel>
                 <Select
                   labelId="month-label"
                   id="month"
                   name="expiryDate.month"
                   value={formData.expiryDate.month}
-                  label="Expiry Month"
+                  label="Month"
                   onChange={handleChange}
                   required
                 >
@@ -339,13 +292,13 @@ const SimulateurContent = () => {
               </FormControl>
 
               <FormControl className="simulateur-form-field">
-                <InputLabel id="year-label">Expiry Year</InputLabel>
+                <InputLabel id="year-label">Year</InputLabel>
                 <Select
                   labelId="year-label"
                   id="year"
                   name="expiryDate.year"
                   value={formData.expiryDate.year}
-                  label="Expiry Year"
+                  label="Year"
                   onChange={handleChange}
                   required
                 >
@@ -359,7 +312,7 @@ const SimulateurContent = () => {
 
               <TextField
                 className="simulateur-form-field"
-                label="CVV2/CVC2"
+                label="CVV2"
                 name="cvv2"
                 value={formData.cvv2}
                 onChange={handleChange}
@@ -370,17 +323,16 @@ const SimulateurContent = () => {
                   maxLength: 3,
                   pattern: '[0-9]{3}'
                 }}
-                helperText="3-digit security code"
               />
 
               <FormControl className="simulateur-form-field">
-                <InputLabel id="pan-source-label">PAN Source</InputLabel>
+                <InputLabel id="pan-source-label">Source</InputLabel>
                 <Select
                   labelId="pan-source-label"
                   id="panSource"
                   name="panSource"
                   value={formData.panSource}
-                  label="PAN Source"
+                  label="Source"
                   onChange={handleChange}
                   required
                 >
@@ -391,25 +343,22 @@ const SimulateurContent = () => {
                   ))}
                 </Select>
               </FormControl>
-            </Box>
-          </div>
 
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              type="submit"
-              className="simulateur-submit-button"
-              disabled={loading}
-              startIcon={loading ? null : <VerifiedIcon />}
-            >
-              {loading ? 'TRAITEMENT...' : 'APPROVE TOKENIZATION'}
-            </Button>
-          </Box>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                type="submit"
+                className="simulateur-submit-button"
+                disabled={loading}
+                startIcon={loading ? null : <VerifiedIcon sx={{ fontSize: '1.2rem' }} />}
+              >
+                {loading ? 'PROCESSING...' : 'APPROVE'}
+              </Button>
+            </div>
+          </div>
         </form>
       </Paper>
       
-      {/* Notification */}
       <Snackbar 
         open={notification.open} 
         autoHideDuration={6000} 
