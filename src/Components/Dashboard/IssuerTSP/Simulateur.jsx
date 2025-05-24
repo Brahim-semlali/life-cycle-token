@@ -13,7 +13,9 @@ import {
   InputAdornment,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  Chip,
+  Divider
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useMenu } from "../../../context/MenuContext";
@@ -21,6 +23,8 @@ import { useTheme } from "../../../context/ThemeContext";
 import ShieldIcon from '@mui/icons-material/Shield';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import SecurityIcon from '@mui/icons-material/Security';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import TokenService from '../../../services/TokenService';
 import './Simulateur.css';
 
@@ -172,14 +176,31 @@ const Simulateur = () => {
   return (
     <div className={`simulateur-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
       <Paper className="simulateur-form-paper" elevation={0}>
-        <Typography 
-          variant="h1"
-          className="simulateur-title"
-        >
-          APPROVE
-          <br />
-          TOKENIZATION
-        </Typography>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 2 }}>
+            <SecurityIcon sx={{ fontSize: '2rem', color: '#6366f1' }} />
+            <Chip 
+              label="SECURE TOKENIZATION" 
+              variant="outlined" 
+              sx={{ 
+                borderColor: '#6366f1', 
+                color: '#6366f1',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                background: 'rgba(99, 102, 241, 0.05)'
+              }} 
+            />
+            <VerifiedIcon sx={{ fontSize: '2rem', color: '#06b6d4' }} />
+          </Box>
+          <Typography 
+            variant="h1"
+            className="simulateur-title"
+          >
+            APPROVE
+            <br />
+            TOKENIZATION
+          </Typography>
+        </Box>
         
         <form onSubmit={handleSubmit}>
           <div className="form-content">
@@ -203,7 +224,10 @@ const Simulateur = () => {
                 >
                   {tspOptions.map(option => (
                     <MenuItem key={option.value} value={option.value}>
-                      {option.label}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <ShieldIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+                        {option.label}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
@@ -227,12 +251,22 @@ const Simulateur = () => {
                 >
                   {tokenRequestorOptions.map(option => (
                     <MenuItem key={option.value} value={option.value}>
-                      {option.label}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CreditCardIcon sx={{ fontSize: '1.2rem', color: '#8b5cf6' }} />
+                        {option.label}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Box>
+
+            <Divider sx={{ 
+              my: 2, 
+              background: 'linear-gradient(90deg, transparent, #e2e8f0, transparent)',
+              height: '2px',
+              border: 'none'
+            }} />
 
             {/* PAN Input */}
             <TextField
@@ -267,6 +301,23 @@ const Simulateur = () => {
 
             {/* Card Details Group */}
             <Box className="card-input-group">
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  gridColumn: '1 / -1', 
+                  mb: 2, 
+                  color: '#374151',
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                <SecurityIcon sx={{ color: '#6366f1' }} />
+                Card Security Details
+              </Typography>
+              
               <FormControl className="simulateur-form-field">
                 <InputLabel id="month-label">Expiry Month</InputLabel>
                 <Select
@@ -342,13 +393,14 @@ const Simulateur = () => {
             </Box>
           </div>
 
-          <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Button 
               variant="contained" 
               color="primary" 
               type="submit"
               className="simulateur-submit-button"
               disabled={loading}
+              startIcon={loading ? null : <VerifiedIcon />}
             >
               {loading ? 'TRAITEMENT...' : 'APPROVE TOKENIZATION'}
             </Button>
