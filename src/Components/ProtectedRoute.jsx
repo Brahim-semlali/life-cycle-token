@@ -38,12 +38,16 @@ const ProtectedRoute = ({
   }
   
   // Vérifier l'accès au module
-  const hasModulePermission = checkModuleAccess(moduleName);
+  // Cas spécial pour ISSUER_TSP: toujours autoriser l'accès
+  const hasModulePermission = moduleName === 'ISSUER_TSP' ? true : checkModuleAccess(moduleName);
   
   // Si un sous-module est spécifié, vérifier également l'accès à ce sous-module
-  const hasSubModulePermission = subModuleName 
-    ? checkSubModuleAccess(moduleName, subModuleName) 
-    : true;
+  // Cas spécial pour SIM: toujours autoriser l'accès
+  const hasSubModulePermission = subModuleName === 'SIM' 
+    ? true 
+    : (subModuleName 
+      ? checkSubModuleAccess(moduleName, subModuleName) 
+      : true);
   
   // Si l'utilisateur n'a pas les permissions nécessaires, rediriger
   if (!hasModulePermission || !hasSubModulePermission) {

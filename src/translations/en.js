@@ -87,6 +87,7 @@ export const en = {
   'modules.issuerTSP.certificates': 'Certificates',
   'modules.issuerTSP.validation': 'Validation',
   'modules.issuerTSP.settings': 'Settings',
+  'modules.issuerTSP.sim': 'Tokenization Simulator',
 
   'modules.tokenManager.title': 'Token Manager',
   'modules.tokenManager.tokens': 'Tokens',

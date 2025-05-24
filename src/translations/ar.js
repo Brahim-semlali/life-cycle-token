@@ -184,6 +184,7 @@ export const ar = {
   'modules.issuerTSP.certificates': 'الشهادات',
   'modules.issuerTSP.validation': 'التحقق',
   'modules.issuerTSP.settings': 'الإعدادات',
+  'modules.issuerTSP.sim': 'محاكي الترميز',
 
   'modules.tokenManager.title': 'إدارة الرموز',
   'modules.tokenManager.tokens': 'الرموز',

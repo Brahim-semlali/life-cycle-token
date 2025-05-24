@@ -44,7 +44,7 @@ const COMPONENT_MAPPING = {
   'issuer-tsp/token': Token,
   'issuer-tsp/mdes': MDES,
   'issuer-tsp/vts': VTS,
-  'issuer-tsp/simulateur': Simulateur,
+  'issuer-tsp/sim': Simulateur,
   
   // Modules sans sous-menus
   'chargeback': ChargeBack,
@@ -255,7 +255,7 @@ function AppContent() {
           <Route path="issuer-tsp/token" element={<Token />} />
           <Route path="issuer-tsp/mdes" element={<MDES />} />
           <Route path="issuer-tsp/vts" element={<VTS />} />
-          <Route path="issuer-tsp/simulateur" element={<Simulateur />} />
+          <Route path="issuer-tsp/sim" element={<Simulateur />} />
           
           {/* Fix for token route mismatch */}
           <Route path="token/token" element={<Navigate to="/dashboard/issuer-tsp/token" replace />} />

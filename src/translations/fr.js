@@ -208,6 +208,7 @@ export const fr = {
   'modules.issuerTSP.certificates': 'Certificats',
   'modules.issuerTSP.validation': 'Validation',
   'modules.issuerTSP.settings': 'Paramètres',
+  'modules.issuerTSP.sim': 'Simulateur de Tokenisation',
 
   'modules.tokenManager.title': 'Gestionnaire de jetons',
   'modules.tokenManager.tokens': 'Jetons',

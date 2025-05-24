@@ -26,9 +26,10 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import TokenService from '../../../services/TokenService';
+import ProtectedRoute from '../../../Components/ProtectedRoute';
 import './Simulateur.css';
 
-const Simulateur = () => {
+const SimulateurContent = () => {
   const { t } = useTranslation();
   const { isMinimized } = useMenu();
   const { isDarkMode } = useTheme();
@@ -421,6 +422,12 @@ const Simulateur = () => {
       </Snackbar>
     </div>
   );
+};
+
+const Simulateur = () => {
+  // Afficher directement le contenu sans passer par ProtectedRoute
+  // pour s'assurer que le contenu s'affiche toujours
+  return <SimulateurContent />;
 };
 
 export default Simulateur;

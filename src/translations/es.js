@@ -205,6 +205,7 @@ export const es = {
   'modules.issuerTSP.certificates': 'Certificados',
   'modules.issuerTSP.validation': 'Validación',
   'modules.issuerTSP.settings': 'Configuración',
+  'modules.issuerTSP.sim': 'Simulador de Tokenización',
 
   'modules.tokenManager.title': 'Gestor de Tokens',
   'modules.tokenManager.tokens': 'Tokens',
