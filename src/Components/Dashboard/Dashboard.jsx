@@ -15,27 +15,12 @@ import {
   Divider,
   CircularProgress,
   Chip,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
-  InputAdornment,
   Alert,
   List,
   ListItem,
   ListItemIcon,
   ListItemText
 } from '@mui/material';
-import {
-  Key as KeyIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  Check as CheckIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
 import './Dashboard.css';
 
 // Define translations
@@ -56,18 +41,7 @@ const translations = {
       profileId: 'Profile ID',
       startValidity: 'Start Validity',
       endValidity: 'End Validity',
-      errorFetchingData: 'Error fetching user data',
-      changePassword: 'Change Password',
-      currentPassword: 'Current Password',
-      newPassword: 'New Password',
-      confirmPassword: 'Confirm Password',
-      passwordRequirements: 'Password Requirements',
-      updatePassword: 'Update Password',
-      cancel: 'Cancel',
-      passwordsDoNotMatch: 'Passwords do not match',
-      passwordChanged: 'Password changed successfully',
-      passwordError: 'Failed to change password',
-      currentPasswordIncorrect: 'Current password is incorrect'
+      errorFetchingData: 'Error fetching user data'
     }
   },
   fr: {
@@ -86,18 +60,7 @@ const translations = {
       profileId: 'ID Profil',
       startValidity: 'Début de validité',
       endValidity: 'Fin de validité',
-      errorFetchingData: 'Erreur lors du chargement des données utilisateur',
-      changePassword: 'Changer le mot de passe',
-      currentPassword: 'Mot de passe actuel',
-      newPassword: 'Nouveau mot de passe',
-      confirmPassword: 'Confirmer le mot de passe',
-      passwordRequirements: 'Exigences de mot de passe',
-      updatePassword: 'Mettre à jour le mot de passe',
-      cancel: 'Annuler',
-      passwordsDoNotMatch: 'Les mots de passe ne correspondent pas',
-      passwordChanged: 'Mot de passe changé avec succès',
-      passwordError: 'Échec du changement de mot de passe',
-      currentPasswordIncorrect: 'Le mot de passe actuel est incorrect'
+      errorFetchingData: 'Erreur lors du chargement des données utilisateur'
     }
   }
 };
@@ -110,26 +73,6 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Password change state
-  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordErrors, setPasswordErrors] = useState([]);
-  const [formError, setFormError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [passwordPolicy, setPasswordPolicy] = useState({
-    min_length: 8,
-    require_uppercase: true,
-    require_lowercase: true,
-    require_number: true,
-    require_special_char: false
-  });
 
   // Add translations to i18n
   useEffect(() => {
@@ -144,20 +87,6 @@ const Dashboard = () => {
       );
     }
   }, [i18n]);
-
-  // Load password policy
-  useEffect(() => {
-    const loadPasswordPolicy = async () => {
-      try {
-        const policy = await api.getPasswordPolicy();
-        setPasswordPolicy(policy);
-      } catch (err) {
-        console.error("Error loading password policy:", err);
-      }
-    };
-    
-    loadPasswordPolicy();
-  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -245,111 +174,6 @@ const Dashboard = () => {
       return dateString;
     }
   };
-  
-  // Validate password against policy
-  const validatePassword = async (password) => {
-    if (!password) return [];
-    
-    const result = await api.validatePassword(password);
-    return result.errors;
-  };
-  
-  // Handle password change
-  const handlePasswordChange = async () => {
-    setFormError('');
-    setPasswordSuccess('');
-    
-    // Check if passwords match
-    if (newPassword !== confirmPassword) {
-      setFormError(t('dashboard.passwordsDoNotMatch', 'Passwords do not match'));
-      return;
-    }
-    
-    // Validate password against policy
-    const errors = await validatePassword(newPassword);
-    if (errors.length > 0) {
-      setPasswordErrors(errors);
-      return;
-    }
-    
-    try {
-      setChangingPassword(true);
-      const result = await api.changePassword(currentPassword, newPassword);
-      
-      if (result.success) {
-        setPasswordSuccess(t('dashboard.passwordChanged', 'Password changed successfully'));
-        // Reset form after successful password change
-        setTimeout(() => {
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setOpenPasswordDialog(false);
-          setPasswordSuccess('');
-        }, 2000);
-      } else {
-        // Handle the case where the current password is incorrect
-        if (result.message && result.message.toLowerCase().includes('incorrect')) {
-          setFormError(t('dashboard.currentPasswordIncorrect', 'Current password is incorrect'));
-          // Highlight the current password field
-          document.getElementById('current-password-field')?.focus();
-        } else {
-          setFormError(result.message || t('dashboard.passwordError', 'Failed to change password'));
-        }
-      }
-    } catch (err) {
-      console.error('Error changing password:', err);
-      
-      // Check if the error indicates an incorrect password
-      if (err.response && err.response.data) {
-        const errorData = err.response.data;
-        if (
-          (typeof errorData === 'string' && errorData.toLowerCase().includes('incorrect')) ||
-          (errorData.message && errorData.message.toLowerCase().includes('incorrect')) ||
-          (errorData.error && errorData.error.toLowerCase().includes('incorrect'))
-        ) {
-          setFormError(t('dashboard.currentPasswordIncorrect', 'Current password is incorrect'));
-          // Highlight the current password field
-          document.getElementById('current-password-field')?.focus();
-        } else {
-          setFormError(t('dashboard.passwordError', 'Failed to change password'));
-        }
-      } else {
-        setFormError(t('dashboard.passwordError', 'Failed to change password'));
-      }
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-  
-  // Open password dialog
-  const handleOpenPasswordDialog = () => {
-    setOpenPasswordDialog(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setFormError('');
-    setPasswordSuccess('');
-    setPasswordErrors([]);
-  };
-  
-  // Close password dialog
-  const handleClosePasswordDialog = () => {
-    setOpenPasswordDialog(false);
-  };
-  
-  // Validate new password as it's being typed
-  useEffect(() => {
-    const validateNewPassword = async () => {
-      if (newPassword) {
-        const errors = await validatePassword(newPassword);
-        setPasswordErrors(errors);
-      } else {
-        setPasswordErrors([]);
-      }
-    };
-    
-    validateNewPassword();
-  }, [newPassword]);
 
   return (
     <Box
@@ -505,21 +329,6 @@ const Dashboard = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         {t('dashboard.personalInfo', 'Informations personnelles')}
                       </Typography>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<KeyIcon />}
-                        onClick={handleOpenPasswordDialog}
-                        sx={{ 
-                          borderRadius: '8px',
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          px: 3,
-                          py: 1
-                        }}
-                      >
-                        {t('dashboard.changePassword', 'Changer le mot de passe')}
-                      </Button>
                     </Box>
                     
                     <Grid container spacing={3}>
@@ -713,262 +522,6 @@ const Dashboard = () => {
           </Grid>
         </Box>
       )}
-      
-      {/* Password Change Dialog */}
-      <Dialog 
-        open={openPasswordDialog} 
-        onClose={handleClosePasswordDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            overflow: 'hidden'
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 3
-        }}>
-          <KeyIcon />
-          {t('dashboard.changePassword', 'Changer le mot de passe')}
-        </DialogTitle>
-        
-        <DialogContent sx={{ pt: 4, pb: 2, px: 3 }}>
-          {passwordSuccess && (
-            <Alert 
-              severity="success" 
-              sx={{ mb: 3, borderRadius: '8px' }}
-            >
-              {passwordSuccess}
-            </Alert>
-          )}
-          
-          {formError && (
-            <Alert 
-              severity="error" 
-              sx={{ mb: 3, borderRadius: '8px' }}
-            >
-              {formError}
-            </Alert>
-          )}
-          
-          <TextField
-            id="current-password-field"
-            label={t('dashboard.currentPassword', 'Mot de passe actuel')}
-            type={showCurrentPassword ? 'text' : 'password'}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
-            variant="outlined"
-            error={!!formError && formError.toLowerCase().includes('incorrect')}
-            sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    edge="end"
-                  >
-                    {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-          
-          <TextField
-            label={t('dashboard.newPassword', 'Nouveau mot de passe')}
-            type={showNewPassword ? 'text' : 'password'}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
-            variant="outlined"
-            sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    edge="end"
-                  >
-                    {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-          
-          <TextField
-            label={t('dashboard.confirmPassword', 'Confirmer le mot de passe')}
-            type={showConfirmPassword ? 'text' : 'password'}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
-            variant="outlined"
-            error={confirmPassword !== '' && newPassword !== confirmPassword}
-            helperText={confirmPassword !== '' && newPassword !== confirmPassword ? 
-              t('dashboard.passwordsDoNotMatch', 'Les mots de passe ne correspondent pas') : ''}
-            sx={{ mb: 3 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    edge="end"
-                  >
-                    {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-          
-          {/* Password Requirements */}
-          <Box sx={{ 
-            mt: 2, 
-            mb: 3,
-            p: 2,
-            borderRadius: '8px',
-            backgroundColor: 'rgba(79, 70, 229, 0.04)'
-          }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              {t('dashboard.passwordRequirements', 'Exigences de mot de passe')}
-            </Typography>
-                
-            <List dense>
-              <ListItem>
-                <ListItemIcon sx={{ minWidth: 30 }}>
-                  {newPassword.length >= passwordPolicy.min_length ? 
-                    <CheckIcon color="success" fontSize="small" /> : 
-                    <CloseIcon color="error" fontSize="small" />
-                  }
-                </ListItemIcon>
-                <ListItemText 
-                  primary={`Au moins ${passwordPolicy.min_length} caractères`} 
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    color: newPassword.length >= passwordPolicy.min_length ? 'success.main' : 'error.main'
-                  }}
-                />
-              </ListItem>
-              
-              {passwordPolicy.require_uppercase && (
-                <ListItem>
-                  <ListItemIcon sx={{ minWidth: 30 }}>
-                    {/[A-Z]/.test(newPassword) ? 
-                      <CheckIcon color="success" fontSize="small" /> : 
-                      <CloseIcon color="error" fontSize="small" />
-                    }
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Au moins une lettre majuscule" 
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: /[A-Z]/.test(newPassword) ? 'success.main' : 'error.main'
-                    }}
-                  />
-                </ListItem>
-              )}
-              
-              {passwordPolicy.require_lowercase && (
-                <ListItem>
-                  <ListItemIcon sx={{ minWidth: 30 }}>
-                    {/[a-z]/.test(newPassword) ? 
-                      <CheckIcon color="success" fontSize="small" /> : 
-                      <CloseIcon color="error" fontSize="small" />
-                    }
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Au moins une lettre minuscule" 
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: /[a-z]/.test(newPassword) ? 'success.main' : 'error.main'
-                    }}
-                  />
-                </ListItem>
-              )}
-              
-              {passwordPolicy.require_number && (
-                <ListItem>
-                  <ListItemIcon sx={{ minWidth: 30 }}>
-                    {/\d/.test(newPassword) ? 
-                      <CheckIcon color="success" fontSize="small" /> : 
-                      <CloseIcon color="error" fontSize="small" />
-                    }
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Au moins un chiffre" 
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: /\d/.test(newPassword) ? 'success.main' : 'error.main'
-                    }}
-                  />
-                </ListItem>
-              )}
-              
-              {passwordPolicy.require_special_char && (
-                <ListItem>
-                  <ListItemIcon sx={{ minWidth: 30 }}>
-                    {/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 
-                      <CheckIcon color="success" fontSize="small" /> : 
-                      <CloseIcon color="error" fontSize="small" />
-                    }
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Au moins un caractère spécial" 
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      color: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'success.main' : 'error.main'
-                    }}
-                  />
-                </ListItem>
-              )}
-            </List>
-          </Box>
-        </DialogContent>
-        
-        <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
-          <Button 
-            onClick={handleClosePasswordDialog}
-            variant="outlined"
-            disabled={changingPassword}
-            sx={{ borderRadius: '8px', px: 3 }}
-          >
-            {t('dashboard.cancel', 'Annuler')}
-          </Button>
-          <Button 
-            onClick={handlePasswordChange} 
-            variant="contained"
-            color="primary"
-            disabled={
-              changingPassword ||
-              !currentPassword || 
-              !newPassword || 
-              !confirmPassword || 
-              newPassword !== confirmPassword ||
-              passwordErrors.length > 0
-            }
-            startIcon={changingPassword ? <CircularProgress size={20} color="inherit" /> : null}
-            sx={{ borderRadius: '8px', px: 3 }}
-          >
-            {changingPassword 
-              ? (t('common.processing') || 'Processing...') 
-              : t('dashboard.updatePassword', 'Mettre à jour le mot de passe')}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
