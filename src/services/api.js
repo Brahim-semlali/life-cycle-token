@@ -380,28 +380,16 @@ const api = {
         }
         
         try {
-            const response = await apiClient.post('/profile/listmodule/');
-            const modules = response.data;
-            
-            if (modules && Array.isArray(modules)) {
-                return modules;
-            }
-            
-            return [];
-        } catch (error) {
-            if (error.response && error.response.status === 403) {
-                try {
-                    const userId = TokenStorage.getUserId();
-                    if (userId) {
-                        const userAccess = await this.getUserProfileAccess(userId);
-                        if (userAccess && userAccess.modules && Array.isArray(userAccess.modules)) {
-                            return userAccess.modules;
-                        }
-                    }
-                } catch (fallbackError) {
-                    console.error('Erreur lors de la récupération des modules via fallback:', fallbackError);
+            const userId = TokenStorage.getUserId();
+            if (userId) {
+                const userAccess = await this.getUserProfileAccess(userId);
+                if (userAccess && userAccess.modules && Array.isArray(userAccess.modules)) {
+                    return userAccess.modules;
                 }
             }
+            return [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des modules:', error);
             return [];
         }
     },
@@ -413,28 +401,16 @@ const api = {
         }
         
         try {
-            const response = await apiClient.post('/profile/listmenu/');
-            const menus = response.data;
-            
-            if (menus && Array.isArray(menus)) {
-                return menus;
-            }
-            
-            return [];
-        } catch (error) {
-            if (error.response && error.response.status === 403) {
-                try {
-                    const userId = TokenStorage.getUserId();
-                    if (userId) {
-                        const userAccess = await this.getUserProfileAccess(userId);
-                        if (userAccess && userAccess.menus && Array.isArray(userAccess.menus)) {
-                            return userAccess.menus;
-                        }
-                    }
-                } catch (fallbackError) {
-                    console.error('Erreur lors de la récupération des menus via fallback:', fallbackError);
+            const userId = TokenStorage.getUserId();
+            if (userId) {
+                const userAccess = await this.getUserProfileAccess(userId);
+                if (userAccess && userAccess.menus && Array.isArray(userAccess.menus)) {
+                    return userAccess.menus;
                 }
             }
+            return [];
+        } catch (error) {
+            console.error('Erreur lors de la récupération des menus:', error);
             return [];
         }
     },
