@@ -233,124 +233,100 @@ const Sidebar = () => {
                 allModules: allModules.length
             });
 
-            if (user) {
-                console.log("Données utilisateur complètes:", JSON.stringify(user));
+            if (!isAuthenticated || !user) {
+                console.log("Utilisateur non authentifié ou absent - arrêt du chargement");
+                setIsLoading(false);
+                setUserModuleStructure([]);
+                return;
             }
 
             try {
-                // Charger les modules et menus si nécessaire
-                if (allModules.length === 0 || allMenus.length === 0) {
-                    console.log("Chargement des modules et menus de base");
-                    await ModuleService.loadModulesAndMenus();
-                }
-                
-                // Si l'utilisateur est connecté - utiliser strictement ses droits d'accès
-                if (isAuthenticated && user) {
-                    console.log("Utilisateur authentifié:", user.id);
-                    
-                    // Utiliser uniquement les données d'accès spécifiques à l'utilisateur
-                    if (userAccessData && (
-                        (Array.isArray(userAccessData.modules) && userAccessData.modules.length > 0) || 
-                        (Array.isArray(userAccessData.menus) && userAccessData.menus.length > 0)
-                    )) {
-                        console.log("Construction de la structure avec les données d'accès:", userAccessData);
-                        console.log("Modules accessibles:", JSON.stringify(userAccessData.modules));
-                        
-                        // Construire la structure en utilisant les modules et menus
-                        const moduleStructure = ModuleService.buildModuleStructure(
-                            userAccessData.modules,
-                            userAccessData.menus
-                        );
-                
-                        // Ajouter les icônes par défaut
-                        const structureWithIcons = addIconsToStructure(moduleStructure);
-                        console.log("Structure finale des modules:", structureWithIcons);
-                        setUserModuleStructure(structureWithIcons);
-                    } else if (user.profile && user.profile.modules) {
-                        // Fallback sur le profil de l'utilisateur si pas de données d'accès
-                        console.log("Utilisation du profil utilisateur comme fallback");
-                        console.log("Modules du profil:", JSON.stringify(user.profile.modules));
-                        
-                        const moduleStructure = ModuleService.buildModuleStructure(
-                            user.profile.modules,
-                            user.profile.menus || []
-                        );
-                        
-                        const structureWithIcons = addIconsToStructure(moduleStructure);
-                        console.log("Structure des modules depuis le profil:", structureWithIcons);
-                        setUserModuleStructure(structureWithIcons);
-                    } else {
-                        // Dernier recours: afficher tous les modules si on est en dev
-                        console.log("Aucune donnée d'accès ni profil disponible - tentative de charger tous les modules");
-                        if (process.env.REACT_APP_DEV_MODE === 'true') {
-                            const moduleStructure = ModuleService.buildModuleStructure(
-                                allModules.map(m => m.id),
-                                allMenus.map(m => m.id)
-                            );
-                            
-                            const structureWithIcons = addIconsToStructure(moduleStructure);
-                            setUserModuleStructure(structureWithIcons);
-                        } else {
-                            setUserModuleStructure([]);
+                // Charger les modules et menus avec retry
+                let retryCount = 0;
+                const maxRetries = 3;
+                let modulesLoaded = false;
+
+                while (!modulesLoaded && retryCount < maxRetries) {
+                    try {
+                        if (allModules.length === 0 || allMenus.length === 0) {
+                            console.log(`Tentative ${retryCount + 1} de chargement des modules et menus`);
+                            await ModuleService.loadModulesAndMenus();
                         }
+                        modulesLoaded = true;
+                    } catch (error) {
+                        retryCount++;
+                        if (retryCount === maxRetries) {
+                            throw error;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
                     }
-                } else if (!isAuthenticated && process.env.REACT_APP_DEV_MODE === 'true') {
-                    console.log("Mode développement - affichage de tous les modules");
-                    const moduleStructure = ModuleService.buildModuleStructure(
-                        allModules.map(m => m.id),
-                        allMenus.map(m => m.id)
-                    );
+                }
+
+                // Utiliser les données d'accès spécifiques à l'utilisateur
+                if (userAccessData && (
+                    (Array.isArray(userAccessData.modules) && userAccessData.modules.length > 0) || 
+                    (Array.isArray(userAccessData.menus) && userAccessData.menus.length > 0)
+                )) {
+                    console.log("Construction de la structure avec les données d'accès:", userAccessData);
                     
+                    const moduleStructure = ModuleService.buildModuleStructure(
+                        userAccessData.modules,
+                        userAccessData.menus
+                    );
+            
                     const structureWithIcons = addIconsToStructure(moduleStructure);
                     setUserModuleStructure(structureWithIcons);
                 } else {
-                    console.log("Aucun utilisateur authentifié - aucun module affiché");
-                    setUserModuleStructure([]);
+                    // Si pas de données d'accès, recharger depuis l'API
+                    console.log("Rechargement des données d'accès depuis l'API");
+                    const userId = user.id;
+                    const freshAccessData = await api.getUserProfileAccess(userId);
+                    
+                    if (freshAccessData && (freshAccessData.modules.length > 0 || freshAccessData.menus.length > 0)) {
+                        const moduleStructure = ModuleService.buildModuleStructure(
+                            freshAccessData.modules,
+                            freshAccessData.menus
+                        );
+                        
+                        const structureWithIcons = addIconsToStructure(moduleStructure);
+                        setUserModuleStructure(structureWithIcons);
+                    } else {
+                        console.warn("Aucune donnée d'accès disponible après rechargement");
+                        setUserModuleStructure([]);
+                    }
                 }
 
                 // Always add Dashboard module to the structure
                 setUserModuleStructure(prevStructure => {
-                    // Check if Dashboard module already exists
                     const dashboardExists = prevStructure.some(module => 
                         module.code === 'DASHBOARD' || module.code === 'dashboard'
                     );
                     
-                    // Remove any existing Dashboard module to avoid duplicates
-                    const filteredStructure = prevStructure.filter(module => 
-                        module.code !== 'DASHBOARD' && module.code !== 'dashboard'
-                    );
+                    if (dashboardExists) return prevStructure;
                     
-                    // Create Dashboard module with a unique ID that won't conflict
                     const dashboardModule = {
-                        id: 'dashboard-module', // Using a string ID to ensure uniqueness
+                        id: 'dashboard-module',
                         code: 'DASHBOARD',
                         title: t('dashboard.title', 'Tableau de bord'),
                         icon: 'dashboard',
-                        path: '/dashboard/dashboard', // Explicit path to dashboard
+                        path: '/dashboard/dashboard',
                         submodules: []
                     };
                     
-                    // Always add Dashboard module at the beginning of the array
-                    return [dashboardModule, ...filteredStructure];
+                    return [dashboardModule, ...prevStructure];
                 });
             } catch (error) {
                 console.error("Erreur lors du chargement des modules et menus:", error);
-                // En cas d'erreur, ne rien afficher plutôt que d'afficher tout
                 setUserModuleStructure([]);
             } finally {
-                // Set loading to false when finished loading modules
-                setTimeout(() => {
-                    setIsLoading(false);
-                }, 800); // Add a small delay to show the loading animation
+                setIsLoading(false);
             }
         };
         
-        // Charger les modules uniquement si l'API a terminé de charger les données d'accès
-        // ou si nous avons des modules dans le contexte d'authentification
-        if (userModules.length > 0 || allModules.length > 0) {
+        if (isAuthenticated && user) {
             loadModulesData();
         }
-    }, [allModules, allMenus, userModules, userMenus, userAccessData, isAuthenticated, user]);
+    }, [allModules, allMenus, userModules, userMenus, userAccessData, isAuthenticated, user, t]);
 
     // Fonction pour ajouter les icônes et corriger les chemins
     const addIconsToStructure = (moduleStructure) => {

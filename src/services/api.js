@@ -151,7 +151,6 @@ const api = {
             // Liste des endpoints possibles pour la politique de mot de passe
             const endpoints = [
                 '/user/password-policy/',
-                '/user/password-policy/get/',
                 '/api/security/password-policy/',
                 '/user/password/policy/',
                 '/security/password-policy/'
@@ -418,66 +417,92 @@ const api = {
     // Méthode pour récupérer les accès d'un utilisateur
     async getUserProfileAccess(userId) {
         if (!TokenStorage.isTokenValid()) {
+            console.log("Token invalide - pas d'accès aux données utilisateur");
             return { modules: [], menus: [] };
+        }
+
+        let retryCount = 0;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 seconde
+
+        while (retryCount < maxRetries) {
+            try {
+                console.log(`Tentative ${retryCount + 1} de récupération des accès utilisateur`);
+                const response = await apiClient.post('/profile/access/', { userId });
+                const userAccess = response.data;
+                
+                let modules = [];
+                let menus = [];
+                
+                if (userAccess && Array.isArray(userAccess.modules)) {
+                    modules = userAccess.modules;
+                } else if (userAccess && typeof userAccess.modules === 'object') {
+                    modules = Object.values(userAccess.modules).filter(m => m && typeof m === 'object');
+                }
+                
+                if (userAccess && Array.isArray(userAccess.menus)) {
+                    menus = userAccess.menus;
+                } else if (userAccess && typeof userAccess.menus === 'object') {
+                    menus = Object.values(userAccess.menus).filter(m => m && typeof m === 'object');
+                }
+                
+                const extractedMenus = [];
+                if (modules.length > 0) {
+                    modules = modules.map(module => {
+                        if (module && Array.isArray(module.menus)) {
+                            const moduleMenus = module.menus.map(menu => ({
+                                ...menu,
+                                module: module.id,
+                                moduleId: module.id,
+                                moduleCode: module.code
+                            }));
+                            
+                            extractedMenus.push(...moduleMenus);
+                            
+                            const { menus, ...moduleWithoutMenus } = module;
+                            return moduleWithoutMenus;
+                        }
+                        return module;
+                    });
+                    
+                    if (extractedMenus.length > 0) {
+                        menus = [...menus, ...extractedMenus];
+                    }
+                }
+                
+                if (Array.isArray(userAccess) && userAccess.length > 0 && !modules.length) {
+                    modules = userAccess.filter(item => 
+                        item && typeof item === 'object' && (item.id || item.code || item.title)
+                    );
+                }
+
+                // Vérifier si les données sont valides
+                if (modules.length === 0 && menus.length === 0) {
+                    console.warn("Aucun module ou menu trouvé dans la réponse");
+                    throw new Error("Données d'accès invalides");
+                }
+                
+                return { modules, menus };
+            } catch (error) {
+                retryCount++;
+                console.warn(`Tentative ${retryCount} échouée:`, error.message);
+                
+                if (error.response && error.response.status === 403) {
+                    console.error("Accès refusé (403) - arrêt des tentatives");
+                    return { modules: [], menus: [] };
+                }
+                
+                if (retryCount === maxRetries) {
+                    console.error("Nombre maximum de tentatives atteint");
+                    return { modules: [], menus: [] };
+                }
+                
+                // Attendre avant la prochaine tentative
+                await new Promise(resolve => setTimeout(resolve, retryDelay * retryCount));
+            }
         }
         
-        try {
-            const response = await apiClient.post('/profile/access/', { userId });
-            const userAccess = response.data;
-            
-            let modules = [];
-            let menus = [];
-            
-            if (userAccess && Array.isArray(userAccess.modules)) {
-                modules = userAccess.modules;
-            } else if (userAccess && typeof userAccess.modules === 'object') {
-                modules = Object.values(userAccess.modules).filter(m => m && typeof m === 'object');
-            }
-            
-            if (userAccess && Array.isArray(userAccess.menus)) {
-                menus = userAccess.menus;
-            } else if (userAccess && typeof userAccess.menus === 'object') {
-                menus = Object.values(userAccess.menus).filter(m => m && typeof m === 'object');
-            }
-            
-            const extractedMenus = [];
-            if (modules.length > 0) {
-                modules = modules.map(module => {
-                    if (module && Array.isArray(module.menus)) {
-                        const moduleMenus = module.menus.map(menu => ({
-                            ...menu,
-                            module: module.id,
-                            moduleId: module.id,
-                            moduleCode: module.code
-                        }));
-                        
-                        extractedMenus.push(...moduleMenus);
-                        
-                        const { menus, ...moduleWithoutMenus } = module;
-                        return moduleWithoutMenus;
-                    }
-                    return module;
-                });
-                
-                if (extractedMenus.length > 0) {
-                    menus = [...menus, ...extractedMenus];
-                }
-            }
-            
-            if (Array.isArray(userAccess) && userAccess.length > 0 && !modules.length) {
-                modules = userAccess.filter(item => 
-                    item && typeof item === 'object' && (item.id || item.code || item.title)
-                );
-            }
-            
-            return { modules, menus };
-        } catch (error) {
-            if (error.response && error.response.status === 403) {
-                return { modules: [], menus: [] };
-            }
-            console.error('Failed to fetch user access:', error);
-            return { modules: [], menus: [] };
-        }
+        return { modules: [], menus: [] };
     },
     
     // Extraire l'ID de profil d'un utilisateur
