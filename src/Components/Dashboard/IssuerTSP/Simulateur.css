@@ -179,9 +179,9 @@
     gap: 1rem;
   }
 
-  /* Masquer le champ TSP en mobile */
+  /* Le champ TSP est maintenant visible en mobile */
   .form-group-left .simulateur-form-field:first-child {
-    display: none;
+    display: block;
   }
 
   .pan-input {
