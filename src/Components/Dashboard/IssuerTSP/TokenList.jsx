@@ -54,6 +54,8 @@ import {
 import TokenTable from './TokenTable';
 import './TokenList.css';
 import { useSnackbar } from 'notistack';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const TokenList = () => {
     const { isDarkMode } = useTheme();
@@ -134,7 +136,9 @@ const TokenList = () => {
         expiration_year: '',
         startDate: '',
         endDate: '',
-        includeDeleted: false
+        includeDeleted: false,
+        token_requestor_id: '',
+        token_reference_id: ''
     });
 
     // Date picker state
@@ -226,6 +230,19 @@ const TokenList = () => {
 
     const { enqueueSnackbar } = useSnackbar();
 
+    // Add new state for TSP notification
+    const [tspNotification, setTspNotification] = useState({
+        open: false,
+        message: '',
+        externalMessage: '',
+        type: 'success'
+    });
+
+    // Add handleCloseTspNotification function
+    const handleCloseTspNotification = () => {
+        setTspNotification(prev => ({ ...prev, open: false }));
+    };
+
     // Fonction mise à jour pour ajouter un statut à la liste des statuts modifiés
     const updateLocalStatus = (tokenId, newStatus) => {
         console.log(`Caching local status for token ${tokenId}: ${newStatus}`);
@@ -312,7 +329,9 @@ const TokenList = () => {
             expiration_year: '',
             startDate: '',
             endDate: '',
-            includeDeleted: false
+            includeDeleted: false,
+            token_requestor_id: '',
+            token_reference_id: ''
         });
         setStartDateObj(null);
         setEndDateObj(null);
@@ -357,105 +376,130 @@ const TokenList = () => {
             // Build query parameters based on search filters
             const queryParams = {};
             
-            // Only add non-empty values to query params
+            // Only add non-empty values to query params and normalize the field names
             Object.entries(searchParams).forEach(([key, value]) => {
-                // Vérifier si la valeur existe et n'est pas une chaîne vide
-                if (value !== undefined && value !== null) {
-                    if (typeof value === 'string') {
-                        if (value.trim() !== '') {
-                            queryParams[key] = value.trim();
-                        }
-                    } else {
-                        queryParams[key] = value;
-                    }
+                // Skip null, undefined, or empty values
+                if (value === null || value === undefined || value === '') {
+                    return;
+                }
+
+                // Convert value to string if it's not already
+                const stringValue = typeof value === 'string' ? value : value.toString();
+                
+                // Skip empty strings after trimming
+                if (stringValue.trim() === '') {
+                    return;
+                }
+
+                // Normalize field names to match API expectations
+                switch(key) {
+                    case 'token_requestor_id':
+                        queryParams.tokenRequestorID = stringValue.trim();
+                        break;
+                    case 'token_reference_id':
+                        queryParams.tokenReferenceID = stringValue.trim();
+                        break;
+                    case 'token_value':
+                        queryParams.token = stringValue.trim();
+                        break;
+                    case 'token_type':
+                        queryParams.tokenType = stringValue.trim();
+                        break;
+                    case 'includeDeleted':
+                        queryParams[key] = value; // Keep boolean value as is
+                        break;
+                    default:
+                        queryParams[key] = stringValue.trim();
                 }
             });
             
             // Add status filter if specific status is selected
-            if (statusFilter !== 'all') {
-                queryParams.token_status = statusFilter;
+            if (statusFilter && statusFilter !== 'all') {
+                queryParams.tokenStatus = statusFilter;
             }
             
             console.log('Fetching tokens with filters:', queryParams);
             
             // Force refresh from server by adding a timestamp
-            queryParams._ts = Date.now();
-            
-            // Forcer un rafraîchissement complet si demandé
             if (forceRefresh) {
+                queryParams._ts = Date.now();
                 queryParams._cache = 'no-cache';
-                console.log('Forçage du rafraîchissement complet des données');
             }
             
-            // Use the TokenService to fetch tokens directly from the database
+            // Use the TokenService to fetch tokens
             const result = await TokenService.listTokens(queryParams);
             
             if (result.success) {
                 console.log('Fetched tokens:', result.data);
                 
-                // Debug: Log the token statuses to check what's coming from the API
-                if (result.data && result.data.length > 0) {
-                    console.log('Token statuses from API:', result.data.map(t => ({
-                        id: t.id,
-                        token_status: t.token_status,
-                        tokenStatus: t.tokenStatus
-                    })));
-                    
-                    // Ajouter un log plus détaillé du premier token
-                    console.log('Detailed first token from API:', JSON.stringify(result.data[0], null, 2));
+                // Apply client-side filtering
+                let filteredTokens = result.data || [];
+                
+                // Filter by token value if specified
+                if (queryParams.token) {
+                    const searchValue = queryParams.token.toLowerCase();
+                    filteredTokens = filteredTokens.filter(token => {
+                        const tokenValue = token.token || token.token_value;
+                        return tokenValue && tokenValue.toString().toLowerCase().includes(searchValue);
+                    });
+                    console.log('Filtered by token value:', filteredTokens);
                 }
                 
-                // Apply client-side filtering for token_value if specified
-                let filteredTokens = result.data;
-                if (queryParams.token_value) {
-                    const searchValue = queryParams.token_value.toLowerCase();
-                    filteredTokens = filteredTokens.filter(token => 
-                        token.token_value && token.token_value.toLowerCase().includes(searchValue)
-                    );
-                    console.log(`Filtered to ${filteredTokens.length} tokens matching value: ${searchValue}`);
+                // Filter by token type if specified
+                if (queryParams.tokenType) {
+                    const searchType = queryParams.tokenType.toLowerCase();
+                    filteredTokens = filteredTokens.filter(token => {
+                        const tokenType = token.tokenType || token.token_type;
+                        return tokenType && tokenType.toString().toLowerCase().includes(searchType);
+                    });
+                    console.log('Filtered by token type:', filteredTokens);
                 }
                 
-                // Apply client-side filtering for dates if specified
+                // Filter by requestor ID if specified
+                if (queryParams.tokenRequestorID) {
+                    const searchRequestorId = queryParams.tokenRequestorID.toString();
+                    filteredTokens = filteredTokens.filter(token => {
+                        const requestorId = token.tokenRequestorID || token.token_requestor_id;
+                        return requestorId && requestorId.toString() === searchRequestorId;
+                    });
+                }
+                
+                // Filter by reference ID if specified
+                if (queryParams.tokenReferenceID) {
+                    const searchReferenceId = queryParams.tokenReferenceID.toString();
+                    filteredTokens = filteredTokens.filter(token => {
+                        const referenceId = token.tokenReferenceID || token.token_reference_id;
+                        return referenceId && referenceId.toString() === searchReferenceId;
+                    });
+                }
+                
+                // Filter by status if specified
+                if (queryParams.tokenStatus) {
+                    const searchStatus = queryParams.tokenStatus.toUpperCase();
+                    filteredTokens = filteredTokens.filter(token => {
+                        const tokenStatus = token.tokenStatus || token.token_status;
+                        return tokenStatus && tokenStatus.toUpperCase() === searchStatus;
+                    });
+                }
+                
+                // Filter by dates if specified
                 if (queryParams.startDate) {
                     const startDate = new Date(queryParams.startDate.split('/').reverse().join('-'));
                     filteredTokens = filteredTokens.filter(token => {
-                        if (!token.creation_date) return false;
-                        const tokenDate = new Date(token.creation_date);
+                        if (!token.creation_date && !token.tokenActivationDate) return false;
+                        const tokenDate = new Date(token.creation_date || token.tokenActivationDate);
                         return tokenDate >= startDate;
                     });
-                    console.log(`Filtered to ${filteredTokens.length} tokens after start date: ${queryParams.startDate}`);
                 }
                 
                 if (queryParams.endDate) {
                     const endDate = new Date(queryParams.endDate.split('/').reverse().join('-'));
-                    endDate.setHours(23, 59, 59); // Set to end of day
+                    endDate.setHours(23, 59, 59);
                     filteredTokens = filteredTokens.filter(token => {
-                        if (!token.creation_date) return false;
-                        const tokenDate = new Date(token.creation_date);
+                        if (!token.creation_date && !token.tokenActivationDate) return false;
+                        const tokenDate = new Date(token.creation_date || token.tokenActivationDate);
                         return tokenDate <= endDate;
                     });
-                    console.log(`Filtered to ${filteredTokens.length} tokens before end date: ${queryParams.endDate}`);
-                }
-                
-                // Apply client-side filtering for expiration month/year if specified
-                if (queryParams.expiration_month) {
-                    filteredTokens = filteredTokens.filter(token => 
-                        token.expiration_month === queryParams.expiration_month
-                    );
-                }
-                
-                if (queryParams.expiration_year) {
-                    filteredTokens = filteredTokens.filter(token => 
-                        token.expiration_year === queryParams.expiration_year
-                    );
-                }
-                
-                // Apply client-side filtering for token_assurance_method if specified
-                if (queryParams.token_assurance_method) {
-                    filteredTokens = filteredTokens.filter(token => 
-                        token.token_assurance_method && 
-                        token.token_assurance_method.toLowerCase().includes(queryParams.token_assurance_method.toLowerCase())
-                    );
                 }
                 
                 // Filter deleted tokens if not included
@@ -463,49 +507,52 @@ const TokenList = () => {
                     filteredTokens = filteredTokens.filter(token => !token.is_deleted);
                 }
                 
-                // Ensure both tokenStatus and token_status are present for consistent UI display
-                // And apply any locally cached status overrides
-                const normalizedTokens = filteredTokens.map(token => {
-                    // Base normalization for consistent field format
-                    const normalizedToken = {
-                        ...token,
-                        // Ensure both formats are available regardless which one comes from API
-                        tokenStatus: token.tokenStatus || token.token_status,
-                        token_status: token.token_status || token.tokenStatus
-                    };
-                    
-                    // Apply any local status overrides if available
+                // Normalize token data
+                const normalizedTokens = filteredTokens.map(token => ({
+                    ...token,
+                    tokenStatus: token.tokenStatus || token.token_status,
+                    token_status: token.token_status || token.tokenStatus,
+                    tokenRequestorID: token.tokenRequestorID || token.token_requestor_id,
+                    tokenReferenceID: token.tokenReferenceID || token.token_reference_id,
+                    token: token.token || token.token_value,
+                    token_value: token.token_value || token.token,
+                    tokenType: token.tokenType || token.token_type,
+                    token_type: token.token_type || token.tokenType
+                }));
+                
+                // Apply any local status overrides
+                const finalTokens = normalizedTokens.map(token => {
                     if (modifiedStatuses && token.id && modifiedStatuses[token.id]) {
                         const cachedStatus = modifiedStatuses[token.id];
-                        console.log(`Applying locally cached status override for token ${token.id}: ${cachedStatus}`);
-                        normalizedToken.tokenStatus = cachedStatus;
-                        normalizedToken.token_status = cachedStatus;
+                        return {
+                            ...token,
+                            tokenStatus: cachedStatus,
+                            token_status: cachedStatus
+                        };
                     }
-                    
-                    return normalizedToken;
+                    return token;
                 });
                 
-                // Refresh table data
-                setTokens(normalizedTokens);
-                setResultsCount(normalizedTokens.length);
+                setTokens(finalTokens);
+                setResultsCount(finalTokens.length);
                 
                 // Check if any filters are applied
-                const hasFilters = Object.keys(queryParams).length > 1; // Accounting for _ts
+                const hasFilters = Object.keys(queryParams).length > 1;
                 setFiltersApplied(hasFilters);
                 
-                return true; // Indicate success
+                return true;
             } else {
-                setError(result.error);
+                setError(result.error || 'Failed to fetch tokens');
                 setTokens([]);
                 setResultsCount(0);
-                return false; // Indicate failure
+                return false;
             }
         } catch (err) {
             console.error('Error in fetchTokens:', err);
             setError('Failed to fetch tokens from database');
             setTokens([]);
             setResultsCount(0);
-            return false; // Indicate failure
+            return false;
         } finally {
             setLoading(false);
         }
@@ -560,7 +607,7 @@ const TokenList = () => {
     const handleViewDetails = async (token) => {
         setDetailDialog({
             open: true,
-            token,
+            token: null,
             loading: true
         });
 
@@ -571,9 +618,27 @@ const TokenList = () => {
             if (result.success) {
                 console.log('Fetched token details for viewing:', result.data);
                 
+                // Normalize the data structure
+                const normalizedToken = {
+                    ...result.data,
+                    // Ensure consistent field names
+                    tokenReferenceID: result.data.tokenReferenceID || result.data.tokenReferenceId,
+                    tokenRequestorID: result.data.tokenRequestorID || result.data.tokenRequestorId,
+                    panReferenceID: result.data.panReferenceID || result.data.panReferenceId,
+                    entityOfLastAction: result.data.entityOfLastAction || result.data.entity_of_last_action,
+                    walletAccountEmailAddressHash: result.data.walletAccountEmailAddressHash || result.data.wallet_account_email_address_hash,
+                    clientWalletAccountID: result.data.clientWalletAccountID || result.data.client_wallet_account_id,
+                    panSource: result.data.panSource || result.data.pan_source,
+                    autoFillIndicator: result.data.autoFillIndicator || result.data.auto_fill_indicator,
+                    // Ensure dates are properly formatted
+                    tokenActivationDate: result.data.tokenActivationDate ? new Date(result.data.tokenActivationDate).toISOString() : null,
+                    tokenExpirationDate: result.data.tokenExpirationDate ? new Date(result.data.tokenExpirationDate).toISOString() : null,
+                    lastTokenStatusUpdatedTime: result.data.lastTokenStatusUpdatedTime ? new Date(result.data.lastTokenStatusUpdatedTime).toISOString() : null
+                };
+                
                 setDetailDialog(prev => ({
                     ...prev,
-                    token: result.data,
+                    token: normalizedToken,
                     loading: false
                 }));
             } else {
@@ -776,10 +841,15 @@ const TokenList = () => {
     };
 
     // Handle token status update with local cache
-    const handleUpdateStatus = async (token, action) => {
+    const handleUpdateStatus = async (token, action, e) => {
         try {
             if (!action) {
                 throw new Error('Action non spécifiée');
+            }
+            
+            // Stop event propagation to prevent opening the details dialog
+            if (e && e.stopPropagation) {
+                e.stopPropagation();
             }
             
             setSelectedToken(token);
@@ -818,64 +888,56 @@ const TokenList = () => {
                     break;
                 default:
                     setIsUpdating(false);
-                    enqueueSnackbar('Action non valide', { 
-                        variant: 'error',
-                        autoHideDuration: 5000,
-                        anchorOrigin: {
-                            vertical: 'top',
-                            horizontal: 'center'
-                        }
+                    setTspNotification({
+                        open: true,
+                        message: 'Action non valide',
+                        type: 'error'
                     });
                     return;
             }
 
             if (result.success) {
-                // Afficher le message du backend s'il existe, sinon utiliser un message par défaut
-                const backendMessage = result.data?.message || result.data?.status || result.message;
-                if (backendMessage) {
-                    enqueueSnackbar(backendMessage, { 
-                        variant: 'success',
-                        autoHideDuration: 5000,
-                        anchorOrigin: {
-                            vertical: 'top',
-                            horizontal: 'center'
+                // Parse external message if it exists
+                let externalMessage = '';
+                try {
+                    if (result.data?.['message externe']) {
+                        const parsedExternal = JSON.parse(result.data['message externe']);
+                        externalMessage = parsedExternal.message;
                     }
-                    });
-                } else {
-                    enqueueSnackbar('Requête envoyée avec succès', { 
-                        variant: 'success',
-                        autoHideDuration: 3000
-                    });
+                } catch (e) {
+                    console.warn('Could not parse external message:', e);
                 }
-                
-                // Fermer le dialogue
+
+                // Show success notification
+                setTspNotification({
+                    open: true,
+                    message: result.message || result.data?.message || 'Opération effectuée avec succès',
+                    externalMessage: externalMessage,
+                    type: 'success'
+                });
+
+                // Close the dialog
                 setOpenReasonDialog(false);
                 setSelectedToken(null);
                 setSelectedAction(null);
                 setSelectedReason('');
                 setMessageText('');
+
+                // Refresh tokens list
+                await fetchTokens(true);
             } else {
-                // Afficher le message d'erreur du backend
-                const errorMessage = result.error || result.details?.message || result.details?.error || 'Erreur lors de l\'envoi de la requête';
-                enqueueSnackbar(errorMessage, { 
-                    variant: 'error',
-                    autoHideDuration: 5000,
-                    anchorOrigin: {
-                        vertical: 'top',
-                        horizontal: 'center'
-                    }
+                setTspNotification({
+                    open: true,
+                    message: result.error || result.details?.message || 'Erreur lors de l\'opération',
+                    type: 'error'
                 });
             }
         } catch (error) {
             console.error('Error updating token status:', error);
-            const errorMessage = error.message || 'Une erreur est survenue';
-            enqueueSnackbar(errorMessage, { 
-                variant: 'error',
-                autoHideDuration: 5000,
-                anchorOrigin: {
-                    vertical: 'top',
-                    horizontal: 'center'
-                }
+            setTspNotification({
+                open: true,
+                message: error.message || 'Une erreur est survenue',
+                type: 'error'
             });
         } finally {
             setIsUpdating(false);
@@ -1083,6 +1145,44 @@ const TokenList = () => {
                         </Alert>
                     </Snackbar>
 
+                    {/* Add TSP Response Notification */}
+                    <Snackbar
+                        open={tspNotification.open}
+                        autoHideDuration={6000}
+                        onClose={handleCloseTspNotification}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert
+                            onClose={handleCloseTspNotification}
+                            severity={tspNotification.type}
+                            sx={{
+                                width: '100%',
+                                backgroundColor: tspNotification.type === 'success' ? '#ecfdf5' : '#fef2f2',
+                                color: tspNotification.type === 'success' ? '#065f46' : '#991b1b',
+                                border: 1,
+                                borderColor: tspNotification.type === 'success' ? '#6ee7b7' : '#fecaca',
+                                '& .MuiAlert-icon': {
+                                    color: tspNotification.type === 'success' ? '#059669' : '#dc2626'
+                                },
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                            }}
+                            icon={tspNotification.type === 'success' ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
+                        >
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                    {tspNotification.message}
+                                </Typography>
+                                {tspNotification.externalMessage && (
+                                    <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9 }}>
+                                        {tspNotification.externalMessage}
+                                    </Typography>
+                                )}
+                            </Box>
+                        </Alert>
+                    </Snackbar>
+
                     {/* FOR DEMO ONLY: Button to simulate team confirmation */}
                     {Object.keys(pendingStatusChanges).length > 0 && (
                         <Box sx={{ 
@@ -1145,12 +1245,12 @@ const TokenList = () => {
                         
                         <form onSubmit={handleSearch}>
                             <Grid container spacing={2.5}>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
                                     <TextField
                                         fullWidth
-                                    label="Token value"
-                                    name="token_value"
-                                    value={searchParams.token_value}
+                                        label="Token value"
+                                        name="token_value"
+                                        value={searchParams.token_value}
                                         onChange={handleInputChange}
                                         variant="outlined"
                                         size="small"
@@ -1172,12 +1272,12 @@ const TokenList = () => {
                                         }}
                                     />
                                 </Grid>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
                                     <TextField
                                         fullWidth
-                                    label="Token type"
-                                    name="token_type"
-                                    value={searchParams.token_type}
+                                        label="Token type"
+                                        name="token_type"
+                                        value={searchParams.token_type}
                                         onChange={handleInputChange}
                                         variant="outlined"
                                         size="small"
@@ -1192,7 +1292,47 @@ const TokenList = () => {
                                         }}
                                     />
                                 </Grid>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        fullWidth
+                                        label="Requestor ID"
+                                        name="token_requestor_id"
+                                        value={searchParams.token_requestor_id}
+                                        onChange={handleInputChange}
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
+                                                    borderWidth: '2px'
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        fullWidth
+                                        label="Reference ID"
+                                        name="token_reference_id"
+                                        value={searchParams.token_reference_id}
+                                        onChange={handleInputChange}
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
+                                                    borderWidth: '2px'
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
                                     <FormControl 
                                         variant="outlined" 
                                         size="small"
@@ -1226,7 +1366,7 @@ const TokenList = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
                                     <DatePicker
                                     label="Created from"
                                         value={startDateObj}
@@ -1256,7 +1396,7 @@ const TokenList = () => {
                                         }}
                                     />
                                 </Grid>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
                                     <DatePicker
                                     label="Created to"
                                         value={endDateObj}
@@ -1286,7 +1426,7 @@ const TokenList = () => {
                                         }}
                                     />
                                 </Grid>
-                            <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={4}>
                                     <FormControlLabel
                                         control={
                                             <Checkbox
@@ -1587,73 +1727,91 @@ const TokenList = () => {
                     fullWidth
                     PaperProps={{
                         sx: {
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            backgroundImage: theme => theme.palette.mode === 'dark' 
+                                ? 'linear-gradient(to bottom, rgba(79, 70, 229, 0.1) 0%, rgba(0, 0, 0, 0) 100%)'
+                                : 'linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+                            '& .MuiDialogTitle-root': {
+                                p: 0
+                            }
                         }
                     }}
                 >
-                    <DialogTitle 
-                        component="div"
-                        sx={{ 
-                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : '#6366f1',
-                            color: '#fff',
-                            p: 3,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 1
-                        }}
-                    >
-                        <Typography variant="h5" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TokenIcon sx={{ fontSize: 28 }} />
-                            Token Details
-                        </Typography>
-                        {detailDialog.token && (
-                            <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 400 }}>
-                                ID: {detailDialog.token.id} {detailDialog.token.token && `• ${detailDialog.token.token}`}
-                            </Typography>
-                        )}
-                    </DialogTitle>
-                    <DialogContent sx={{ p: 0 }}>
-                        {detailDialog.loading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                                <CircularProgress />
-                </Box>
-                        ) : detailDialog.token ? (
-                            <Box sx={{ p: 0 }}>
-                                {/* Status banner */}
-                                {detailDialog.token.tokenStatus && (
-                                    <Box 
-                                        sx={{ 
-                                            p: 2, 
-                                            borderBottom: '1px solid',
-                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            bgcolor: theme => {
-                                                const status = detailDialog.token.tokenStatus?.toLowerCase();
-                                                if (status === 'active') return theme.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.1)';
-                                                if (status === 'inactive') return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-                                                if (status === 'suspended') return theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.1)';
-                                                return 'transparent';
-                                            }
-                                        }}
-                                    >
+                    <Box sx={{ 
+                        position: 'relative',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '200px',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            opacity: theme => theme.palette.mode === 'dark' ? 0.8 : 1
+                        }
+                    }}>
+                        <DialogTitle 
+                            component="div"
+                            sx={{ 
+                                position: 'relative',
+                                color: '#fff',
+                                p: 3,
+                                pb: 0
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                <Box sx={{
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                    backdropFilter: 'blur(8px)'
+                                }}>
+                                    <TokenIcon sx={{ fontSize: 28 }} />
+                                </Box>
+                                <Box>
+                                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                        Token Details
+                                    </Typography>
+                                    {detailDialog.token && (
+                                        <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 400, fontSize: '0.875rem' }}>
+                                            ID: {detailDialog.token.id} {detailDialog.token.token && `• ${detailDialog.token.token}`}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
+
+                            {detailDialog.token && detailDialog.token.tokenStatus && (
+                                <Box sx={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    p: 3,
+                                    mt: 2,
+                                    borderRadius: '12px',
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                    backdropFilter: 'blur(8px)'
+                                }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Chip 
                                             label={detailDialog.token.tokenStatus} 
                                             size="medium"
                                             sx={{
                                                 fontSize: '0.875rem',
                                                 fontWeight: 600,
-                                                height: '28px',
-                                                borderRadius: '6px',
-                                                mr: 2,
+                                                height: '32px',
+                                                borderRadius: '8px',
                                                 backgroundColor: theme => {
                                                     const status = detailDialog.token.tokenStatus?.toLowerCase();
-                                                    if (status === 'active') return theme.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(52, 211, 153, 0.2)';
-                                                    if (status === 'inactive') return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-                                                    if (status === 'suspended') return theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(245, 158, 11, 0.2)';
-                                                    return theme.palette.mode === 'dark' ? 'rgba(107, 114, 128, 0.2)' : 'rgba(107, 114, 128, 0.2)';
+                                                    if (status === 'active') return 'rgba(52, 211, 153, 0.2)';
+                                                    if (status === 'inactive') return 'rgba(239, 68, 68, 0.2)';
+                                                    if (status === 'suspended') return 'rgba(245, 158, 11, 0.2)';
+                                                    return 'rgba(107, 114, 128, 0.2)';
                                                 },
                                                 color: theme => {
                                                     const status = detailDialog.token.tokenStatus?.toLowerCase();
@@ -1662,169 +1820,327 @@ const TokenList = () => {
                                                     if (status === 'suspended') return '#f59e0b';
                                                     return '#6b7280';
                                                 },
+                                                '& .MuiChip-label': {
+                                                    px: 2
+                                                }
                                             }}
                                         />
-                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        <Typography variant="body1" sx={{ 
+                                            fontWeight: 500,
+                                            color: '#fff'
+                                        }}>
                                             {detailDialog.token.tokenType} 
-                                            {detailDialog.token.tokenAssuranceMethod && ` • Method: ${getAssuranceMethodDescription(detailDialog.token.tokenAssuranceMethod)}`}
-                                            {detailDialog.token.tokenExpirationDate && 
-                                             ` • Expires: ${new Date(detailDialog.token.tokenExpirationDate).toLocaleDateString()}`}
                                         </Typography>
                                     </Box>
-                                )}
-                                
-                                <Box sx={{ height: '450px', overflowY: 'auto', p: 3 }}>
-                                    {/* Group the data into logical sections */}
-                                    <Grid container spacing={3}>
-                                        {/* Token Basic Info */}
-                                        <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 1,
+                                            color: 'rgba(255, 255, 255, 0.9)',
+                                            px: 2,
+                                            py: 1,
+                                            borderRadius: '8px',
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                        }}>
+                                            <SmartphoneIcon fontSize="small" />
+                                            <Typography variant="body2">
+                                                {getAssuranceMethodDescription(detailDialog.token.tokenAssuranceMethod)}
+                                            </Typography>
+                                        </Box>
+                                        {detailDialog.token.tokenExpirationDate && (
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: 1,
+                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                px: 2,
+                                                py: 1,
+                                                borderRadius: '8px',
+                                                bgcolor: 'rgba(255, 255, 255, 0.1)'
+                                            }}>
+                                                <CalendarIcon fontSize="small" />
+                                                <Typography variant="body2">
+                                                    Expires: {new Date(detailDialog.token.tokenExpirationDate).toLocaleDateString()}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </Box>
+                            )}
+                        </DialogTitle>
+                    </Box>
+
+                    <DialogContent 
+                        sx={{ 
+                            p: 0,
+                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : '#fff',
+                            mt: -3
+                        }}
+                    >
+                        {detailDialog.loading ? (
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                justifyContent: 'center', 
+                                alignItems: 'center', 
+                                minHeight: '300px',
+                                gap: 2
+                            }}>
+                                <CircularProgress size={40} />
+                                <Typography variant="body2" color="text.secondary">
+                                    Loading token details...
+                                </Typography>
+                            </Box>
+                        ) : detailDialog.token ? (
+                            <Box sx={{ p: 3 }}>
+                                <Grid container spacing={3}>
+                                    {/* Token Basic Info */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            mb: 2
+                                        }}>
+                                            <Box sx={{
+                                                width: 32,
+                                                height: 32,
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                                            }}>
+                                                <TokenIcon sx={{ 
+                                                    fontSize: 20,
+                                                    color: '#6366f1'
+                                                }} />
+                                            </Box>
                                             <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
+                                                fontSize: '1.1rem', 
                                                 fontWeight: 600,
                                                 color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1
                                             }}>
                                                 Token Information
                                             </Typography>
-                                            <Grid container spacing={2}>
-                                                {['id', 'token', 'tokenReferenceId', 'pan_reference_id', 'tokenRequestorId', 'tokenType', 'tokenStatus', 'tokenAssuranceMethod', 'assurance_method_display'].filter(key => 
-                                                    detailDialog.token[key] !== undefined
-                                                ).map(key => (
-                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                        </Box>
+                                        <Grid container spacing={2}>
+                                            {[
+                                                { key: 'id', label: 'ID' },
+                                                { key: 'token', label: 'Token' },
+                                                { key: 'tokenReferenceID', label: 'Token Reference ID' },
+                                                { key: 'panReferenceID', label: 'PAN Reference ID' },
+                                                { key: 'tokenRequestorID', label: 'Token Requestor ID' },
+                                                { key: 'tokenType', label: 'Token Type' }
+                                            ].map(({ key, label }) => (
+                                                <Grid item xs={12} sm={6} md={4} key={key}>
+                                                    <Box sx={{
+                                                        p: 2,
+                                                        borderRadius: '12px',
+                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                                                        border: '1px solid',
+                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                        transition: 'all 0.2s ease-in-out',
+                                                        '&:hover': {
+                                                            transform: 'translateY(-2px)',
+                                                            boxShadow: theme => theme.palette.mode === 'dark' 
+                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                                        }
+                                                    }}>
                                                         <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                                                             textTransform: 'uppercase',
                                                             fontSize: '0.7rem',
                                                             fontWeight: 600,
                                                             letterSpacing: 0.5,
                                                             display: 'block',
-                                                            mb: 0.5
+                                                            mb: 1
                                                         }}>
-                                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                            {label}
                                                         </Typography>
                                                         <Typography variant="body2" sx={{ 
                                                             fontWeight: 500,
                                                             color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
+                                                            wordBreak: 'break-all'
                                                         }}>
-                                                            {key === 'tokenAssuranceMethod' 
-                                                                ? detailDialog.token[key] !== null 
-                                                                    ? getAssuranceMethodDescription(detailDialog.token[key]) 
-                                                                    : 'N/A'
-                                                                : detailDialog.token[key] !== null ? String(detailDialog.token[key]) : 'N/A'}
+                                                            {detailDialog.token[key] !== null && detailDialog.token[key] !== undefined ? String(detailDialog.token[key]) : 'N/A'}
                                                         </Typography>
-                                                    </Grid>
-                                                ))}
-                                            </Grid>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
                                         </Grid>
+                                    </Grid>
 
-                                        {/* Additional Token Info */}
-                                        <Grid item xs={12}>
+                                    {/* Additional Token Info */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            mb: 2,
+                                            mt: 3
+                                        }}>
+                                            <Box sx={{
+                                                width: 32,
+                                                height: 32,
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                                            }}>
+                                                <AssessmentIcon sx={{ 
+                                                    fontSize: 20,
+                                                    color: '#6366f1'
+                                                }} />
+                                            </Box>
                                             <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
+                                                fontSize: '1.1rem', 
                                                 fontWeight: 600,
                                                 color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1
                                             }}>
                                                 Additional Information
                                             </Typography>
-                                            <Grid container spacing={2}>
-                                                {['entity_of_last_action', 'wallet_account_email_address_hash', 'client_wallet_account_id', 'pan_source', 'auto_fill_indicator'].filter(key => 
-                                                    detailDialog.token[key] !== undefined && detailDialog.token[key] !== null && detailDialog.token[key] !== ''
-                                                ).map(key => (
-                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                        </Box>
+                                        <Grid container spacing={2}>
+                                            {[
+                                                { key: 'entityOfLastAction', label: 'Entity of Last Action' },
+                                                { key: 'walletAccountEmailAddressHash', label: 'Wallet Account Email Hash' },
+                                                { key: 'clientWalletAccountID', label: 'Client Wallet Account ID' },
+                                                { key: 'panSource', label: 'PAN Source' },
+                                                { key: 'autoFillIndicator', label: 'Auto Fill Indicator' }
+                                            ].filter(({ key }) => 
+                                                detailDialog.token[key] !== undefined && detailDialog.token[key] !== null && detailDialog.token[key] !== ''
+                                            ).map(({ key, label }) => (
+                                                <Grid item xs={12} sm={6} key={key}>
+                                                    <Box sx={{
+                                                        p: 2,
+                                                        borderRadius: '12px',
+                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                                                        border: '1px solid',
+                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                        transition: 'all 0.2s ease-in-out',
+                                                        '&:hover': {
+                                                            transform: 'translateY(-2px)',
+                                                            boxShadow: theme => theme.palette.mode === 'dark' 
+                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                                        }
+                                                    }}>
                                                         <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                                                             textTransform: 'uppercase',
                                                             fontSize: '0.7rem',
                                                             fontWeight: 600,
                                                             letterSpacing: 0.5,
                                                             display: 'block',
-                                                            mb: 0.5
+                                                            mb: 1
                                                         }}>
-                                                            {key.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}
+                                                            {label}
                                                         </Typography>
                                                         <Typography variant="body2" sx={{ 
                                                             fontWeight: 500,
                                                             color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
+                                                            wordBreak: 'break-all'
                                                         }}>
-                                                            {String(detailDialog.token[key])}
+                                                            {typeof detailDialog.token[key] === 'boolean' 
+                                                                ? detailDialog.token[key] ? 'Yes' : 'No'
+                                                                : String(detailDialog.token[key])}
                                                         </Typography>
-                                                    </Grid>
-                                                ))}
-                                            </Grid>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
                                         </Grid>
-                                        
-                                        {/* Dates Section */}
-                                        <Grid item xs={12}>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1rem', 
-                                                mb: 2, 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                                borderBottom: '1px solid',
-                                                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                                pb: 1,
+                                    </Grid>
+
+                                    {/* Timeline & Expiration */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            mb: 2,
+                                            mt: 3
+                                        }}>
+                                            <Box sx={{
+                                                width: 32,
+                                                height: 32,
+                                                borderRadius: '8px',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: 1
+                                                justifyContent: 'center',
+                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
                                             }}>
-                                                <CalendarIcon fontSize="small" />
+                                                <CalendarIcon sx={{ 
+                                                    fontSize: 20,
+                                                    color: '#6366f1'
+                                                }} />
+                                            </Box>
+                                            <Typography variant="h6" sx={{ 
+                                                fontSize: '1.1rem', 
+                                                fontWeight: 600,
+                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
+                                            }}>
                                                 Timeline & Expiration
                                             </Typography>
-                                            <Grid container spacing={2}>
-                                                {['tokenActivationDate', 'tokenExpirationDate', 'lastTokenStatusUpdatedTime'].filter(key => 
-                                                    detailDialog.token[key] !== undefined
-                                                ).map(key => (
-                                                    <Grid item xs={12} small={6} md={4} key={key}>
+                                        </Box>
+                                        <Grid container spacing={2}>
+                                            {['tokenActivationDate', 'tokenExpirationDate', 'lastTokenStatusUpdatedTime'].filter(key => 
+                                                detailDialog.token[key] !== undefined
+                                            ).map(key => (
+                                                <Grid item xs={12} sm={6} md={4} key={key}>
+                                                    <Box sx={{
+                                                        p: 2,
+                                                        borderRadius: '12px',
+                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                                                        border: '1px solid',
+                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                        transition: 'all 0.2s ease-in-out',
+                                                        '&:hover': {
+                                                            transform: 'translateY(-2px)',
+                                                            boxShadow: theme => theme.palette.mode === 'dark' 
+                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                                        }
+                                                    }}>
                                                         <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#64748b', 
+                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                                                             textTransform: 'uppercase',
                                                             fontSize: '0.7rem',
                                                             fontWeight: 600,
                                                             letterSpacing: 0.5,
                                                             display: 'block',
-                                                            mb: 0.5
+                                                            mb: 1
                                                         }}>
                                                             {key.replace(/([A-Z])/g, ' $1').trim()}
                                                         </Typography>
-                                                        <Box sx={{
-                                                            p: 1,
-                                                            borderRadius: '4px',
-                                                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.7)',
-                                                            fontSize: '0.875rem',
+                                                        <Typography variant="body2" sx={{ 
                                                             fontWeight: 500,
                                                             color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                            border: '1px solid',
-                                                            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                            display: 'inline-block'
                                                         }}>
                                                             {detailDialog.token[key] !== null 
                                                                 ? new Date(detailDialog.token[key]).toLocaleString() 
                                                                 : 'N/A'}
-                                                        </Box>
-                                                    </Grid>
-                                                ))}
-                                            </Grid>
+                                                        </Typography>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
                                         </Grid>
                                     </Grid>
-                                </Box>
+                                </Grid>
                             </Box>
                         ) : (
                             <Typography sx={{ p: 4, textAlign: 'center' }}>No token details available</Typography>
                         )}
                     </DialogContent>
+
                     <DialogActions sx={{ 
+                        p: 3,
+                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : '#fff',
                         borderTop: '1px solid',
-                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
-                        p: 2,
-                        display: 'flex',
-                        justifyContent: 'flex-end'
+                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0'
                     }}>
                         <Button 
                             onClick={handleCloseDetailDialog}
@@ -1832,7 +2148,9 @@ const TokenList = () => {
                             sx={{
                                 borderRadius: '8px',
                                 bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#6366f1',
-                                color: theme => theme.palette.mode === 'dark' ? '#fff' : '#fff',
+                                color: '#fff',
+                                px: 4,
+                                py: 1,
                                 '&:hover': {
                                     bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#4f46e5'
                                 }
@@ -1924,8 +2242,8 @@ const TokenList = () => {
                                     <TextField
                                         fullWidth
                                         label="Token Reference ID"
-                                        name="tokenReferenceId"
-                                        value={editDialog.formData.tokenReferenceId || ''}
+                                        name="tokenReferenceID"
+                                        value={editDialog.formData.tokenReferenceID || ''}
                                         onChange={handleEditFormChange}
                                         variant="outlined"
                                         margin="normal"
@@ -1936,8 +2254,8 @@ const TokenList = () => {
                                     <TextField
                                         fullWidth
                                         label="Token Requestor ID"
-                                        name="tokenRequestorId"
-                                        value={editDialog.formData.tokenRequestorId || ''}
+                                        name="tokenRequestorID"
+                                        value={editDialog.formData.tokenRequestorID || ''}
                                         onChange={handleEditFormChange}
                                         variant="outlined"
                                         margin="normal"

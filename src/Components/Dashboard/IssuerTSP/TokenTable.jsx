@@ -20,7 +20,8 @@ import {
     ListItemIcon,
     ListItemText,
     useTheme,
-    Button
+    Button,
+    ButtonBase
 } from '@mui/material';
 import { 
     Visibility as ViewIcon,
@@ -753,29 +754,45 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                     <TableRow
                                         key={token.id || token._id}
                                         hover
-                                        sx={{ 
-                                            '&:last-child td, &:last-child th': { border: 0 },
+                                        onClick={() => handleViewDetails(token)}
+                                        sx={{
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            position: 'relative',
                                             '&:hover': {
-                                                    backgroundColor: theme.palette.mode === 'dark' 
-                                                        ? 'rgba(255, 255, 255, 0.05)' 
-                                                        : 'rgba(243, 244, 246, 0.7)',
+                                                bgcolor: theme => theme.palette.mode === 'dark' 
+                                                    ? 'rgba(255, 255, 255, 0.05)' 
+                                                    : 'rgba(99, 102, 241, 0.04)',
+                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                                             },
-                                                borderBottom: '1px solid',
-                                                borderBottomColor: theme.palette.mode === 'dark' 
-                                                    ? 'rgba(255, 255, 255, 0.08)' 
-                                                    : 'rgba(0, 0, 0, 0.06)',
-                                            transition: 'all 0.2s ease'
+                                            '&:active': {
+                                                transform: 'translateY(0)',
+                                            },
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                left: 0,
+                                                top: 0,
+                                                bottom: 0,
+                                                width: '3px',
+                                                bgcolor: 'primary.main',
+                                                opacity: 0,
+                                                transition: 'opacity 0.2s ease'
+                                            },
+                                            '&:hover::after': {
+                                                opacity: 1
+                                            }
                                         }}
+                                    >
+                                        {columns.map((column) => (
+                                            <TableCell 
+                                                key={`${token.id || token._id}-${column.id}`}
+                                            sx={{ 
+                                                    padding: '12px 16px',
+                                                    fontSize: '0.875rem'
+                                            }}
                                         >
-                                            {columns.map((column) => (
-                                                <TableCell 
-                                                    key={`${token.id || token._id}-${column.id}`}
-                                                sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem'
-                                                }}
-                                            >
-                                                    {renderCellContent(token, column)}
+                                                {renderCellContent(token, column)}
                                         </TableCell>
                                             ))}
                                             <TableCell align="center">
@@ -822,7 +839,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<ActivateIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'activate')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'activate');
+                                                                }}
                                                                 sx={{
                                                                     color: '#10b981',
                                                                     minWidth: 'auto',
@@ -838,7 +858,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<DeactivateIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'deactivate');
+                                                                }}
                                                                 sx={{
                                                                     color: '#6b7280',
                                                                     minWidth: 'auto',
@@ -859,7 +882,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<BlockIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'suspend')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'suspend');
+                                                                }}
                                                                 sx={{
                                                                     color: '#f59e0b',
                                                                     minWidth: 'auto',
@@ -875,7 +901,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<DeactivateIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'deactivate');
+                                                                }}
                                                                 sx={{
                                                                     color: '#6b7280',
                                                                     minWidth: 'auto',
@@ -896,7 +925,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<ResumeIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'resume')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'resume');
+                                                                }}
                                                                 sx={{
                                                                     color: '#3b82f6',
                                                                     minWidth: 'auto',
@@ -912,7 +944,10 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                             <Button 
                                                                 startIcon={<DeactivateIcon fontSize="small" />}
                                                                 size="small"
-                                                                onClick={() => handleUpdateStatus(token, 'deactivate')}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onUpdateStatus(token, 'deactivate');
+                                                                }}
                                                                 sx={{
                                                                     color: '#6b7280',
                                                                     minWidth: 'auto',
@@ -924,8 +959,8 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                                 Deactivate
                                                             </Button>
                                                         </Tooltip>
-                                                        </>
-                                                    )}
+                                                    </>
+                                                )}
                                                     </>
                                                 )}
                                                 </Box>
