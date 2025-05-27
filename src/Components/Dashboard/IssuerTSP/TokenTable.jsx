@@ -69,177 +69,39 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
         // Si aucune donnée n'est disponible, renvoyer un tableau vide
         if ((!tokens || tokens.length === 0) && !tableMetadata) return [];
         
-        // Colonnes à exclure de l'affichage
-        const excludedColumns = ['_id', '__v']; 
-        
-        // Définir les colonnes que nous voulons spécifiquement afficher
+        // Définir uniquement les colonnes que nous voulons afficher
         const columnsToDisplay = [
-            'token',
-            'tokenType',
-            'tokenStatus',
-            'token_status',
             'tokenReferenceID',
-            'tokenReferenceId',
-            'tokenRequestorID',
-            'tokenRequestorId',
-            'tokenAssuranceMethod',
-            'assurance_method_display',
-            'panReferenceID',
-            'pan_reference_id',
-            'entityOfLastAction',
-            'entity_of_last_action',
-            'walletAccountEmailAddressHash',
-            'wallet_account_email_address_hash',
-            'clientWalletAccountID',
-            'client_wallet_account_id',
             'panSource',
-            'pan_source',
-            'autoFillIndicator',
-            'auto_fill_indicator',
+            'tokenStatus',
             'tokenActivationDate',
-            'activation_date',
-            'tokenExpirationDate',
-            'expiration_date',
-            'lastTokenStatusUpdatedTime',
-            'last_status_update'
+            'tokenRequestorID'
         ];
         
         // Groupes de champs équivalents (différentes conventions de nommage)
         const fieldGroups = {
-            'token': ['token', 'token_value'],
             'tokenStatus': ['tokenStatus', 'token_status'],
-            'tokenReferenceID': ['tokenReferenceID', 'tokenReferenceId', 'pan_reference_id'],
+            'tokenReferenceID': ['tokenReferenceID', 'tokenReferenceId', 'token_reference_id'],
             'tokenRequestorID': ['tokenRequestorID', 'tokenRequestorId', 'token_requestor_id'],
-            'panReferenceID': ['panReferenceID', 'pan_reference_id'],
-            'entityOfLastAction': ['entityOfLastAction', 'entity_of_last_action'],
-            'walletAccountEmailAddressHash': ['walletAccountEmailAddressHash', 'wallet_account_email_address_hash'],
-            'clientWalletAccountID': ['clientWalletAccountID', 'client_wallet_account_id'],
             'panSource': ['panSource', 'pan_source'],
-            'autoFillIndicator': ['autoFillIndicator', 'auto_fill_indicator'],
-            'tokenActivationDate': ['tokenActivationDate', 'activation_date'],
-            'tokenExpirationDate': ['tokenExpirationDate', 'expiration_date'],
-            'lastTokenStatusUpdatedTime': ['lastTokenStatusUpdatedTime', 'last_status_update', 'last_token_status_updated_time']
+            'tokenActivationDate': ['tokenActivationDate', 'creation_date', 'activation_date']
         };
         
-        // Déterminer quelles colonnes sont disponibles dans les données
-        let availableKeys = [];
-        
-        // Priorité 1: Obtenir les colonnes à partir des métadonnées de la table
-        if (tableMetadata && tableMetadata.columns) {
-            availableKeys = tableMetadata.columns
-                .map(col => col.name || col.column_name)
-                .filter(key => !excludedColumns.includes(key) && columnsToDisplay.includes(key));
-        }
-        
-        // Priorité 2: Obtenir les colonnes à partir des données réelles
-        if (tokens && tokens.length > 0) {
-            // Collecter toutes les clés uniques de tous les tokens
-            const allKeys = new Set();
-            tokens.forEach(token => {
-                Object.keys(token).forEach(key => {
-                    if (!excludedColumns.includes(key) && columnsToDisplay.includes(key)) {
-                        allKeys.add(key);
-                    }
-                });
-            });
-            
-            // Convertir le Set en array et ajouter les clés qui ne sont pas déjà présentes
-            Array.from(allKeys).forEach(key => {
-                if (!availableKeys.includes(key)) {
-                    availableKeys.push(key);
-                }
-            });
-        }
-        
-        // Définir un ordre préférentiel pour les colonnes les plus importantes
-        const preferredOrder = [
-            'token',
-            'tokenType',
-            'tokenStatus',
-            'tokenAssuranceMethod',
-            'tokenReferenceID',
-            'tokenRequestorID', 
-            'panReferenceID',
-            'entityOfLastAction',
-            'walletAccountEmailAddressHash',
-            'clientWalletAccountID',
-            'panSource',
-            'autoFillIndicator',
-            'tokenActivationDate',
-            'tokenExpirationDate',
-            'lastTokenStatusUpdatedTime'
-        ];
-        
-        // Dédupliquer les champs qui peuvent exister en plusieurs formats
-        const uniqueColumns = [];
-        const addedColumnGroups = new Set();
-        
-        // Ajouter chaque colonne préférée en premier (si disponible)
-        preferredOrder.forEach(preferredKey => {
-            // Si c'est un champ qui a des alternatives
-            if (fieldGroups[preferredKey]) {
-                // Si on n'a pas déjà ajouté une colonne de ce groupe
-                if (!addedColumnGroups.has(preferredKey)) {
-                    // Trouver la première alternative disponible
-                    const availableAlternative = fieldGroups[preferredKey].find(alt => 
-                        availableKeys.includes(alt)
-                    );
-                    
-                    if (availableAlternative) {
-                        uniqueColumns.push(availableAlternative);
-                        addedColumnGroups.add(preferredKey);
-                    } else if (availableKeys.includes(preferredKey)) {
-                        uniqueColumns.push(preferredKey);
-                        addedColumnGroups.add(preferredKey);
-                    }
-                }
-            } 
-            // Si c'est un champ normal sans alternatives
-            else if (availableKeys.includes(preferredKey) && !uniqueColumns.includes(preferredKey)) {
-                uniqueColumns.push(preferredKey);
-            }
-        });
-        
-        // Ajouter les colonnes restantes qui n'ont pas été traitées
-        availableKeys.forEach(key => {
-            // Vérifier si cette clé fait partie d'un groupe
-            let isPartOfGroup = false;
-            let groupName = null;
-            
-            for (const [group, alternatives] of Object.entries(fieldGroups)) {
-                if (alternatives.includes(key)) {
-                    isPartOfGroup = true;
-                    groupName = group;
-                    break;
-                }
-            }
-            
-            // Si c'est une clé de groupe et qu'on a déjà ajouté une colonne de ce groupe, on l'ignore
-            if (isPartOfGroup && addedColumnGroups.has(groupName)) {
-                return;
-            }
-            
-            // Sinon, on l'ajoute si elle n'est pas déjà présente
-            if (!uniqueColumns.includes(key)) {
-                uniqueColumns.push(key);
-            
-                // Si c'est une clé de groupe, marquer ce groupe comme traité
-                if (isPartOfGroup) {
-                    addedColumnGroups.add(groupName);
-                }
-            }
-        });
-        
-        // Convertir les clés en objets de colonne
-        const finalColumns = uniqueColumns.map(key => ({
+        // Convertir les clés en objets de colonne avec les labels personnalisés
+        const finalColumns = columnsToDisplay.map(key => ({
             id: key,
-            label: formatColumnLabel(key),
+            label: {
+                'tokenReferenceID': 'Reference ID',
+                'panSource': 'PAN Source',
+                'tokenStatus': 'Status',
+                'tokenActivationDate': 'Creation Date',
+                'tokenRequestorID': 'Token Requestor'
+            }[key] || formatColumnLabel(key),
             isDate: key.includes('Date') || key.includes('Time'),
-            isStatus: key === 'tokenStatus' || key === 'token_status',
+            isStatus: key === 'tokenStatus',
             isDisplay: key.toLowerCase().includes('display'),
             isAssurance: key.includes('Assurance'),
-            isBoolean: key === 'autoFillIndicator' || key === 'auto_fill_indicator' || 
-                     (tokens.length > 0 && typeof tokens.find(t => t[key] !== undefined)?.[key] === 'boolean')
+            isBoolean: false
         }));
         
         return finalColumns;
