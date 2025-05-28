@@ -369,190 +369,37 @@ const TokenList = () => {
     };
 
     const fetchTokens = async (forceRefresh = false) => {
-        setLoading(true);
-        setError(null);
-        
         try {
-            // Build query parameters based on search filters
-            const queryParams = {};
+            setLoading(true);
+            setError(null);
             
-            // Only add non-empty values to query params and normalize the field names
-            Object.entries(searchParams).forEach(([key, value]) => {
-                // Skip null, undefined, or empty values
-                if (value === null || value === undefined || value === '') {
-                    return;
-                }
-
-                // Convert value to string if it's not already
-                const stringValue = typeof value === 'string' ? value : value.toString();
-                
-                // Skip empty strings after trimming
-                if (stringValue.trim() === '') {
-                    return;
-                }
-
-                // Normalize field names to match API expectations
-                switch(key) {
-                    case 'token_requestor_id':
-                        queryParams.tokenRequestorID = stringValue.trim();
-                        break;
-                    case 'token_reference_id':
-                        queryParams.tokenReferenceID = stringValue.trim();
-                        break;
-                    case 'token_value':
-                        queryParams.token = stringValue.trim();
-                        break;
-                    case 'token_type':
-                        queryParams.tokenType = stringValue.trim();
-                        break;
-                    case 'includeDeleted':
-                        queryParams[key] = value; // Keep boolean value as is
-                        break;
-                    default:
-                        queryParams[key] = stringValue.trim();
-                }
-            });
+            // Construire l'objet des filtres
+            const filters = {
+                ...searchParams
+            };
             
-            // Add status filter if specific status is selected
-            if (statusFilter && statusFilter !== 'all') {
-                queryParams.tokenStatus = statusFilter;
+            if (statusFilter !== 'all') {
+                filters.token_status = statusFilter;
             }
             
-            console.log('Fetching tokens with filters:', queryParams);
-            
-            // Force refresh from server by adding a timestamp
-            if (forceRefresh) {
-                queryParams._ts = Date.now();
-                queryParams._cache = 'no-cache';
-            }
-            
-            // Use the TokenService to fetch tokens
-            const result = await TokenService.listTokens(queryParams);
+            console.log('Fetching tokens with filters:', filters);
+            const result = await TokenService.listTokens(filters);
             
             if (result.success) {
-                console.log('Fetched tokens:', result.data);
-                
-                // Apply client-side filtering
-                let filteredTokens = result.data || [];
-                
-                // Filter by token value if specified
-                if (queryParams.token) {
-                    const searchValue = queryParams.token.toLowerCase();
-                    filteredTokens = filteredTokens.filter(token => {
-                        const tokenValue = token.token || token.token_value;
-                        return tokenValue && tokenValue.toString().toLowerCase().includes(searchValue);
-                    });
-                    console.log('Filtered by token value:', filteredTokens);
-                }
-                
-                // Filter by token type if specified
-                if (queryParams.tokenType) {
-                    const searchType = queryParams.tokenType.toLowerCase();
-                    filteredTokens = filteredTokens.filter(token => {
-                        const tokenType = token.tokenType || token.token_type;
-                        return tokenType && tokenType.toString().toLowerCase().includes(searchType);
-                    });
-                    console.log('Filtered by token type:', filteredTokens);
-                }
-                
-                // Filter by requestor ID if specified
-                if (queryParams.tokenRequestorID) {
-                    const searchRequestorId = queryParams.tokenRequestorID.toString();
-                    filteredTokens = filteredTokens.filter(token => {
-                        const requestorId = token.tokenRequestorID || token.token_requestor_id;
-                        return requestorId && requestorId.toString() === searchRequestorId;
-                    });
-                }
-                
-                // Filter by reference ID if specified
-                if (queryParams.tokenReferenceID) {
-                    const searchReferenceId = queryParams.tokenReferenceID.toString();
-                    filteredTokens = filteredTokens.filter(token => {
-                        const referenceId = token.tokenReferenceID || token.token_reference_id;
-                        return referenceId && referenceId.toString() === searchReferenceId;
-                    });
-                }
-                
-                // Filter by status if specified
-                if (queryParams.tokenStatus) {
-                    const searchStatus = queryParams.tokenStatus.toUpperCase();
-                    filteredTokens = filteredTokens.filter(token => {
-                        const tokenStatus = token.tokenStatus || token.token_status;
-                        return tokenStatus && tokenStatus.toUpperCase() === searchStatus;
-                    });
-                }
-                
-                // Filter by dates if specified
-                if (queryParams.startDate) {
-                    const startDate = new Date(queryParams.startDate.split('/').reverse().join('-'));
-                    filteredTokens = filteredTokens.filter(token => {
-                        if (!token.creation_date && !token.tokenActivationDate) return false;
-                        const tokenDate = new Date(token.creation_date || token.tokenActivationDate);
-                        return tokenDate >= startDate;
-                    });
-                }
-                
-                if (queryParams.endDate) {
-                    const endDate = new Date(queryParams.endDate.split('/').reverse().join('-'));
-                    endDate.setHours(23, 59, 59);
-                    filteredTokens = filteredTokens.filter(token => {
-                        if (!token.creation_date && !token.tokenActivationDate) return false;
-                        const tokenDate = new Date(token.creation_date || token.tokenActivationDate);
-                        return tokenDate <= endDate;
-                    });
-                }
-                
-                // Filter deleted tokens if not included
-                if (!queryParams.includeDeleted) {
-                    filteredTokens = filteredTokens.filter(token => !token.is_deleted);
-                }
-                
-                // Normalize token data
-                const normalizedTokens = filteredTokens.map(token => ({
-                    ...token,
-                    tokenStatus: token.tokenStatus || token.token_status,
-                    token_status: token.token_status || token.tokenStatus,
-                    tokenRequestorID: token.tokenRequestorID || token.token_requestor_id,
-                    tokenReferenceID: token.tokenReferenceID || token.token_reference_id,
-                    token: token.token || token.token_value,
-                    token_value: token.token_value || token.token,
-                    tokenType: token.tokenType || token.token_type,
-                    token_type: token.token_type || token.tokenType
-                }));
-                
-                // Apply any local status overrides
-                const finalTokens = normalizedTokens.map(token => {
-                    if (modifiedStatuses && token.id && modifiedStatuses[token.id]) {
-                        const cachedStatus = modifiedStatuses[token.id];
-                        return {
-                            ...token,
-                            tokenStatus: cachedStatus,
-                            token_status: cachedStatus
-                        };
-                    }
-                    return token;
-                });
-                
-                setTokens(finalTokens);
-                setResultsCount(finalTokens.length);
-                
-                // Check if any filters are applied
-                const hasFilters = Object.keys(queryParams).length > 1;
-                setFiltersApplied(hasFilters);
-                
-                return true;
+                setTokens(result.data || []);
             } else {
-                setError(result.error || 'Failed to fetch tokens');
+                // Handle permission denied error specifically
+                if (result.errorCode === 'PERMISSION_DENIED') {
+                    setError('Access Denied: You do not have permission to view tokens. Please contact your administrator.');
+                } else {
+                    setError(result.error || 'Failed to fetch tokens');
+                }
                 setTokens([]);
-                setResultsCount(0);
-                return false;
             }
-        } catch (err) {
-            console.error('Error in fetchTokens:', err);
-            setError('Failed to fetch tokens from database');
+        } catch (error) {
+            console.error('Error fetching tokens:', error);
+            setError('An unexpected error occurred while fetching tokens');
             setTokens([]);
-            setResultsCount(0);
-            return false;
         } finally {
             setLoading(false);
         }
@@ -605,56 +452,29 @@ const TokenList = () => {
 
     // Handle token detail view
     const handleViewDetails = async (token) => {
-        setDetailDialog({
-            open: true,
-            token: null,
-            loading: true
-        });
-
         try {
-            // Fetch detailed token information from the database
-            const result = await TokenService.getTokenDetails(token.id);
+            // Get the token details using the /token/detail/ API
+            const result = await TokenService.getTokenDetails(token.tokenReferenceID);
             
             if (result.success) {
-                console.log('Fetched token details for viewing:', result.data);
-                
-                // Normalize the data structure
-                const normalizedToken = {
-                    ...result.data,
-                    // Ensure consistent field names
-                    tokenReferenceID: result.data.tokenReferenceID || result.data.tokenReferenceId,
-                    tokenRequestorID: result.data.tokenRequestorID || result.data.tokenRequestorId,
-                    panReferenceID: result.data.panReferenceID || result.data.panReferenceId,
-                    entityOfLastAction: result.data.entityOfLastAction || result.data.entity_of_last_action,
-                    walletAccountEmailAddressHash: result.data.walletAccountEmailAddressHash || result.data.wallet_account_email_address_hash,
-                    clientWalletAccountID: result.data.clientWalletAccountID || result.data.client_wallet_account_id,
-                    panSource: result.data.panSource || result.data.pan_source,
-                    autoFillIndicator: result.data.autoFillIndicator || result.data.auto_fill_indicator,
-                    // Ensure dates are properly formatted
-                    tokenActivationDate: result.data.tokenActivationDate ? new Date(result.data.tokenActivationDate).toISOString() : null,
-                    tokenExpirationDate: result.data.tokenExpirationDate ? new Date(result.data.tokenExpirationDate).toISOString() : null,
-                    lastTokenStatusUpdatedTime: result.data.lastTokenStatusUpdatedTime ? new Date(result.data.lastTokenStatusUpdatedTime).toISOString() : null
-                };
-                
-                setDetailDialog(prev => ({
-                    ...prev,
-                    token: normalizedToken,
-                    loading: false
-                }));
+                setDetailDialog({
+                    open: true,
+                    token: result.data
+                });
             } else {
-                setError(result.error || 'Failed to fetch token details');
-                setDetailDialog(prev => ({
-                    ...prev,
-                    loading: false
-                }));
+                console.error('Failed to get token details:', result.error);
+                // Show error notification
+                enqueueSnackbar('Failed to get token details: ' + result.error, { 
+                    variant: 'error',
+                    autoHideDuration: 3000
+                });
             }
-        } catch (err) {
-            console.error('Error in handleViewDetails:', err);
-            setError('Failed to fetch token details');
-            setDetailDialog(prev => ({
-                ...prev,
-                loading: false
-            }));
+        } catch (error) {
+            console.error('Error viewing token details:', error);
+            enqueueSnackbar('Error viewing token details: ' + error.message, { 
+                variant: 'error',
+                autoHideDuration: 3000
+            });
         }
     };
 
@@ -872,19 +692,30 @@ const TokenList = () => {
             setIsUpdating(true);
             let result;
 
+            // Get the tokenReferenceID and tokenRequestorID from the selected token
+            const tokenReferenceID = selectedToken.tokenReferenceID;
+            const tokenRequestorID = selectedToken.tokenRequestorID;
+            
+            if (!tokenReferenceID) {
+                throw new Error('Token Reference ID is required');
+            }
+            if (!tokenRequestorID) {
+                throw new Error('Token Requestor ID is required');
+            }
+
             switch (selectedAction) {
                 case 'ACTIVATE':
-                    result = await TokenService.activateToken(selectedToken.id, messageText, selectedReason);
+                    result = await TokenService.activateToken(tokenReferenceID, tokenRequestorID, messageText, selectedReason);
                     break;
                 case 'SUSPEND':
-                    result = await TokenService.suspendToken(selectedToken.id, selectedReason, messageText);
+                    result = await TokenService.suspendToken(tokenReferenceID, tokenRequestorID, selectedReason, messageText);
                     break;
                 case 'RESUME':
-                    result = await TokenService.resumeToken(selectedToken.id, selectedReason, messageText);
+                    result = await TokenService.resumeToken(tokenReferenceID, tokenRequestorID, selectedReason, messageText);
                     break;
                 case 'DELETE':
                 case 'DEACTIVATE':
-                    result = await TokenService.deactivateToken(selectedToken.id, selectedReason, messageText);
+                    result = await TokenService.deactivateToken(tokenReferenceID, tokenRequestorID, selectedReason, messageText);
                     break;
                 default:
                     setIsUpdating(false);

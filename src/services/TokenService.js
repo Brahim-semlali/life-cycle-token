@@ -19,16 +19,22 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://localhost:8000';
 
 // Configuration Axios avec URL de base et gestion des erreurs
 const apiClient = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'https://localhost:8000',
+    baseURL: API_BASE_URL,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
     }
 });
 
-// Intercepteur pour ajouter le JWT token à chaque requête
+// Intercepteur pour logger les requêtes
 apiClient.interceptors.request.use(
     config => {
+        console.log('API Request:', {
+            method: config.method,
+            url: config.url,
+            data: config.data,
+            headers: config.headers
+        });
         const token = TokenStorage.getToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -36,6 +42,7 @@ apiClient.interceptors.request.use(
         return config;
     },
     error => {
+        console.error('API Request Error:', error);
         return Promise.reject(error);
     }
 );
@@ -156,147 +163,17 @@ const TokenService = {
         try {
             console.log('Fetching tokens with filters:', filters);
             
-            // Create a copy of filters to work with
-            const queryFilters = { ...filters };
+            // Use the token/infos/ endpoint with filters in the body
+            const response = await apiClient.post(API_ENDPOINTS.LIST_TOKENS, filters);
             
-            // Check if we need to bypass cache (if a timestamp is provided)
-            const bypassCache = queryFilters._ts !== undefined;
-            if (bypassCache) {
-                console.log('Timestamp provided, bypassing cache for fresh data');
-                delete queryFilters._ts; // Remove timestamp before sending to API
-            }
-            
-            // Special handling for token_status filter
-            const statusFilter = queryFilters.token_status;
-            if (statusFilter && statusFilter !== 'all') {
-                console.log(`Filtering by token_status: ${statusFilter}`);
-            }
-            
-            // If we have a specific token_value filter, try to get that token directly
-            if (queryFilters.token_value && queryFilters.token_value.trim() !== '') {
-                console.log(`Searching for specific token with value: ${queryFilters.token_value}`);
-                
-                try {
-                    // First try to get all tokens
-                    const response = await apiClient.post(API_ENDPOINTS.LIST_TOKENS, {});
-                    
-                    if (response.data) {
-                        let allTokens = [];
-                        
-                        if (Array.isArray(response.data)) {
-                            allTokens = response.data;
-                        } else if (response.data.tokens && Array.isArray(response.data.tokens)) {
-                            allTokens = response.data.tokens;
-                        } else if (response.data.results && Array.isArray(response.data.results)) {
-                            allTokens = response.data.results;
-                        }
-                        
-                        // Filter tokens by token_value
-                        const searchValue = queryFilters.token_value.toLowerCase();
-                        let matchingTokens = allTokens.filter(token => 
-                            token.token_value && 
-                            token.token_value.toLowerCase().includes(searchValue)
-                        );
-                        
-                        // Apply status filter if specified
-                        if (statusFilter && statusFilter !== 'all') {
-                            matchingTokens = matchingTokens.filter(token => 
-                                token.token_status === statusFilter
-                            );
-                        }
-                        
-                        console.log(`Found ${matchingTokens.length} tokens matching criteria`);
-                        
-                        if (matchingTokens.length > 0) {
-                            // Get detailed information for each matching token
-                            const detailedTokens = await this.getDetailedTokens(matchingTokens, bypassCache);
-                            return {
-                                success: true,
-                                data: detailedTokens
-                            };
-                        }
-                    }
-                } catch (error) {
-                    console.warn('Error searching by token_value, falling back to standard search:', error);
-                }
-            }
-            
-            // Use the standard token list endpoint with filters
-            const response = await apiClient.post(API_ENDPOINTS.LIST_TOKENS, queryFilters);
-            
-            if (response.data && Array.isArray(response.data)) {
-                console.log(`Retrieved ${response.data.length} tokens from API`);
-                
-                // Apply client-side filtering for status if needed
-                let filteredTokens = response.data;
-                if (statusFilter && statusFilter !== 'all') {
-                    filteredTokens = filteredTokens.filter(token => token.token_status === statusFilter);
-                    console.log(`Filtered to ${filteredTokens.length} tokens with status: ${statusFilter}`);
-                }
-                
-                // Get detailed information for each token
-                const detailedTokens = await this.getDetailedTokens(filteredTokens, bypassCache);
+            if (response.data) {
+                // Return the data directly as it's already in the correct format
                 return {
                     success: true,
-                    data: detailedTokens
+                    data: response.data
                 };
-            } else if (response.data && response.data.tokens && Array.isArray(response.data.tokens)) {
-                console.log(`Retrieved ${response.data.tokens.length} tokens from API (tokens property)`);
-                
-                // Apply client-side filtering for status if needed
-                let filteredTokens = response.data.tokens;
-                if (statusFilter && statusFilter !== 'all') {
-                    filteredTokens = filteredTokens.filter(token => token.token_status === statusFilter);
-                    console.log(`Filtered to ${filteredTokens.length} tokens with status: ${statusFilter}`);
-                }
-                
-                // Get detailed information for each token
-                const detailedTokens = await this.getDetailedTokens(filteredTokens, bypassCache);
-                return {
-                    success: true,
-                    data: detailedTokens
-                };
-            } else if (response.data && response.data.results && Array.isArray(response.data.results)) {
-                console.log('Found results array in response:', response.data.results);
-                
-                // Apply client-side filtering for status if needed
-                let filteredTokens = response.data.results;
-                if (statusFilter && statusFilter !== 'all') {
-                    filteredTokens = filteredTokens.filter(token => token.token_status === statusFilter);
-                    console.log(`Filtered to ${filteredTokens.length} tokens with status: ${statusFilter}`);
-                }
-                
-                // Get detailed information for each token
-                const detailedTokens = await this.getDetailedTokens(filteredTokens, bypassCache);
-                return {
-                    success: true,
-                    data: detailedTokens
-                };
-            } else if (response.data && typeof response.data === 'object') {
-                // If the response is an object but not an array, try to adapt it
-                console.log('Response is not an array, adapting:', response.data);
-                const adaptedData = Object.values(response.data)
-                    .filter(item => item && typeof item === 'object')
-                    .map(item => ({...item}));
-                
-                if (adaptedData.length > 0) {
-                    // Apply client-side filtering for status if needed
-                    let filteredTokens = adaptedData;
-                    if (statusFilter && statusFilter !== 'all') {
-                        filteredTokens = filteredTokens.filter(token => token.token_status === statusFilter);
-                        console.log(`Filtered to ${filteredTokens.length} tokens with status: ${statusFilter}`);
-                    }
-                    
-                    // Get detailed information for each token
-                    const detailedTokens = await this.getDetailedTokens(filteredTokens, bypassCache);
-                    return {
-                        success: true,
-                        data: detailedTokens
-                    };
-                }
             }
             
-            // If no data is returned, return an empty array
             return {
                 success: true,
                 data: []
@@ -304,9 +181,20 @@ const TokenService = {
             
         } catch (error) {
             console.error('Error listing tokens:', error);
+
+            // Handle 403 Forbidden error specifically
+            if (error.response?.status === 403) {
+                return {
+                    success: false,
+                    error: 'You do not have permission to access this functionality. Please contact your administrator.',
+                    errorCode: 'PERMISSION_DENIED',
+                    details: error.response.data?.detail || error.message
+                };
+            }
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Failed to retrieve tokens from database',
+                error: error.response?.data?.detail || error.message || 'Failed to retrieve tokens from database',
                 details: error.message
             };
         }
@@ -355,72 +243,46 @@ const TokenService = {
 
     /**
      * Gets token details by ID
-     * @param {string} id - Token ID
+     * @param {string} tokenReferenceID - Token Reference ID
      * @param {boolean} bypassCache - Whether to bypass cache for fresh data
      * @returns {Promise<Object>} - Success status with data or error
      */
-    async getTokenDetails(id, bypassCache = false) {
+    async getTokenDetails(tokenReferenceID, bypassCache = false) {
         try {
-            console.log(`Fetching details for token ID ${id}${bypassCache ? ' (bypassing cache)' : ''}`);
+            // S'assurer que tokenReferenceID est une chaîne de caractères
+            const tokenRefString = String(tokenReferenceID);
+            console.log(`Fetching details for token Reference ID ${tokenRefString}`);
             
-            // Create API request payload
-            const payload = { 
-                token_id: parseInt(id, 10) || id 
+            // Create API request body in the expected format
+            const body = {
+                tokenReferenceID: tokenRefString
             };
             
-            // Add timestamp to bypass cache if needed
-            if (bypassCache) {
-                payload._ts = Date.now();
-            }
+            console.log('Sending request to /token/detail/ with body:', body);
             
-            // Use the token/detail/ endpoint with the token_id parameter
-            const response = await apiClient.post(API_ENDPOINTS.GET_TOKEN_DETAILS, payload);
+            // Use the token/detail/ endpoint
+            const response = await apiClient.post('/token/detail/', body);
             
             if (response.data) {
                 console.log('Received token details from API:', response.data);
-                
-                // Log current token status values for debugging
-                const apiTokenStatus = response.data.tokenStatus || response.data.token_status || null;
-                console.log('Token status in response:', {
-                    token_status: response.data.token_status, 
-                    tokenStatus: response.data.tokenStatus,
-                    raw_status: apiTokenStatus
-                });
-                
-                // Create a copy of the response data with explicit status preservation
-                const preservedToken = {...response.data};
-                
-                // Ensure both status fields are properly set before normalization
-                if (preservedToken.tokenStatus && !preservedToken.token_status) {
-                    preservedToken.token_status = preservedToken.tokenStatus;
-                } else if (preservedToken.token_status && !preservedToken.tokenStatus) {
-                    preservedToken.tokenStatus = preservedToken.token_status;
-                }
-                
-                // Normalize the token data to ensure all fields are present
-                const normalizedToken = this.normalizeTokenData([preservedToken])[0];
-                
-                console.log('Normalized token status:', {
-                    token_status: normalizedToken.token_status, 
-                    tokenStatus: normalizedToken.tokenStatus
-                });
-                
                 return {
                     success: true,
-                    data: normalizedToken
+                    data: response.data
                 };
             }
             
             return {
                 success: false,
-                error: `Token with ID ${id} not found in database`
+                error: `Token with Reference ID ${tokenRefString} not found in database`
             };
             
         } catch (error) {
-            console.error(`Error getting token details for ID ${id}:`, error);
+            console.error(`Error getting token details for Reference ID ${tokenReferenceID}:`, error);
+            console.error('Error response:', error.response?.data);
+
             return {
                 success: false,
-                error: error.response?.data?.message || 'Failed to retrieve token details from database',
+                error: error.response?.data?.detail || error.message || 'Failed to retrieve token details from database',
                 details: error.message
             };
         }
@@ -1360,22 +1222,15 @@ const TokenService = {
 
     /**
      * Active un token (statut -> ACTIVE)
-     * @param {string|number} id - ID du token
+     * @param {string} tokenReferenceID - Token Reference ID
+     * @param {string} tokenRequestorID - Token Requestor ID
      * @param {string} message - Message pour l'activation
      * @param {string} reason - Raison de l'activation
      * @returns {Promise<Object>} - Statut de succès avec données ou erreur
      */
-    async activateToken(id, message = '', reason = '') {
+    async activateToken(tokenReferenceID, tokenRequestorID, message = '', reason = '') {
         try {
-            console.log(`TokenService.activateToken: Activating token ${id}`);
-            
-            const tokenDetails = await this.getTokenDetails(id);
-            if (!tokenDetails.success) {
-                return {
-                    success: false,
-                    error: 'Failed to retrieve token details'
-                };
-            }
+            console.log(`TokenService.activateToken: Activating token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1383,8 +1238,8 @@ const TokenService = {
             const validatedReason = validateAndTransformReason('ACTIVATE', reason);
             
             const payload = {
-                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || ""),
-                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                tokenReferenceID: tokenReferenceID,
+                tokenRequestorID: tokenRequestorID,
                 operatorID: operatorID,
                 reason: validatedReason,
                 message: message || "saisie lib",
@@ -1396,7 +1251,6 @@ const TokenService = {
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
             console.log('Response from API:', response.data);
 
-            // Retourner le message exact du backend
             return {
                 success: true,
                 message: response.data?.message || response.data?.status || 'Requête d\'activation envoyée avec succès',
@@ -1404,7 +1258,6 @@ const TokenService = {
             };
         } catch (error) {
             console.error('Error activating token:', error);
-            // Retourner le message d'erreur exact du backend
             const errorMessage = error.response?.data?.message || 
                                error.response?.data?.error || 
                                error.response?.data?.detail ||
@@ -1419,22 +1272,15 @@ const TokenService = {
     
     /**
      * Suspend un token (statut -> SUSPENDED)
-     * @param {string|number} id - ID du token
+     * @param {string} tokenReferenceID - Token Reference ID
+     * @param {string} tokenRequestorID - Token Requestor ID
      * @param {string} reason - Raison de la suspension
      * @param {string} message - Message additionnel
      * @returns {Promise<Object>} - Statut de succès avec données ou erreur
      */
-    async suspendToken(id, reason, message = '') {
+    async suspendToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.suspendToken: Suspending token ${id}`);
-            
-            const tokenDetails = await this.getTokenDetails(id);
-            if (!tokenDetails.success) {
-                return {
-                    success: false,
-                    error: 'Failed to retrieve token details'
-                };
-            }
+            console.log(`TokenService.suspendToken: Suspending token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1442,8 +1288,8 @@ const TokenService = {
             const validatedReason = validateAndTransformReason('SUSPEND', reason);
             
             const payload = {
-                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || ""),
-                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                tokenReferenceID: tokenReferenceID,
+                tokenRequestorID: tokenRequestorID,
                 operatorID: operatorID,
                 reason: validatedReason,
                 message: message || "saisie lib",
@@ -1455,7 +1301,6 @@ const TokenService = {
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
             console.log('Response from API:', response.data);
 
-            // Retourner le message exact du backend
             return {
                 success: true,
                 message: response.data?.message || response.data?.status || 'Requête de suspension envoyée avec succès',
@@ -1463,7 +1308,6 @@ const TokenService = {
             };
         } catch (error) {
             console.error('Error suspending token:', error);
-            // Retourner le message d'erreur exact du backend
             const errorMessage = error.response?.data?.message || 
                                error.response?.data?.error || 
                                error.response?.data?.detail ||
@@ -1478,22 +1322,15 @@ const TokenService = {
     
     /**
      * Reprend un token suspendu (statut -> INACTIVE)
-     * @param {string|number} id - ID du token
+     * @param {string} tokenReferenceID - Token Reference ID
+     * @param {string} tokenRequestorID - Token Requestor ID
      * @param {string} reason - Raison de la reprise
      * @param {string} message - Message additionnel
      * @returns {Promise<Object>} - Statut de succès avec données ou erreur
      */
-    async resumeToken(id, reason, message = '') {
+    async resumeToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.resumeToken: Resuming token ${id}`);
-            
-            const tokenDetails = await this.getTokenDetails(id);
-            if (!tokenDetails.success) {
-                return {
-                    success: false,
-                    error: 'Failed to retrieve token details'
-                };
-            }
+            console.log(`TokenService.resumeToken: Resuming token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1501,8 +1338,8 @@ const TokenService = {
             const validatedReason = validateAndTransformReason('RESUME', reason);
             
             const payload = {
-                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || ""),
-                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                tokenReferenceID: tokenReferenceID,
+                tokenRequestorID: tokenRequestorID,
                 operatorID: operatorID,
                 reason: validatedReason,
                 message: message || "saisie lib",
@@ -1514,7 +1351,6 @@ const TokenService = {
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
             console.log('Response from API:', response.data);
 
-            // Retourner le message exact du backend
             return {
                 success: true,
                 message: response.data?.message || response.data?.status || 'Requête de reprise envoyée avec succès',
@@ -1522,7 +1358,6 @@ const TokenService = {
             };
         } catch (error) {
             console.error('Error resuming token:', error);
-            // Retourner le message d'erreur exact du backend
             const errorMessage = error.response?.data?.message || 
                                error.response?.data?.error || 
                                error.response?.data?.detail ||
@@ -1537,22 +1372,15 @@ const TokenService = {
     
     /**
      * Désactive un token (statut -> DEACTIVATED)
-     * @param {string|number} id - ID du token
+     * @param {string} tokenReferenceID - Token Reference ID
+     * @param {string} tokenRequestorID - Token Requestor ID
      * @param {string} reason - Raison de la désactivation
      * @param {string} message - Message additionnel
      * @returns {Promise<Object>} - Statut de succès avec données ou erreur
      */
-    async deactivateToken(id, reason, message = '') {
+    async deactivateToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.deactivateToken: Deactivating token ${id}`);
-            
-            const tokenDetails = await this.getTokenDetails(id);
-            if (!tokenDetails.success) {
-                return {
-                    success: false,
-                    error: 'Failed to retrieve token details'
-                };
-            }
+            console.log(`TokenService.deactivateToken: Deactivating token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1560,8 +1388,8 @@ const TokenService = {
             const validatedReason = validateAndTransformReason('DELETE', reason);
             
             const payload = {
-                tokenRequestorID: String(tokenDetails.data.tokenRequestorID || tokenDetails.data.tokenRequestorId || ""),
-                tokenReferenceID: tokenDetails.data.tokenReferenceID || tokenDetails.data.tokenReferenceId || "",
+                tokenReferenceID: tokenReferenceID,
+                tokenRequestorID: tokenRequestorID,
                 operatorID: operatorID,
                 reason: validatedReason,
                 message: message || "saisie lib",
@@ -1573,7 +1401,6 @@ const TokenService = {
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
             console.log('Response from API:', response.data);
 
-            // Retourner le message exact du backend
             return {
                 success: true,
                 message: response.data?.message || response.data?.status || 'Requête de désactivation envoyée avec succès',
@@ -1581,7 +1408,6 @@ const TokenService = {
             };
         } catch (error) {
             console.error('Error deactivating token:', error);
-            // Retourner le message d'erreur exact du backend
             const errorMessage = error.response?.data?.message || 
                                error.response?.data?.error || 
                                error.response?.data?.detail ||
