@@ -954,10 +954,15 @@ const TokenService = {
             
             // Extraire toutes les clés uniques des tokens
             const allKeys = new Set();
-            const tokenSample = tokens.data;
+            const tokenSample = tokens.data.slice(0, 1); // Only take first token for metadata
             
-            // Récupérer les détails complets pour un échantillon de tokens
-            const detailedTokens = await this.getDetailedTokens(tokenSample);
+            // Get details only if we have valid tokens
+            let detailedTokens = [];
+            if (tokenSample.length > 0 && tokenSample[0].id) {
+                detailedTokens = await this.getDetailedTokens(tokenSample);
+            } else {
+                detailedTokens = tokenSample;
+            }
             
             // Collecter toutes les clés uniques
             detailedTokens.forEach(token => {
