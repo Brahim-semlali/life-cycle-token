@@ -1,7 +1,7 @@
-/* Container principal avec animation d'entrée */
+/* Container principal avec animation d'entrée améliorée */
 .security-container {
     padding: 2rem;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     margin-left: 250px;
     min-height: 100vh;
     width: calc(100% - 250px);
@@ -11,7 +11,7 @@
     overflow-y: auto;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     color: #2d3748;
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
@@ -51,16 +51,19 @@
 
 /* Sections avec effet de carte */
 .security-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.05),
+        0 1px 3px rgba(0, 0, 0, 0.03),
+        inset 0 1px 1px rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(226, 232, 240, 0.8);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: sectionSlideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .security-section::before {
@@ -68,23 +71,47 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 6px;
+    width: 8px;
     height: 100%;
     background: linear-gradient(to bottom, #7c3aed, #4f46e5);
-    border-radius: 16px 0 0 16px;
+    border-radius: 20px 0 0 20px;
+    opacity: 0.8;
+    transition: all 0.3s ease;
 }
 
-.security-section:hover {
-    transform: translateY(-4px);
-    box-shadow: 
-        0 12px 30px rgba(0, 0, 0, 0.08),
-        0 4px 8px rgba(124, 58, 237, 0.05);
+.security-section:hover::before {
+    width: 12px;
+    opacity: 1;
+}
+
+/* Titre des sections */
+.security-section h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    position: relative;
+    border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+    letter-spacing: -0.02em;
+}
+
+.security-section h3 svg {
+    font-size: 2rem;
+    color: #7c3aed;
+    filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2));
+    transition: all 0.3s ease;
 }
 
 .security-container.dark-mode .security-section {
-    background: #1e293b;
+    background: rgba(30, 41, 59, 0.95);
     border-color: rgba(74, 85, 104, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.2),
+        0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes sectionSlideUp {
@@ -98,47 +125,30 @@
     }
 }
 
-/* Titre des sections */
-.security-section h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 1.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding-bottom: 0.75rem;
-    position: relative;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-.security-section h3::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100px;
-    height: 3px;
-    background: linear-gradient(90deg, #7c3aed 0%, #4f46e5 100%);
-    border-radius: 2px;
-}
-
-.security-container.dark-mode .security-section h3 {
-    color: #e2e8f0;
-    border-bottom: 1px solid rgba(74, 85, 104, 0.3);
-}
-
 /* Grille pour les règles */
 .rules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 /* Style des champs de formulaire */
 .form-group {
-    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.form-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(124, 58, 237, 0.04);
+    border-color: rgba(124, 58, 237, 0.3);
 }
 
 .form-group label {
@@ -211,46 +221,33 @@
 /* Style des cases à cocher */
 .checkbox-rules {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
 }
 
 .checkbox-rules label {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid rgba(124, 58, 237, 0.1);
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    border: 1px solid rgba(124, 58, 237, 0.15);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.03),
+        inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
-.security-container.dark-mode .checkbox-rules label {
-    background: #1e293b;
-    border-color: #4a5568;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.checkbox-rules label::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(79, 70, 229, 0.05));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.checkbox-rules label:hover::before {
-    opacity: 1;
+.checkbox-rules label:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(124, 58, 237, 0.04);
+    border-color: rgba(124, 58, 237, 0.3);
 }
 
 .checkbox-rules input[type="checkbox"] {
@@ -292,61 +289,29 @@
 
 /* Testeur de mot de passe */
 .password-tester {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-top: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    position: relative;
-    overflow: hidden;
-}
-
-.password-tester::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%);
-    border-radius: 0 0 0 100px;
-    z-index: 0;
-}
-
-.security-container.dark-mode .password-tester {
-    background: #1e293b;
-    border-color: #4a5568;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-top: 2rem;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.05),
+        0 1px 3px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    backdrop-filter: blur(10px);
 }
 
 .test-password-input {
     width: 100%;
-    padding: 1rem 1.25rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 2px solid rgba(226, 232, 240, 0.8);
+    border-radius: 16px;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    font-family: monospace;
-}
-
-.test-password-input:hover {
-    border-color: #cbd5e0;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
-}
-
-.test-password-input:focus {
-    outline: none;
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
-}
-
-.security-container.dark-mode .test-password-input {
-    background: #1a202c;
-    border-color: #4a5568;
-    color: #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.03),
+        inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 /* Barre de force du mot de passe */
@@ -355,45 +320,20 @@
 }
 
 .strength-bar {
-    height: 10px;
-    background: #e2e8f0;
-    border-radius: 6px;
+    height: 12px;
+    background: rgba(226, 232, 240, 0.5);
+    border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 0.75rem;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    position: relative;
+    margin-bottom: 1rem;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .strength-fill {
     height: 100%;
-    transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.5s ease;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.strength-fill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    transform: translateX(-100%);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    100% {
-        transform: translateX(100%);
-    }
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    background: linear-gradient(90deg, #7c3aed, #4f46e5);
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
 }
 
 .strength-label {
