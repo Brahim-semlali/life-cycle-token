@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from "../../../context/ThemeContext";
 import { useTranslation } from 'react-i18next';
 import TokenService from '../../../services/TokenService';
@@ -49,7 +49,12 @@ import {
     Token as TokenIcon,
     Smartphone as SmartphoneIcon,
     Assessment as AssessmentIcon,
-    Delete as DeleteIcon
+    Delete as DeleteIcon,
+    Block as BlockIcon,
+    PowerSettingsNew as DeactivateIcon,
+    PlayArrow as ActivateIcon,
+    Replay as ResumeIcon,
+    HourglassEmpty as WaitingIcon
 } from '@mui/icons-material';
 import TokenTable from './TokenTable';
 import './TokenList.css';
@@ -238,6 +243,17 @@ const TokenList = () => {
         type: 'success'
     });
 
+    // Ajouter un state pour suivre la dernière requête
+    const [lastRequest, setLastRequest] = useState(null);
+    const searchTimer = React.useRef(null);
+    const debounceTimer = React.useRef(null);
+
+    // Fonction pour comparer deux objets de filtres
+    const areFiltersEqual = (filters1, filters2) => {
+        if (!filters1 || !filters2) return false;
+        return JSON.stringify(filters1) === JSON.stringify(filters2);
+    };
+
     // Add handleCloseTspNotification function
     const handleCloseTspNotification = () => {
         setTspNotification(prev => ({ ...prev, open: false }));
@@ -299,10 +315,25 @@ const TokenList = () => {
 
     const handleInputChange = (e) => {
         const { name, value, checked, type } = e.target;
+        
+        // Annuler les timers existants
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+        
+        // Mettre à jour les paramètres de recherche
         setSearchParams(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+
+        // Débouncer la recherche avec des délais différents selon le type de champ
+        const debounceTime = type === 'checkbox' ? 0 : 
+            (name === 'token_value' || name === 'token_type') ? 300 : 500;
+
+        debounceTimer.current = setTimeout(() => {
+            fetchTokens(true);
+        }, debounceTime);
     };
 
     // Handle status filter change
@@ -310,13 +341,19 @@ const TokenList = () => {
         const value = e.target.value;
         setStatusFilter(value);
         
-        // If we're setting a specific status, clear any token_status in searchParams
-        if (value !== 'all') {
-            setSearchParams(prev => ({
-                ...prev,
-                token_status: '' // Clear this as we'll use statusFilter instead
-            }));
+        // Mettre à jour les paramètres de recherche et déclencher la recherche
+        setSearchParams(prev => ({
+            ...prev,
+            token_status: value === 'all' ? '' : value
+        }));
+        
+        // Déclencher la recherche avec un petit délai
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
         }
+        debounceTimer.current = setTimeout(() => {
+            fetchTokens(true);
+        }, 100);
     };
 
     const handleClear = () => {
@@ -370,39 +407,143 @@ const TokenList = () => {
 
     const fetchTokens = async (forceRefresh = false) => {
         try {
+            // Construire l'objet des filtres
+            const filters = {
+                ...searchParams,
+                token_status: statusFilter !== 'all' ? statusFilter : ''
+            };
+
+            // Nettoyer et formater les filtres
+            Object.keys(filters).forEach(key => {
+                const value = filters[key];
+                if (value === '' || value === null || value === undefined) {
+                    delete filters[key];
+                } else {
+                    // Formater les valeurs selon le type de champ
+                    switch(key) {
+                        case 'token_requestor_id':
+                        case 'token_reference_id':
+                            filters[key] = value.toString().trim();
+                            break;
+                        case 'token_value':
+                            // Garder la valeur exacte pour token_value
+                            filters[key] = value.trim();
+                            break;
+                        case 'token_type':
+                            // Convertir en majuscules pour la cohérence
+                            filters[key] = value.toUpperCase().trim();
+                            break;
+                        case 'token_status':
+                            filters[key] = value.toUpperCase().trim();
+                            break;
+                    }
+                }
+            });
+
+            // Vérifier si la requête est identique à la précédente
+            if (!forceRefresh && areFiltersEqual(filters, lastRequest)) {
+                console.log('Skipping duplicate request with same filters');
+                return;
+            }
+
             setLoading(true);
             setError(null);
             
-            // Construire l'objet des filtres
-            const filters = {
-                ...searchParams
+            console.log('Fetching tokens with filters:', filters);
+            
+            // Configuration de la requête API
+            const requestConfig = {
+                method: 'post',
+                url: '/token/infos/',
+                data: filters,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             };
             
-            if (statusFilter !== 'all') {
-                filters.token_status = statusFilter;
-            }
+            // Sauvegarder la requête actuelle
+            setLastRequest(filters);
             
-            console.log('Fetching tokens with filters:', filters);
-            const result = await TokenService.listTokens(filters);
+            const result = await TokenService.listTokens(filters, requestConfig);
             
             if (result.success) {
-                setTokens(result.data || []);
+                let filteredTokens = result.data || [];
+                
+                // Appliquer les filtres côté client pour une recherche plus précise
+                filteredTokens = filteredTokens.filter(token => {
+                    let matches = true;
+
+                    // Filtre par Token Value (recherche partielle, insensible à la casse)
+                    if (filters.token_value) {
+                        const searchValue = filters.token_value.toLowerCase();
+                        const tokenValue = (token.token || token.token_value || '').toLowerCase();
+                        
+                        // Vérifier si la valeur recherchée est contenue dans le token
+                        matches = matches && tokenValue.includes(searchValue);
+                    }
+
+                    // Filtre par Token Type (recherche exacte, insensible à la casse)
+                    if (filters.token_type) {
+                        const searchType = filters.token_type.toUpperCase();
+                        const tokenType = (token.tokenType || token.token_type || '').toUpperCase();
+                        
+                        // Vérifier si le type correspond exactement
+                        matches = matches && tokenType === searchType;
+                    }
+
+                    // Filtre par Requestor ID (recherche exacte)
+                    if (filters.token_requestor_id) {
+                        const requestorId = filters.token_requestor_id.toString();
+                        const tokenRequestorId = (token.tokenRequestorID || token.token_requestor_id || '').toString();
+                        matches = matches && tokenRequestorId === requestorId;
+                    }
+
+                    // Filtre par Reference ID (recherche exacte)
+                    if (filters.token_reference_id) {
+                        const referenceId = filters.token_reference_id.toString();
+                        const tokenReferenceId = (token.tokenReferenceID || token.token_reference_id || '').toString();
+                        matches = matches && tokenReferenceId === referenceId;
+                    }
+
+                    // Filtre par Status (recherche exacte)
+                    if (filters.token_status) {
+                        const status = filters.token_status.toUpperCase();
+                        const tokenStatus = (token.tokenStatus || token.token_status || '').toUpperCase();
+                        matches = matches && tokenStatus === status;
+                    }
+
+                    return matches;
+                });
+                
+                setTokens(filteredTokens);
+                setResultsCount(filteredTokens.length);
+                setFiltersApplied(Object.keys(filters).length > 0);
+
+                // Afficher un message de debug avec le nombre de résultats
+                console.log(`Found ${filteredTokens.length} tokens matching filters:`, filters);
             } else {
-                // Handle permission denied error specifically
-                if (result.errorCode === 'PERMISSION_DENIED') {
-                    setError('Access Denied: You do not have permission to view tokens. Please contact your administrator.');
-                } else {
-                    setError(result.error || 'Failed to fetch tokens');
-                }
-                setTokens([]);
+                handleApiError(result);
             }
         } catch (error) {
             console.error('Error fetching tokens:', error);
             setError('An unexpected error occurred while fetching tokens');
             setTokens([]);
+            setResultsCount(0);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Fonction pour gérer les erreurs API
+    const handleApiError = (result) => {
+        if (result.errorCode === 'PERMISSION_DENIED') {
+            setError('Access Denied: You do not have permission to view tokens. Please contact your administrator.');
+        } else {
+            setError(result.error || 'Failed to fetch tokens');
+        }
+        setTokens([]);
+        setResultsCount(0);
     };
 
     const handleSearch = (e) => {
@@ -692,7 +833,6 @@ const TokenList = () => {
             setIsUpdating(true);
             let result;
 
-            // Get the tokenReferenceID and tokenRequestorID from the selected token
             const tokenReferenceID = selectedToken.tokenReferenceID;
             const tokenRequestorID = selectedToken.tokenRequestorID;
             
@@ -702,6 +842,14 @@ const TokenList = () => {
             if (!tokenRequestorID) {
                 throw new Error('Token Requestor ID is required');
             }
+
+            console.log('Attempting status update with:', {
+                action: selectedAction,
+                tokenReferenceID,
+                tokenRequestorID,
+                reason: selectedReason,
+                message: messageText
+            });
 
             switch (selectedAction) {
                 case 'ACTIVATE':
@@ -727,47 +875,84 @@ const TokenList = () => {
                     return;
             }
 
-            if (result.success) {
-                // Parse external message if it exists
-                let externalMessage = '';
-                try {
-                    if (result.data?.['message externe']) {
-                        const parsedExternal = JSON.parse(result.data['message externe']);
-                        externalMessage = parsedExternal.message;
-                    }
-                } catch (e) {
-                    console.warn('Could not parse external message:', e);
-                }
+            console.log('Status update result:', result);
 
-                // Show success notification
+            if (result.success) {
+                // Log détaillé de la réponse réussie
+                console.log('Success response:', {
+                    message: result.message,
+                    message_externe: result.data?.message_externe,
+                    status: result.data?.status
+                });
+
                 setTspNotification({
                     open: true,
                     message: result.message || result.data?.message || 'Opération effectuée avec succès',
-                    externalMessage: externalMessage,
+                    externalMessage: result.data?.message_externe || '',
                     type: 'success'
                 });
 
-                // Close the dialog
                 setOpenReasonDialog(false);
                 setSelectedToken(null);
                 setSelectedAction(null);
                 setSelectedReason('');
                 setMessageText('');
 
-                // Refresh tokens list
                 await fetchTokens(true);
             } else {
+                // Log détaillé de l'erreur
+                console.log('Error response:', {
+                    error: result.error,
+                    message_erreur: result.details?.message_erreur,
+                    message_externe_erreur: result.details?.message_externe_erreur,
+                    status: result.details?.status
+                });
+
+                let errorMessage = result.error || 'Erreur lors de l\'opération';
+                let externalMessage = '';
+
+                if (result.details?.message_externe_erreur) {
+                    externalMessage = result.details.message_externe_erreur;
+                } else if (result.details?.message_externe) {
+                    externalMessage = result.details.message_externe;
+                }
+
                 setTspNotification({
                     open: true,
-                    message: result.error || result.details?.message || 'Erreur lors de l\'opération',
+                    message: errorMessage,
+                    externalMessage: externalMessage,
                     type: 'error'
                 });
             }
         } catch (error) {
             console.error('Error updating token status:', error);
+            
+            // Log détaillé de l'erreur
+            console.log('Error details:', {
+                response: error.response?.data,
+                message_erreur: error.response?.data?.message_erreur,
+                message_externe_erreur: error.response?.data?.message_externe_erreur,
+                status: error.response?.status
+            });
+            
+            let errorMessage = 'Requête traitée avec refus';
+            let externalMessage = '';
+
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                errorMessage = errorData.message_erreur || errorData.error || 'Requête traitée avec refus';
+                
+                if (errorData.message_externe_erreur) {
+                    externalMessage = errorData.message_externe_erreur;
+                } else if (errorData.message_externe) {
+                    externalMessage = errorData.message_externe;
+                }
+            }
+
             setTspNotification({
                 open: true,
-                message: error.message || 'Une erreur est survenue',
+                message: errorMessage,
+                externalMessage: externalMessage,
                 type: 'error'
             });
         } finally {
@@ -940,6 +1125,103 @@ const TokenList = () => {
         }
     };
 
+    const hasPendingStatusChange = (token) => {
+        return pendingStatusChanges[token.id] !== undefined;
+    };
+
+    const getPendingActionName = (token) => {
+        const pendingChange = pendingStatusChanges[token.id];
+        if (!pendingChange) return '';
+        switch (pendingChange.action) {
+            case 'activate':
+                return 'activation';
+            case 'suspend':
+                return 'suspension';
+            case 'resume':
+                return 'resume';
+            case 'deactivate':
+                return 'deactivation';
+            default:
+                return '';
+        }
+    };
+
+    const getNormalizedStatus = (token) => {
+        if (!token.tokenStatus) return '';
+        const status = token.tokenStatus.toLowerCase();
+        if (status === 'active') return 'active';
+        if (status === 'inactive') return 'inactive';
+        if (status === 'suspended') return 'suspended';
+        return '';
+    };
+
+    // Fonction pour parser les messages externes
+    const parseExternalMessage = (message) => {
+        try {
+            if (typeof message === 'string') {
+                const parsed = JSON.parse(message);
+                
+                // Vérifier d'abord les messages d'erreur
+                if (parsed.erreur) {
+                    return {
+                        text: parsed.erreur,
+                        type: 'error'
+                    };
+                }
+                
+                // Puis les messages normaux
+                if (parsed.message) {
+                    return {
+                        text: parsed.message,
+                        type: 'info'
+                    };
+                }
+                
+                // Fallback pour les autres cas
+                return {
+                    text: message,
+                    type: 'info'
+                };
+            }
+            
+            // Si le message est déjà un objet
+            if (message && typeof message === 'object') {
+                return {
+                    text: message.erreur || message.message || JSON.stringify(message),
+                    type: message.erreur ? 'error' : 'info'
+                };
+            }
+            
+            return {
+                text: message || '',
+                type: 'info'
+            };
+        } catch (e) {
+            console.warn('Error parsing external message:', e);
+            return {
+                text: message || '',
+                type: 'info'
+            };
+        }
+    };
+
+    // Nettoyer les timers lors du démontage
+    useEffect(() => {
+        return () => {
+            if (searchTimer.current) {
+                clearTimeout(searchTimer.current);
+            }
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        };
+    }, []);
+
+    // Effectuer la recherche initiale au montage
+    useEffect(() => {
+        fetchTokens(true);
+    }, []);
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
             <Box sx={{ padding: '1rem' }}>
@@ -982,6 +1264,10 @@ const TokenList = () => {
                         autoHideDuration={6000}
                         onClose={handleCloseTspNotification}
                         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                        sx={{
+                            maxWidth: '600px',
+                            width: '100%'
+                        }}
                     >
                         <Alert
                             onClose={handleCloseTspNotification}
@@ -996,19 +1282,54 @@ const TokenList = () => {
                                     color: tspNotification.type === 'success' ? '#059669' : '#dc2626'
                                 },
                                 display: 'flex',
-                                alignItems: 'center',
-                                gap: 1
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                gap: 1,
+                                padding: '16px',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                             }}
                             icon={tspNotification.type === 'success' ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
                         >
-                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                width: '100%'
+                            }}>
+                                <Typography variant="subtitle1" sx={{ 
+                                    fontWeight: 600,
+                                    mb: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}>
                                     {tspNotification.message}
                                 </Typography>
+                                
                                 {tspNotification.externalMessage && (
-                                    <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9 }}>
-                                        {tspNotification.externalMessage}
-                                    </Typography>
+                                    <Box sx={{
+                                        mt: 1,
+                                        p: 2,
+                                        borderRadius: '8px',
+                                        backgroundColor: tspNotification.type === 'success' ? 'rgba(6, 95, 70, 0.1)' : 'rgba(153, 27, 27, 0.1)',
+                                        border: '1px solid',
+                                        borderColor: tspNotification.type === 'success' ? 'rgba(6, 95, 70, 0.2)' : 'rgba(153, 27, 27, 0.2)',
+                                        width: '100%'
+                                    }}>
+                                        {(() => {
+                                            const parsedMessage = parseExternalMessage(tspNotification.externalMessage);
+                                            return (
+                                                <Typography variant="body2" sx={{ 
+                                                    color: tspNotification.type === 'success' ? '#065f46' : '#991b1b',
+                                                    fontFamily: 'monospace',
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word'
+                                                }}>
+                                                    {parsedMessage.text}
+                                                </Typography>
+                                            );
+                                        })()}
+                                    </Box>
                                 )}
                             </Box>
                         </Alert>
@@ -1095,9 +1416,14 @@ const TokenList = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
+                                                border: '1px solid',
+                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                '&:hover': {
+                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    borderColor: '#6366f1',
+                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                 }
                                             }
                                         }}
@@ -1115,9 +1441,14 @@ const TokenList = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
+                                                border: '1px solid',
+                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                '&:hover': {
+                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    borderColor: '#6366f1',
+                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                 }
                                             }
                                         }}
@@ -1135,9 +1466,14 @@ const TokenList = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
+                                                border: '1px solid',
+                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                '&:hover': {
+                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    borderColor: '#6366f1',
+                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                 }
                                             }
                                         }}
@@ -1155,9 +1491,14 @@ const TokenList = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
+                                                border: '1px solid',
+                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                '&:hover': {
+                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    borderColor: '#6366f1',
+                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                 }
                                             }
                                         }}
@@ -1171,9 +1512,14 @@ const TokenList = () => {
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: '8px',
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    borderWidth: '2px'
+                                                border: '1px solid',
+                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                '&:hover': {
+                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                },
+                                                '&.Mui-focused': {
+                                                    borderColor: '#6366f1',
+                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                 }
                                             }
                                         }}
@@ -1182,7 +1528,7 @@ const TokenList = () => {
                                         <Select
                                             value={statusFilter}
                                             onChange={handleStatusFilterChange}
-                                        label="Status Filter"
+                                            label="Status Filter"
                                             startAdornment={
                                                 <InputAdornment position="start">
                                                     <FilterListIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
@@ -1199,7 +1545,7 @@ const TokenList = () => {
                                 </Grid>
                                 <Grid item xs={12} md={4}>
                                     <DatePicker
-                                    label="Created from"
+                                        label="Created from"
                                         value={startDateObj}
                                         onChange={setStartDateObj}
                                         format="dd/MM/yyyy"
@@ -1217,9 +1563,14 @@ const TokenList = () => {
                                                 sx: {
                                                     '& .MuiOutlinedInput-root': {
                                                         borderRadius: '8px',
-                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                            borderWidth: '2px'
+                                                        border: '1px solid',
+                                                        borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                        '&:hover': {
+                                                            borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                        },
+                                                        '&.Mui-focused': {
+                                                            borderColor: '#6366f1',
+                                                            boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                         }
                                                     }
                                                 }
@@ -1229,7 +1580,7 @@ const TokenList = () => {
                                 </Grid>
                                 <Grid item xs={12} md={4}>
                                     <DatePicker
-                                    label="Created to"
+                                        label="Created to"
                                         value={endDateObj}
                                         onChange={setEndDateObj}
                                         format="dd/MM/yyyy"
@@ -1247,9 +1598,14 @@ const TokenList = () => {
                                                 sx: {
                                                     '& .MuiOutlinedInput-root': {
                                                         borderRadius: '8px',
-                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                            borderWidth: '2px'
+                                                        border: '1px solid',
+                                                        borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                                                        '&:hover': {
+                                                            borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+                                                        },
+                                                        '&.Mui-focused': {
+                                                            borderColor: '#6366f1',
+                                                            boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
                                                         }
                                                     }
                                                 }
@@ -1725,6 +2081,179 @@ const TokenList = () => {
                             </Box>
                         ) : detailDialog.token ? (
                             <Box sx={{ p: 3 }}>
+                                {/* Actions Section */}
+                                <Box sx={{
+                                    mb: 4,
+                                    p: 3,
+                                    borderRadius: '12px',
+                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
+                                    border: '1px solid',
+                                    borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                }}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1,
+                                        mb: 2
+                                    }}>
+                                        <Box sx={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                                        }}>
+                                            <EditIcon sx={{ 
+                                                fontSize: 20,
+                                                color: '#6366f1'
+                                            }} />
+                                        </Box>
+                                        <Typography variant="h6" sx={{ 
+                                            fontSize: '1.1rem', 
+                                            fontWeight: 600,
+                                            color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
+                                        }}>
+                                            Token Actions
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        gap: 2, 
+                                        flexWrap: 'wrap',
+                                        alignItems: 'center'
+                                    }}>
+                                        {/* Vérifier s'il y a une action en attente */}
+                                        {hasPendingStatusChange(detailDialog.token) ? (
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: 1,
+                                                bgcolor: 'rgba(99, 102, 241, 0.1)',
+                                                borderRadius: '8px',
+                                                py: 1.5,
+                                                px: 3,
+                                                width: '100%',
+                                                justifyContent: 'center'
+                                            }}>
+                                                <WaitingIcon fontSize="small" sx={{ color: '#6366f1' }} />
+                                                <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 500 }}>
+                                                    Demande de {getPendingActionName(detailDialog.token)} en attente de confirmation
+                                                </Typography>
+                                            </Box>
+                                        ) : (
+                                            <>
+                                                {getNormalizedStatus(detailDialog.token) === 'inactive' && (
+                                                    <>
+                                                        <Button 
+                                                            variant="contained"
+                                                            startIcon={<ActivateIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'activate')}
+                                                            sx={{
+                                                                bgcolor: '#10b981',
+                                                                '&:hover': { bgcolor: '#059669' },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Activate
+                                                        </Button>
+                                                        <Button 
+                                                            variant="outlined"
+                                                            startIcon={<DeactivateIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
+                                                            sx={{
+                                                                color: '#6b7280',
+                                                                borderColor: '#6b7280',
+                                                                '&:hover': { 
+                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
+                                                                    borderColor: '#4b5563'
+                                                                },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Deactivate
+                                                        </Button>
+                                                    </>
+                                                )}
+                                                
+                                                {getNormalizedStatus(detailDialog.token) === 'active' && (
+                                                    <>
+                                                        <Button 
+                                                            variant="contained"
+                                                            startIcon={<BlockIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'suspend')}
+                                                            sx={{
+                                                                bgcolor: '#f59e0b',
+                                                                '&:hover': { bgcolor: '#d97706' },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Suspend
+                                                        </Button>
+                                                        <Button 
+                                                            variant="outlined"
+                                                            startIcon={<DeactivateIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
+                                                            sx={{
+                                                                color: '#6b7280',
+                                                                borderColor: '#6b7280',
+                                                                '&:hover': { 
+                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
+                                                                    borderColor: '#4b5563'
+                                                                },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Deactivate
+                                                        </Button>
+                                                    </>
+                                                )}
+                                                
+                                                {getNormalizedStatus(detailDialog.token) === 'suspended' && (
+                                                    <>
+                                                        <Button 
+                                                            variant="contained"
+                                                            startIcon={<ResumeIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'resume')}
+                                                            sx={{
+                                                                bgcolor: '#3b82f6',
+                                                                '&:hover': { bgcolor: '#2563eb' },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Resume
+                                                        </Button>
+                                                        <Button 
+                                                            variant="outlined"
+                                                            startIcon={<DeactivateIcon />}
+                                                            onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
+                                                            sx={{
+                                                                color: '#6b7280',
+                                                                borderColor: '#6b7280',
+                                                                '&:hover': { 
+                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
+                                                                    borderColor: '#4b5563'
+                                                                },
+                                                                px: 3,
+                                                                py: 1
+                                                            }}
+                                                        >
+                                                            Deactivate
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </Box>
+                                </Box>
+                                
                                 <Grid container spacing={3}>
                                     {/* Token Basic Info */}
                                     <Grid item xs={12}>

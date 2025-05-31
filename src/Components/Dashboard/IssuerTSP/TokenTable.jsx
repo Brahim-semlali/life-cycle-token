@@ -562,7 +562,7 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                         <TableCell 
                                             key={column.id}
                                             sx={{ 
-                                    fontWeight: 600, 
+                                                fontWeight: 600, 
                                                 color: theme.palette.primary.main, 
                                                 borderBottom: '2px solid',
                                                 borderBottomColor: theme.palette.primary.light,
@@ -574,25 +574,8 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                             }}
                                         >
                                             {column.label}
-                                </TableCell>
+                                        </TableCell>
                                     ))}
-                                    {!hasNoDataToDisplay && (
-                                        <TableCell 
-                                            align="center"
-                                            sx={{ 
-                                    fontWeight: 600, 
-                                                color: theme.palette.primary.main, 
-                                                borderBottom: '2px solid',
-                                                borderBottomColor: theme.palette.primary.light,
-                                                backgroundColor: theme.palette.mode === 'dark' 
-                                                    ? 'rgba(0, 0, 0, 0.2)' 
-                                                    : 'rgba(249, 250, 252, 0.9)',
-                                                padding: '16px'
-                                            }}
-                                        >
-                                    Actions
-                                </TableCell>
-                                    )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -615,20 +598,6 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                             '&:active': {
                                                 transform: 'translateY(0)',
                                             },
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                left: 0,
-                                                top: 0,
-                                                bottom: 0,
-                                                width: '3px',
-                                                bgcolor: 'primary.main',
-                                                opacity: 0,
-                                                transition: 'opacity 0.2s ease'
-                                            },
-                                            '&:hover::after': {
-                                                opacity: 1
-                                            }
                                         }}
                                     >
                                         {columns.map((column) => (
@@ -642,191 +611,11 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
                                                 {renderCellContent(token, column)}
                                             </TableCell>
                                         ))}
-                                        <TableCell 
-                                            key={`${token.tokenReferenceID || token.id || Math.random()}-actions`}
-                                            align="center"
-                                            sx={{ 
-                                                padding: '12px 16px',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                            <Tooltip title="View details">
-                                                <IconButton 
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewDetails(token);
-                                                    }}
-                                                    sx={{
-                                                            color: theme.palette.primary.main,
-                                                        '&:hover': {
-                                                                backgroundColor: `${theme.palette.primary.main}15`
-                                                            }
-                                                    }}
-                                                >
-                                                    <ViewIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                            
-                                            {/* Vérifier s'il y a une action en attente */}
-                                            {hasPendingStatusChange(token) ? (
-                                                <Tooltip title={`Demande de ${getPendingActionName(token)} en attente de confirmation`}>
-                                                    <Box sx={{ 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        gap: 1,
-                                                        bgcolor: 'rgba(99, 102, 241, 0.1)',
-                                                        borderRadius: '4px',
-                                                        py: 0.5,
-                                                        px: 1
-                                                    }}>
-                                                        <WaitingIcon fontSize="small" sx={{ color: '#6366f1' }} />
-                                                        <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 500 }}>
-                                                            En attente
-                                                        </Typography>
-                                                    </Box>
-                                                </Tooltip>
-                                            ) : (
-                                                /* Display appropriate action buttons based on token status */
-                                                <>
-                                            {getNormalizedStatus(token) === 'inactive' && (
-                                                <>
-                                                    <Tooltip title="Activate token">
-                                                        <Button 
-                                                            startIcon={<ActivateIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'activate');
-                                                            }}
-                                                            sx={{
-                                                                color: '#10b981',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(16, 185, 129, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Activate
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip title="Deactivate token">
-                                                        <Button 
-                                                            startIcon={<DeactivateIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'deactivate');
-                                                            }}
-                                                            sx={{
-                                                                color: '#6b7280',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Deactivate
-                                                        </Button>
-                                                    </Tooltip>
-                                                </>
-                                            )}
-                                            
-                                            {getNormalizedStatus(token) === 'active' && (
-                                                <>
-                                                    <Tooltip title="Suspend token">
-                                                        <Button 
-                                                            startIcon={<BlockIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'suspend');
-                                                            }}
-                                                            sx={{
-                                                                color: '#f59e0b',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(245, 158, 11, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Suspend
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip title="Deactivate token">
-                                                        <Button 
-                                                            startIcon={<DeactivateIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'deactivate');
-                                                            }}
-                                                            sx={{
-                                                                color: '#6b7280',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Deactivate
-                                                        </Button>
-                                                    </Tooltip>
-                                                </>
-                                            )}
-                                            
-                                            {getNormalizedStatus(token) === 'suspended' && (
-                                                <>
-                                                    <Tooltip title="Resume token">
-                                                        <Button 
-                                                            startIcon={<ResumeIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'resume');
-                                                            }}
-                                                            sx={{
-                                                                color: '#3b82f6',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(59, 130, 246, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Resume
-                                                        </Button>
-                                                    </Tooltip>
-                                                    <Tooltip title="Deactivate token">
-                                                        <Button 
-                                                            startIcon={<DeactivateIcon fontSize="small" />}
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleUpdateStatus(token, 'deactivate');
-                                                            }}
-                                                            sx={{
-                                                                color: '#6b7280',
-                                                                minWidth: 'auto',
-                                                                '&:hover': {
-                                                                    backgroundColor: 'rgba(107, 114, 128, 0.1)'
-                                                                }
-                                                            }}
-                                                        >
-                                                            Deactivate
-                                                        </Button>
-                                                    </Tooltip>
-                                                </>
-                                            )}
-                                                </>
-                                            )}
-                                            </Box>
-                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={columns.length + 1} align="center">
+                                    <TableCell colSpan={columns.length} align="center">
                                         <Box sx={{ py: 5 }}>
                                             <Typography 
                                                 variant="body1" 

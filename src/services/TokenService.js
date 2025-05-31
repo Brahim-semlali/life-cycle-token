@@ -112,7 +112,7 @@ const TokenService = {
      */
     async issueTspToken(tokenData) {
         try {
-            console.log('TokenService.issueTspToken: Issuing token via TSP', tokenData);
+            console.log('TokenService.issueTspToken: Starting token issuance request');
             
             // Récupérer l'utilisateur connecté
             const user = TokenStorage.getUser();
@@ -130,26 +130,49 @@ const TokenService = {
                 operatorID: operatorID
             };
             
+            console.log('TokenService.issueTspToken: Request payload:', payload);
+            
             // Appel à l'API
             const response = await apiClient.post(API_ENDPOINTS.ISSUE_TSP_TOKEN, payload);
             
-            if (response.data) {
-                console.log('TokenService.issueTspToken: Response:', response.data);
+            // Log de la réponse en cas de succès
+            console.log('TokenService.issueTspToken: Success response:', {
+                status: response.status,
+                statusText: response.statusText,
+                data: response.data
+            });
+            
+            // Retourner la réponse avec le statut et le statusText
+            return {
+                ...response.data,
+                status: response.status,
+                statusText: response.statusText
+            };
+            
+        } catch (error) {
+            // Log détaillé de l'erreur
+            console.error('TokenService.issueTspToken: Error occurred:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+            
+            // En cas d'erreur, retourner les données avec le statut
+            if (error.response) {
                 return {
-                    success: true,
-                    data: response.data
+                    ...error.response.data,
+                    status: error.response.status,
+                    statusText: error.response.statusText
                 };
             }
             
+            // Si pas de réponse du serveur, retourner une erreur générique
             return {
-                success: false,
-                error: 'Failed to issue token via TSP'
-            };
-        } catch (error) {
-            console.error('TokenService.issueTspToken: Error:', error);
-            return {
-                success: false,
-                error: error.response?.data?.detail || error.message || 'An error occurred during token issuance'
+                message_erreur: 'Erreur de connexion au serveur',
+                message_externe_erreur: JSON.stringify({ message: 'Erreur technique' }),
+                status: 500,
+                statusText: 'Internal Server Error'
             };
         }
     },
@@ -1165,55 +1188,56 @@ const TokenService = {
     },
 
     /**
-     * Fonction utilitaire pour gérer et extraire les messages d'erreur des réponses API
+     * Fonction utilitaire pour extraire les messages d'erreur pertinents
      * @param {Error} error - L'erreur à analyser
      * @returns {Object} - Objet contenant les détails de l'erreur
      */
     extractErrorDetails(error) {
-        if (error.response && error.response.data) {
-            const responseData = error.response.data;
-            
-            // Extraction du message d'erreur
-            if (responseData.message) {
-                return {
-                    message: responseData.message,
-                    error: responseData.error || error.message,
-                    status: error.response.status,
-                    details: responseData
-                };
-            }
-            
-            // Si l'erreur est un objet avec une propriété error
-            if (responseData.error) {
-                return {
-                    message: 'Votre demande a été refusée',
-                    error: responseData.error,
-                    status: error.response.status,
-                    details: responseData
-                };
-            }
+        if (!error.response || !error.response.data) {
+            return {
+                message_erreur: 'Requête traitée avec refus',
+                message_externe_erreur: null,
+                status: error.status || 400
+            };
         }
-        
-        // Erreur générique
+
+        const errorData = error.response.data;
         return {
-            message: error.message || 'Une erreur s\'est produite',
-            error: 'Request failed',
-            status: error.response?.status || 500
+            message_erreur: errorData.message_erreur || 'Requête traitée avec refus',
+            message_externe_erreur: errorData.message_externe_erreur || null,
+            status: error.response.status
         };
     },
 
-    // Ajouter une fonction utilitaire pour extraire le message d'erreur
+    // Améliorer la fonction extractErrorMessage pour logger les détails
     extractErrorMessage(error) {
         console.log('Error response data:', error.response?.data);
         
+        const errorData = error.response?.data;
+        
+        // Log détaillé des messages d'erreur
+        if (errorData) {
+            console.log('Detailed error messages:', {
+                message_erreur: errorData.message_erreur,
+                message_externe_erreur: errorData.message_externe_erreur,
+                message: errorData.message,
+                status: error.response?.status
+            });
+        }
+        
+        // Si nous avons un message_erreur dans la réponse
+        if (errorData?.message_erreur) {
+            return errorData.message_erreur;
+        }
+        
         // Si c'est une erreur simulée de l'API externe
-        if (error.response?.data?.status === 'error') {
-            return error.response.data.message;
+        if (errorData?.status === 'error') {
+            return errorData.message || 'Requête traitée avec refus';
         }
         
         // Si c'est une erreur avec un message du backend
-        if (error.response?.data?.message) {
-            return error.response.data.message;
+        if (errorData?.message) {
+            return errorData.message;
         }
 
         // Si c'est une erreur avec un message dans error.message
@@ -1222,7 +1246,7 @@ const TokenService = {
         }
 
         // Message par défaut
-        return 'An unexpected error occurred';
+        return 'Requête traitée avec refus';
     },
 
     /**
@@ -1235,7 +1259,7 @@ const TokenService = {
      */
     async activateToken(tokenReferenceID, tokenRequestorID, message = '', reason = '') {
         try {
-            console.log(`TokenService.activateToken: Activating token ${tokenReferenceID}`);
+            console.log(`TokenService: Activating token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1251,26 +1275,36 @@ const TokenService = {
                 operationType: "ACTIVATE"
             };
             
-            console.log('TokenService.activateToken: Sending data:', payload);
+            console.log('TokenService: Sending activate request with payload:', {
+                tokenReferenceID,
+                tokenRequestorID,
+                reason: validatedReason,
+                operationType: "ACTIVATE"
+            });
             
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
-            console.log('Response from API:', response.data);
+            
+            if (response.data.message_externe) {
+                console.log('Message externe reçu:', response.data.message_externe);
+            }
 
             return {
                 success: true,
-                message: response.data?.message || response.data?.status || 'Requête d\'activation envoyée avec succès',
+                message: response.data?.message || 'Token activated successfully',
                 data: response.data
             };
         } catch (error) {
-            console.error('Error activating token:', error);
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               error.response?.data?.detail ||
-                               error.message;
+            const errorDetails = this.extractErrorDetails(error);
+            console.log('Erreur lors de l\'activation du token:', {
+                message: errorDetails.message_erreur,
+                messageExterne: errorDetails.message_externe_erreur,
+                status: errorDetails.status
+            });
+
             return {
                 success: false,
-                error: errorMessage,
-                details: error.response?.data
+                error: errorDetails.message_erreur,
+                details: errorDetails
             };
         }
     },
@@ -1285,7 +1319,7 @@ const TokenService = {
      */
     async suspendToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.suspendToken: Suspending token ${tokenReferenceID}`);
+            console.log(`TokenService: Suspending token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1301,26 +1335,36 @@ const TokenService = {
                 operationType: "SUSPEND"
             };
             
-            console.log('TokenService.suspendToken: Sending data:', payload);
+            console.log('TokenService: Sending suspend request with payload:', {
+                tokenReferenceID,
+                tokenRequestorID,
+                reason: validatedReason,
+                operationType: "SUSPEND"
+            });
             
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
-            console.log('Response from API:', response.data);
+            
+            if (response.data.message_externe) {
+                console.log('Message externe reçu:', response.data.message_externe);
+            }
 
             return {
                 success: true,
-                message: response.data?.message || response.data?.status || 'Requête de suspension envoyée avec succès',
+                message: response.data?.message || 'Token suspended successfully',
                 data: response.data
             };
         } catch (error) {
-            console.error('Error suspending token:', error);
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               error.response?.data?.detail ||
-                               error.message;
+            const errorDetails = this.extractErrorDetails(error);
+            console.log('Erreur lors de la suspension du token:', {
+                message: errorDetails.message_erreur,
+                messageExterne: errorDetails.message_externe_erreur,
+                status: errorDetails.status
+            });
+
             return {
                 success: false,
-                error: errorMessage,
-                details: error.response?.data
+                error: errorDetails.message_erreur,
+                details: errorDetails
             };
         }
     },
@@ -1335,7 +1379,7 @@ const TokenService = {
      */
     async resumeToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.resumeToken: Resuming token ${tokenReferenceID}`);
+            console.log(`TokenService: Resuming token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1351,26 +1395,36 @@ const TokenService = {
                 operationType: "RESUME"
             };
             
-            console.log('TokenService.resumeToken: Sending data:', payload);
+            console.log('TokenService: Sending resume request with payload:', {
+                tokenReferenceID,
+                tokenRequestorID,
+                reason: validatedReason,
+                operationType: "RESUME"
+            });
             
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
-            console.log('Response from API:', response.data);
+            
+            if (response.data.message_externe) {
+                console.log('Message externe reçu:', response.data.message_externe);
+            }
 
             return {
                 success: true,
-                message: response.data?.message || response.data?.status || 'Requête de reprise envoyée avec succès',
+                message: response.data?.message || 'Token resumed successfully',
                 data: response.data
             };
         } catch (error) {
-            console.error('Error resuming token:', error);
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               error.response?.data?.detail ||
-                               error.message;
+            const errorDetails = this.extractErrorDetails(error);
+            console.log('Erreur lors de la reprise du token:', {
+                message: errorDetails.message_erreur,
+                messageExterne: errorDetails.message_externe_erreur,
+                status: errorDetails.status
+            });
+
             return {
                 success: false,
-                error: errorMessage,
-                details: error.response?.data
+                error: errorDetails.message_erreur,
+                details: errorDetails
             };
         }
     },
@@ -1385,7 +1439,7 @@ const TokenService = {
      */
     async deactivateToken(tokenReferenceID, tokenRequestorID, reason, message = '') {
         try {
-            console.log(`TokenService.deactivateToken: Deactivating token ${tokenReferenceID}`);
+            console.log(`TokenService: Deactivating token ${tokenReferenceID}`);
             
             const user = TokenStorage.getUser();
             const operatorID = user ? user.email || user.username : '';
@@ -1401,26 +1455,35 @@ const TokenService = {
                 operationType: "DELETE"
             };
             
-            console.log('TokenService.deactivateToken: Sending data:', payload);
+            console.log('TokenService: Sending deactivate request with payload:', payload);
             
             const response = await apiClient.post(API_ENDPOINTS.TOKEN_ACTION, payload);
-            console.log('Response from API:', response.data);
+            
+            if (response.data) {
+                if (response.data.message_externe) {
+                    console.log('Message externe reçu:', response.data.message_externe);
+                }
+
+                return {
+                    success: true,
+                    message: response.data?.message || 'Token deactivated successfully',
+                    data: {
+                        ...response.data,
+                        token_status: 'DEACTIVATED',
+                        tokenStatus: 'DEACTIVATED'
+                    }
+                };
+            }
+
+            throw new Error('No response data received');
+        } catch (error) {
+            const errorDetails = this.extractErrorDetails(error);
+            console.log('Erreur lors de la désactivation du token:', errorDetails);
 
             return {
-                success: true,
-                message: response.data?.message || response.data?.status || 'Requête de désactivation envoyée avec succès',
-                data: response.data
-            };
-        } catch (error) {
-            console.error('Error deactivating token:', error);
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               error.response?.data?.detail ||
-                               error.message;
-            return {
                 success: false,
-                error: errorMessage,
-                details: error.response?.data
+                error: errorDetails.message_erreur || 'Failed to deactivate token',
+                details: errorDetails
             };
         }
     },
