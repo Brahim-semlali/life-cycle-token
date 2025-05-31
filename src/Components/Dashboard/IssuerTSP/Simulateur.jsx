@@ -25,6 +25,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SecurityIcon from '@mui/icons-material/Security';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import MessageIcon from '@mui/icons-material/Message';
 import TokenService from '../../../services/TokenService';
 import ProtectedRoute from '../../../Components/ProtectedRoute';
 import './Simulateur.css';
@@ -46,6 +47,8 @@ const SimulateurContent = () => {
     panSource: '',
   });
   
+  const [responseData, setResponseData] = useState(null);
+  
   // État pour gérer les notifications
   const [notification, setNotification] = useState({
     open: false,
@@ -55,6 +58,8 @@ const SimulateurContent = () => {
   
   // État pour gérer le chargement
   const [loading, setLoading] = useState(false);
+
+  const [focusedInput, setFocusedInput] = useState(null);
 
   const tspOptions = [
     { value: 'MDES', label: 'MDES' },
@@ -101,6 +106,87 @@ const SimulateurContent = () => {
     });
   };
 
+  const formatResponse = (data) => {
+    try {
+      // Si c'est une erreur
+      if (data.error) {
+        try {
+          // Essayer de parser le message d'erreur qui est dans le format "Erreur du service: {...}"
+          const errorMatch = data.error.match(/Erreur du service: (.+)$/);
+          if (errorMatch) {
+            const errorJson = JSON.parse(errorMatch[1]);
+            return {
+              isError: true,
+              message: errorJson.message || 'Erreur inconnue',
+              type: 'SERVICE_ERROR'
+            };
+          }
+          return {
+            isError: true,
+            message: data.error,
+            type: 'SERVICE_ERROR'
+          };
+        } catch (e) {
+          return {
+            isError: true,
+            message: data.error,
+            type: 'SERVICE_ERROR'
+          };
+        }
+      }
+
+      // Si c'est une réponse succès
+      let formattedResponse = {
+        isError: false,
+        type: 'SUCCESS',
+        message: data.message || '',
+        messageExterne: '',
+        issuanceId: data.issuance_id,
+        timestamp: data.timestamp
+      };
+
+      if (data.message_externe) {
+        try {
+          const externalMessage = JSON.parse(data.message_externe);
+          formattedResponse.messageExterne = externalMessage.message || '';
+        } catch (e) {
+          formattedResponse.messageExterne = data.message_externe;
+        }
+      }
+
+      return formattedResponse;
+    } catch (e) {
+      return {
+        isError: true,
+        type: 'SERVICE_ERROR',
+        message: 'Erreur lors du traitement de la réponse'
+      };
+    }
+  };
+
+  const handleAxiosError = (error) => {
+    // Si c'est une erreur Axios avec une réponse du serveur
+    if (error.response && error.response.data) {
+      return formatResponse(error.response.data);
+    }
+
+    // Si c'est une erreur Axios sans réponse du serveur
+    if (error.code === 'ERR_BAD_REQUEST') {
+      return {
+        isError: true,
+        type: 'SERVICE_ERROR',
+        message: 'Erreur du service'
+      };
+    }
+
+    // Pour toute autre erreur
+    return {
+      isError: true,
+      type: 'TECHNICAL_ERROR',
+      message: 'Erreur technique'
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -145,18 +231,16 @@ const SimulateurContent = () => {
       // Appel au service pour l'issuance TSP
       const result = await TokenService.issueTspToken(payload);
       
-      if (result.success) {
-        // Afficher le message de succès du backend
-        const message = result.data?.message || 'Tokenisation approuvée avec succès!';
-        const externalMessage = result.data?.['message externe'];
-        
-        setNotification({
-          open: true,
-          message: externalMessage ? `${message}\nRéponse externe: ${externalMessage}` : message,
-          severity: 'success'
-        });
-        
-        // Réinitialiser le formulaire après succès
+      const formattedResponse = formatResponse(result.data || result);
+      setResponseData(formattedResponse);
+      
+      setNotification({
+        open: true,
+        message: formattedResponse.message,
+        severity: formattedResponse.isError ? 'error' : 'success'
+      });
+
+      if (!formattedResponse.isError) {
         setFormData({
           tsp: '',
           tokenRequestor: '',
@@ -168,15 +252,14 @@ const SimulateurContent = () => {
           cvv2: '',
           panSource: '',
         });
-      } else {
-        // Afficher le message d'erreur du backend
-        throw new Error(result.error || 'Échec de la tokenisation');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+      const errorResponse = handleAxiosError(error);
+      setResponseData(errorResponse);
       setNotification({
         open: true,
-        message: error.message || 'Une erreur est survenue lors de la tokenisation',
+        message: errorResponse.message,
         severity: 'error'
       });
     } finally {
@@ -184,23 +267,101 @@ const SimulateurContent = () => {
     }
   };
 
+  const handleFocus = (inputName) => {
+    setFocusedInput(inputName);
+  };
+
+  const handleBlur = () => {
+    setFocusedInput(null);
+  };
+
+  const ResponseContent = () => {
+    if (!responseData) {
+      return (
+        <div className="response-content">
+          <div className="response-label">Status</div>
+          <div className="response-message">
+            En attente de soumission...
+          </div>
+        </div>
+      );
+    }
+
+    const getStatusText = () => {
+      if (!responseData.isError) return 'Succès';
+      switch (responseData.type) {
+        case 'SERVICE_ERROR':
+          return 'Erreur du service';
+        case 'TECHNICAL_ERROR':
+          return 'Erreur technique';
+        default:
+          return 'Échec';
+      }
+    };
+
+    return (
+      <div className="response-content">
+        <div className="response-label">Status</div>
+        <div className={`response-message ${responseData.isError ? 'error' : 'success'}`}>
+          {getStatusText()}
+        </div>
+
+        {responseData.message && (
+          <>
+            <div className="response-label">Message</div>
+            <div className={`response-message ${responseData.isError ? 'error' : ''}`}>
+              {responseData.message}
+            </div>
+          </>
+        )}
+        
+        {responseData.messageExterne && (
+          <>
+            <div className="response-label">Message Externe</div>
+            <div className="response-external">
+              {responseData.messageExterne}
+            </div>
+          </>
+        )}
+
+        {responseData.issuanceId && (
+          <>
+            <div className="response-label">ID d'émission</div>
+            <div className="response-id">
+              {responseData.issuanceId}
+            </div>
+          </>
+        )}
+
+        {responseData.timestamp && (
+          <>
+            <div className="response-label">Horodatage</div>
+            <div className="response-timestamp">
+              {new Date(responseData.timestamp).toLocaleString()}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={`simulateur-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
-      <Paper className="simulateur-form-paper" elevation={0}>
-        <div className="form-header">
-          <div className="header-title">
-            <SecurityIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
-            <Typography variant="h6">APPROVE TOKENIZATION</Typography>
+      <div className="form-container">
+        <Paper className="simulateur-form-paper" elevation={0}>
+          <div className="form-header">
+            <div className="header-title">
+              <SecurityIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+              <Typography variant="h6">APPROVE TOKENIZATION</Typography>
+            </div>
+            <Chip 
+              label="SECURE TOKENIZATION" 
+              className="secure-badge"
+            />
           </div>
-          <Chip 
-            label="SECURE TOKENIZATION" 
-            className="secure-badge"
-          />
-        </div>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-content">
-            <div className="form-group-left">
+          
+          <form onSubmit={handleSubmit}>
+            <div className="form-content">
               <FormControl className="simulateur-form-field">
                 <InputLabel id="tsp-label">TSP</InputLabel>
                 <Select
@@ -213,7 +374,7 @@ const SimulateurContent = () => {
                   required
                   startAdornment={
                     <InputAdornment position="start">
-                      <ShieldIcon sx={{ fontSize: '1.2rem' }} />
+                      <ShieldIcon className="input-icon" />
                     </InputAdornment>
                   }
                 >
@@ -237,7 +398,7 @@ const SimulateurContent = () => {
                   required
                   startAdornment={
                     <InputAdornment position="start">
-                      <CreditCardIcon sx={{ fontSize: '1.2rem' }} />
+                      <CreditCardIcon className="input-icon" />
                     </InputAdornment>
                   }
                 >
@@ -248,82 +409,6 @@ const SimulateurContent = () => {
                   ))}
                 </Select>
               </FormControl>
-
-              <TextField
-                className="simulateur-form-field pan-input"
-                label="Card Number (PAN)"
-                name="pan"
-                value={formData.pan}
-                onChange={handleChange}
-                variant="outlined"
-                required
-                inputProps={{
-                  maxLength: 16,
-                  pattern: '[0-9]{16}'
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <CreditCardIcon sx={{ fontSize: '1.2rem' }} />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </div>
-
-            <div className="form-group-right">
-              <FormControl className="simulateur-form-field">
-                <InputLabel id="month-label">Month</InputLabel>
-                <Select
-                  labelId="month-label"
-                  id="month"
-                  name="expiryDate.month"
-                  value={formData.expiryDate.month}
-                  label="Month"
-                  onChange={handleChange}
-                  required
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                    <MenuItem key={month} value={month.toString().padStart(2, '0')}>
-                      {month.toString().padStart(2, '0')}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl className="simulateur-form-field">
-                <InputLabel id="year-label">Year</InputLabel>
-                <Select
-                  labelId="year-label"
-                  id="year"
-                  name="expiryDate.year"
-                  value={formData.expiryDate.year}
-                  label="Year"
-                  onChange={handleChange}
-                  required
-                >
-                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                    <MenuItem key={year} value={year.toString().slice(-2)}>
-                      {year.toString().slice(-2)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <TextField
-                className="simulateur-form-field"
-                label="CVV2"
-                name="cvv2"
-                value={formData.cvv2}
-                onChange={handleChange}
-                variant="outlined"
-                type="password"
-                required
-                inputProps={{
-                  maxLength: 3,
-                  pattern: '[0-9]{3}'
-                }}
-              />
 
               <FormControl className="simulateur-form-field">
                 <InputLabel id="pan-source-label">Source</InputLabel>
@@ -344,19 +429,129 @@ const SimulateurContent = () => {
                 </Select>
               </FormControl>
 
+              <div className="input-container">
+                <Typography className="input-label">Card Number (PAN)</Typography>
+                <TextField
+                  className={`simulateur-form-field pan-input ${focusedInput === 'pan' ? 'focused' : ''}`}
+                  name="pan"
+                  value={formData.pan}
+                  onChange={handleChange}
+                  variant="outlined"
+                  required
+                  inputProps={{
+                    maxLength: 16,
+                    pattern: '[0-9]{16}',
+                    className: 'pan-input'
+                  }}
+                  onFocus={() => handleFocus('pan')}
+                  onBlur={handleBlur}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <CreditCardIcon className="input-icon" />
+                      </InputAdornment>
+                    ),
+                    className: 'card-input'
+                  }}
+                  placeholder="1234 5678 9012 3456"
+                />
+              </div>
+
+              <div className="expiry-section">
+                <Typography className="expiry-title">Expiration Date</Typography>
+                <div className="expiry-group">
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="month-label">Month</InputLabel>
+                    <Select
+                      labelId="month-label"
+                      id="month"
+                      name="expiryDate.month"
+                      value={formData.expiryDate.month}
+                      label="Month"
+                      onChange={handleChange}
+                      required
+                      className="card-input"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                        <MenuItem key={month} value={month.toString().padStart(2, '0')}>
+                          {month.toString().padStart(2, '0')}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="year-label">Year</InputLabel>
+                    <Select
+                      labelId="year-label"
+                      id="year"
+                      name="expiryDate.year"
+                      value={formData.expiryDate.year}
+                      label="Year"
+                      onChange={handleChange}
+                      required
+                      className="card-input"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                        <MenuItem key={year} value={year.toString().slice(-2)}>
+                          {year.toString().slice(-2)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              <div className="input-container">
+                <Typography className="input-label">CVV2</Typography>
+                <TextField
+                  className={`simulateur-form-field cvv-input ${focusedInput === 'cvv2' ? 'focused' : ''}`}
+                  name="cvv2"
+                  value={formData.cvv2}
+                  onChange={handleChange}
+                  variant="outlined"
+                  type="password"
+                  required
+                  inputProps={{
+                    maxLength: 3,
+                    pattern: '[0-9]{3}',
+                    className: 'cvv-input'
+                  }}
+                  onFocus={() => handleFocus('cvv2')}
+                  onBlur={handleBlur}
+                  InputProps={{
+                    className: 'card-input',
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SecurityIcon className="input-icon" />
+                      </InputAdornment>
+                    )
+                  }}
+                  placeholder="123"
+                />
+              </div>
+
               <Button 
                 variant="contained" 
                 color="primary" 
                 type="submit"
                 className="simulateur-submit-button"
                 disabled={loading}
-                startIcon={loading ? null : <VerifiedIcon sx={{ fontSize: '1.2rem' }} />}
+                startIcon={loading ? null : <VerifiedIcon />}
               >
                 {loading ? 'PROCESSING...' : 'APPROVE'}
               </Button>
             </div>
-          </div>
-        </form>
+          </form>
+        </Paper>
+      </div>
+
+      <Paper className="response-container" elevation={0}>
+        <div className="response-header">
+          <MessageIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+          <Typography variant="h6">Response</Typography>
+        </div>
+        <ResponseContent />
       </Paper>
       
       <Snackbar 
