@@ -542,10 +542,47 @@
   .simulateur-container {
     margin-left: 0;
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+    min-height: 100vh;
   }
 
-  .form-row,
+  .form-container {
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .simulateur-form-paper {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .header-title {
+    gap: 0.5rem;
+  }
+
+  .header-title h6 {
+    font-size: 0.85rem !important;
+  }
+
+  .secure-badge {
+    font-size: 0.65rem !important;
+    height: 18px !important;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
   .card-row {
     flex-direction: column;
     gap: 0.75rem;
@@ -553,34 +590,58 @@
 
   .card-row .pan-container,
   .card-row .cvv-container {
-    flex: none;
+    width: 100%;
   }
 
-  .form-group-left {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  .expiry-group {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 
-  .form-group-right {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+  .simulateur-form-field {
+    width: 100%;
   }
 
-  /* Le champ TSP est maintenant visible en mobile */
-  .form-group-left .simulateur-form-field:first-child {
-    display: block;
-  }
-
-  .pan-input {
-    order: 2; /* Déplacer le PAN après Token Requestor */
+  .simulateur-form-field .MuiOutlinedInput-root {
+    height: 48px !important;
   }
 
   .simulateur-submit-button {
-    grid-column: span 2;
-    margin-top: 0.5rem !important;
     width: 100%;
+    margin-top: 1rem !important;
+    height: 48px !important;
+  }
+
+  .response-container {
+    width: 100%;
+    margin-top: 1rem;
+    position: relative;
+    top: auto;
+    right: auto;
+  }
+
+  .response-content {
+    gap: 1rem;
+  }
+
+  .response-message,
+  .response-external,
+  .response-code {
+    padding: 0.875rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .response-label {
+    font-size: 0.65rem;
+  }
+
+  .input-label {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.375rem !important;
+  }
+
+  .expiry-title {
+    font-size: 0.75rem !important;
   }
 }
 
@@ -589,50 +650,62 @@
     padding: 0.25rem;
   }
 
-  .form-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
   .simulateur-form-paper {
     padding: 0.75rem;
+    border-radius: 8px;
   }
 
-  .form-content {
-    gap: 0.75rem;
+  .header-title h6 {
+    font-size: 0.8rem !important;
   }
 
-  .form-group-left,
-  .form-group-right {
-    gap: 0.75rem;
+  .secure-badge {
+    font-size: 0.6rem !important;
+    height: 16px !important;
+    padding: 0 6px !important;
   }
 
-  .form-group-right {
+  .expiry-group {
     grid-template-columns: 1fr;
-  }
-
-  .simulateur-submit-button {
-    grid-column: span 1;
+    gap: 0.75rem;
   }
 
   .simulateur-form-field .MuiOutlinedInput-root {
-    height: 42px !important;
+    height: 44px !important;
+  }
+
+  .simulateur-submit-button {
+    height: 44px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .response-container {
+    padding: 1rem;
+  }
+
+  .response-message,
+  .response-external,
+  .response-code {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
   }
 }
 
 .dark-mode .simulateur-form-paper {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(71, 85, 105, 0.8);
+  background: rgba(30, 41, 59, 0.98);
+}
+
+.dark-mode .response-container {
+  background: rgba(30, 41, 59, 0.98);
 }
 
 .dark-mode .simulateur-form-field .MuiOutlinedInput-root {
   background: rgba(30, 41, 59, 0.95) !important;
-  border-color: #475569 !important;
 }
 
 .dark-mode .simulateur-form-field .MuiInputLabel-root {
-  color: #94a3b8 !important;
+  color: #e2e8f0 !important;
 }
 
 .simulateur-title {
@@ -1268,4 +1341,232 @@
 
 .response-message.error {
   animation: errorShake 0.4s ease-in-out;
+}
+
+/* Mobile Responsive Design Improvements */
+@media (max-width: 768px) {
+  .simulateur-container {
+    margin-left: 0;
+    width: 100%;
+    padding: 0.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .form-container {
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .simulateur-form-paper {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .header-title {
+    gap: 0.5rem;
+  }
+
+  .header-title h6 {
+    font-size: 0.85rem !important;
+  }
+
+  .secure-badge {
+    font-size: 0.65rem !important;
+    height: 18px !important;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-row .pan-container,
+  .card-row .cvv-container {
+    width: 100%;
+  }
+
+  .expiry-group {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .simulateur-form-field {
+    width: 100%;
+  }
+
+  .simulateur-form-field .MuiOutlinedInput-root {
+    height: 48px !important;
+  }
+
+  .simulateur-submit-button {
+    width: 100%;
+    margin-top: 1rem !important;
+    height: 48px !important;
+  }
+
+  .response-container {
+    width: 100%;
+    margin-top: 1rem;
+    position: relative;
+    top: auto;
+    right: auto;
+  }
+
+  .response-content {
+    gap: 1rem;
+  }
+
+  .response-message,
+  .response-external,
+  .response-code {
+    padding: 0.875rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .response-label {
+    font-size: 0.65rem;
+  }
+
+  .input-label {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.375rem !important;
+  }
+
+  .expiry-title {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .simulateur-container {
+    padding: 0.25rem;
+  }
+
+  .simulateur-form-paper {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .header-title h6 {
+    font-size: 0.8rem !important;
+  }
+
+  .secure-badge {
+    font-size: 0.6rem !important;
+    height: 16px !important;
+    padding: 0 6px !important;
+  }
+
+  .expiry-group {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .simulateur-form-field .MuiOutlinedInput-root {
+    height: 44px !important;
+  }
+
+  .simulateur-submit-button {
+    height: 44px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .response-container {
+    padding: 1rem;
+  }
+
+  .response-message,
+  .response-external,
+  .response-code {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+}
+
+/* Tablet Devices */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .simulateur-container {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .form-container {
+    max-width: 60%;
+  }
+
+  .response-container {
+    width: 40%;
+  }
+
+  .simulateur-form-paper {
+    padding: 1rem;
+  }
+}
+
+/* Landscape Mobile Devices */
+@media (max-height: 480px) and (orientation: landscape) {
+  .simulateur-container {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .form-container {
+    padding-bottom: 2rem;
+  }
+
+  .simulateur-form-paper {
+    margin-bottom: 1rem;
+  }
+
+  .response-container {
+    position: relative;
+  }
+}
+
+/* Touch Device Improvements */
+@media (hover: none) {
+  .simulateur-form-field .MuiOutlinedInput-root:hover,
+  .simulateur-submit-button:hover,
+  .response-message:hover,
+  .response-external:hover,
+  .response-code:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .simulateur-form-field .MuiOutlinedInput-root:active,
+  .simulateur-submit-button:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Dark Mode Mobile Adjustments */
+@media (max-width: 768px) {
+  .dark-mode .simulateur-form-paper {
+    background: rgba(30, 41, 59, 0.98);
+  }
+
+  .dark-mode .response-container {
+    background: rgba(30, 41, 59, 0.98);
+  }
+
+  .dark-mode .simulateur-form-field .MuiOutlinedInput-root {
+    background: rgba(30, 41, 59, 0.95) !important;
+  }
 }
