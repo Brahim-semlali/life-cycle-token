@@ -1570,3 +1570,26 @@
     background: rgba(30, 41, 59, 0.95) !important;
   }
 }
+
+.response-card-description {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 16px;
+  margin-top: 8px;
+  font-family: monospace;
+  font-size: 14px;
+  overflow-x: auto;
+  border: 1px solid #e9ecef;
+}
+
+.response-card-description pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.dark-mode .response-card-description {
+  background-color: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}

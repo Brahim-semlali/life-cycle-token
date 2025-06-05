@@ -11,7 +11,9 @@ const API_ENDPOINTS = {
     // Endpoint unifié pour les actions sur les tokens
     TOKEN_ACTION: '/token/action/',
     // Endpoint pour l'issuance TSP
-    ISSUE_TSP_TOKEN: '/tsp/send/'
+    ISSUE_TSP_TOKEN: '/tsp/send/',
+    // Endpoint pour la description de carte
+    GET_CARD_DESCRIPTION: '/tsp/card/'
 };
 
 // Définition de l'URL de base de l'API
@@ -1557,6 +1559,83 @@ const TokenService = {
                 success: false,
                 error: error.response?.data?.message || 'Failed to fetch token action options',
                 details: error.message
+            };
+        }
+    },
+
+    /**
+     * Get card description from TSP
+     * @param {Object} cardData - Data required for card description
+     * @returns {Promise<Object>} - Success status with data or error
+     */
+    async getCardDescription(cardData) {
+        try {
+            console.log('TokenService.getCardDescription: Starting card description request');
+            
+            // Récupérer l'utilisateur connecté
+            const user = TokenStorage.getUser();
+            const operatorID = user ? user.email || user.username : '';
+            
+            // Préparer les données au format attendu par l'API
+            const payload = {
+                tsp: cardData.tsp,
+                tokenRequestor: cardData.tokenRequestor,
+                pan: cardData.pan,
+                expiryMonth: cardData.expiryMonth || cardData.expiryDate?.month,
+                expiryYear: cardData.expiryYear || cardData.expiryDate?.year,
+                cvv: cardData.cvv || cardData.cvv2,
+                panSource: cardData.panSource,
+                operatorID: operatorID
+            };
+            
+            console.log('TokenService.getCardDescription: Request payload:', payload);
+            
+            // Appel à l'API
+            const response = await apiClient.post(API_ENDPOINTS.GET_CARD_DESCRIPTION, payload);
+            
+            // Log de la réponse en cas de succès
+            console.log('TokenService.getCardDescription: Success response:', {
+                status: response.status,
+                statusText: response.statusText,
+                data: response.data
+            });
+            
+            // Retourner la réponse avec le statut et le statusText
+            return {
+                message_erreur: response.data.message_erreur || response.data.message || 'Card description retrieved successfully',
+                message_externe_erreur: response.data.message_externe_erreur || response.data.message_externe || '',
+                status: response.status,
+                statusText: response.statusText,
+                data: response.data
+            };
+            
+        } catch (error) {
+            // Log détaillé de l'erreur
+            console.error('TokenService.getCardDescription: Error occurred:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+            
+            // En cas d'erreur, retourner les données avec le statut
+            if (error.response) {
+                return {
+                    message_erreur: error.response.data?.message_erreur || error.response.data?.message || 'Error retrieving card description',
+                    message_externe_erreur: error.response.data?.message_externe_erreur || error.response.data?.message_externe || '',
+                    status: error.response.status,
+                    statusText: error.response.statusText,
+                    data: error.response.data
+                };
+            }
+            
+            // Si pas de réponse du serveur, retourner une erreur générique
+            return {
+                message_erreur: 'Server connection error',
+                message_externe_erreur: JSON.stringify({ erreur: 'Technical error' }),
+                status: error.status || 500,
+                statusText: error.statusText || 'Internal Server Error',
+                data: null
             };
         }
     }

@@ -217,7 +217,13 @@ const SimulateurContent = () => {
       };
 
       const response = await TokenService.getCardDescription(payload);
-      const formattedResponse = formatResponse(response);
+      
+      const formattedResponse = {
+        message: response.message_erreur,
+        messageExterne: response.message_externe_erreur,
+        statusCode: response.status,
+        cardDescription: response.data
+      };
       
       setResponseData(formattedResponse);
       setNotification({
@@ -227,8 +233,14 @@ const SimulateurContent = () => {
       });
 
     } catch (error) {
-      console.error('Error in form submission:', error);
-      const errorResponse = handleAxiosError(error);
+      console.error('Error in card description submission:', error);
+      
+      const errorResponse = {
+        message: error.response?.data?.message_erreur || 'Error retrieving card description',
+        messageExterne: error.response?.data?.message_externe_erreur || '',
+        statusCode: error.response?.status || 500
+      };
+      
       setResponseData(errorResponse);
       setNotification({
         open: true,
@@ -254,7 +266,7 @@ const SimulateurContent = () => {
     try {
       if (typeof messageExterne === 'string') {
         const parsed = JSON.parse(messageExterne);
-        return parsed.message || messageExterne;
+        return parsed.erreur || parsed.message || messageExterne;
       }
       return messageExterne;
     } catch (e) {
