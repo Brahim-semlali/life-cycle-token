@@ -179,349 +179,288 @@ const Dashboard = () => {
     <Box
       className={`dashboard-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'}`}
       sx={{
-        padding: '2rem',
+        padding: { xs: '1.5rem', md: '2rem' },
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        marginLeft: isMinimized ? '5rem' : '250px',
-        width: isMinimized ? 'calc(100% - 5rem)' : 'calc(100% - 250px)',
+        marginLeft: { xs: 0, md: isMinimized ? '5rem' : '250px' },
+        width: { xs: '100%', md: isMinimized ? 'calc(100% - 5rem)' : 'calc(100% - 250px)' },
         minHeight: '100vh',
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
+        left: 0,
         right: 0,
+        bottom: 0,
         overflowY: 'auto',
-        backgroundColor: '#f5f7ff',
-        color: '#6b7a99',
-        '@media (max-width: 768px)': {
-          marginLeft: '0',
-          width: '100%',
-          padding: '1.5rem'
-        }
+        overflowX: 'hidden',
+        color: isDarkMode ? '#e0e0e0' : '#6b7a99',
+        backgroundColor: isDarkMode ? '#121212' : '#f6f8ff',
       }}
     >
-      <Box sx={{ 
-        mb: 4,
-        textAlign: 'center',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        position: 'relative'
-      }}>
-        <Box 
-          sx={{
-            position: 'absolute',
-            top: '-20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%',
-            height: '180px',
-            background: 'linear-gradient(180deg, rgba(63, 104, 208, 0.08) 0%, rgba(63, 104, 208, 0) 100%)',
-            borderRadius: '50%',
-            filter: 'blur(30px)',
-            zIndex: -1
-          }}
-        />
-        <Typography variant="h2" className="gradient-text dashboard-title" sx={{
-          fontWeight: 700,
-          mb: 2,
-          fontSize: '3.5rem',
-          background: 'linear-gradient(90deg, #3968d0 0%, #4f46e5 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          letterSpacing: '0.02em',
-          textAlign: 'center'
-        }}>
-          {t('dashboard.title', 'Dashboard')}
-        </Typography>
-        
-        <Typography variant="h6" sx={{ 
-          color: '#64748b', 
-          mb: 4, 
-          maxWidth: '800px',
-          margin: '0 auto',
-          fontWeight: 400,
-          fontSize: '1.1rem',
-          letterSpacing: '0.01em'
-        }}>
-          {userData && userData.first_name ? 
-            t('dashboard.welcome', 'Welcome, {{name}}', { name: `${userData.first_name} ${userData.last_name}` }) :
-            t('dashboard.welcomeGeneric', 'Welcome to your dashboard')}
-        </Typography>
+      {/* Animated background elements */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 0 }}>
+        {[...Array(5)].map((_, i) => (
+          <Box
+            key={i}
+            sx={{
+              position: 'absolute',
+              width: { xs: '150px', md: '250px' },
+              height: { xs: '150px', md: '250px' },
+              background: `linear-gradient(135deg, ${isDarkMode ? 'rgba(79, 70, 229, 0.03)' : 'rgba(79, 70, 229, 0.05)'} 0%, ${isDarkMode ? 'rgba(63, 104, 208, 0.03)' : 'rgba(63, 104, 208, 0.05)'} 100%)`,
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+              animation: `float ${Math.random() * 10 + 15}s ease-in-out infinite`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        ))}
       </Box>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Paper sx={{ 
-          p: 3, 
-          bgcolor: 'rgba(239, 68, 68, 0.1)', 
-          color: '#ef4444', 
-          borderRadius: '12px',
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          <Typography>{error}</Typography>
-        </Paper>
-      ) : (
+      <Box sx={{ 
+        position: 'relative',
+        zIndex: 1,
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          maxWidth: '1200px',
-          margin: '0 auto'
+          textAlign: 'center',
+          mb: 4,
+          pt: { xs: 2, md: 4 }
         }}>
-          <Grid container spacing={3} justifyContent="center">
-            {/* User Information Card */}
-            <Grid item xs={12} md={10} lg={8}>
-              <Card sx={{ 
-                borderRadius: '16px', 
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                height: '100%',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)'
-                }
-              }}>
-                <CardContent sx={{ p: 0 }}>
-                  <Box sx={{ 
-                    p: 4, 
-                    bgcolor: 'primary.main', 
-                    borderTopLeftRadius: '16px', 
-                    borderTopRightRadius: '16px',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 3
-                  }}>
-                    <Avatar 
-                      sx={{ 
-                        width: 80, 
-                        height: 80, 
-                        bgcolor: 'white', 
-                        color: 'primary.main',
-                        fontWeight: 'bold',
-                        fontSize: '2rem',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                      }}
-                    >
-                      {getInitials(userData?.first_name, userData?.last_name)}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                        {userData?.first_name} {userData?.last_name}
-                      </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, mt: 0.5 }}>
-                        {userData?.email}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  
-                  <Box sx={{ p: 4 }}>
+          <Typography variant="h2" className="gradient-text dashboard-title">
+            {t('dashboard.title', 'Dashboard')}
+          </Typography>
+          
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : '#64748b',
+              mb: 4,
+              maxWidth: '800px',
+              margin: '0 auto',
+              fontWeight: 400,
+              fontSize: '1.1rem',
+              letterSpacing: '0.01em',
+              opacity: 0,
+              animation: 'slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+              animationDelay: '0.3s'
+            }}
+          >
+            {userData && userData.first_name ? 
+              t('dashboard.welcome', 'Welcome, {{name}}', { name: `${userData.first_name} ${userData.last_name}` }) :
+              t('dashboard.welcomeGeneric', 'Welcome to your dashboard')}
+          </Typography>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            flex: 1
+          }}>
+            <div className="loading-spinner" />
+          </Box>
+        ) : error ? (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            px: 2
+          }}>
+            <Paper sx={{ 
+              p: 3, 
+              bgcolor: 'rgba(239, 68, 68, 0.1)', 
+              color: '#ef4444', 
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '800px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  background: 'linear-gradient(45deg, transparent, rgba(239, 68, 68, 0.1), transparent)',
+                  animation: 'shine 2s infinite',
+                }}
+              />
+              <Typography>{error}</Typography>
+            </Paper>
+          </Box>
+        ) : (
+          <Box sx={{ 
+            flex: 1,
+            width: '100%',
+            px: { xs: 2, md: 3 }
+          }}>
+            <Grid container spacing={3} justifyContent="center">
+              <Grid item xs={12} md={10} lg={8}>
+                <Card className="card-animation">
+                  <CardContent sx={{ p: 0 }}>
                     <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      mb: 3,
-                      flexWrap: 'wrap',
-                      gap: 2
+                      p: { xs: 3, md: 4 }, 
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #3968d0 100%)',
+                      borderTopLeftRadius: '16px', 
+                      borderTopRightRadius: '16px',
+                      color: 'white',
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: 'center',
+                      gap: 3,
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {t('dashboard.personalInfo', 'Informations personnelles')}
-                      </Typography>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 60%)',
+                        }}
+                      />
+                      <Avatar 
+                        sx={{ 
+                          width: { xs: 70, md: 80 }, 
+                          height: { xs: 70, md: 80 }, 
+                          bgcolor: 'white', 
+                          color: '#4f46e5',
+                          fontWeight: 'bold',
+                          fontSize: { xs: '1.8rem', md: '2rem' }
+                        }}
+                      >
+                        {getInitials(userData?.first_name, userData?.last_name)}
+                      </Avatar>
+                      <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                        <Typography variant="h5" sx={{ 
+                          fontWeight: 600, 
+                          textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          mb: 0.5
+                        }}>
+                          {userData?.first_name} {userData?.last_name}
+                        </Typography>
+                        <Typography variant="body1" sx={{ 
+                          opacity: 0.9,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: { xs: 'center', sm: 'flex-start' },
+                          gap: 1
+                        }}>
+                          <span className="material-icons" style={{ fontSize: '18px' }}>email</span>
+                          {userData?.email}
+                        </Typography>
+                      </Box>
                     </Box>
                     
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          mb: 2,
-                          p: 2,
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                          }
+                    <Box sx={{ p: { xs: 2, md: 4 } }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        mb: 3,
+                        flexWrap: 'wrap',
+                        gap: 2
+                      }}>
+                        <Typography variant="h6" sx={{ 
+                          fontWeight: 600,
+                          background: 'linear-gradient(135deg, #4f46e5 0%, #3968d0 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
                         }}>
-                          <Box sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            borderRadius: '50%', 
-                            bgcolor: 'rgba(79, 70, 229, 0.1)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            mr: 2
+                          <span className="material-icons" style={{ 
+                            fontSize: '24px',
+                            background: 'linear-gradient(135deg, #4f46e5 0%, #3968d0 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
                           }}>
-                            <span className="material-icons" style={{ color: '#4f46e5', fontSize: '24px' }}>person</span>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                              {t('dashboard.fullName', 'Nom complet')}
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              {userData?.first_name} {userData?.last_name}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
+                            person_outline
+                          </span>
+                          {t('dashboard.personalInfo', 'Informations personnelles')}
+                        </Typography>
+                      </Box>
                       
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          mb: 2,
-                          p: 2,
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                          }
-                        }}>
-                          <Box sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            borderRadius: '50%', 
-                            bgcolor: 'rgba(79, 70, 229, 0.1)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            mr: 2
-                          }}>
-                            <span className="material-icons" style={{ color: '#4f46e5', fontSize: '24px' }}>email</span>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                              {t('dashboard.email', 'Email')}
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              {userData?.email}
-                            </Typography>
-                          </Box>
-                        </Box>
+                      <Grid container spacing={3}>
+                        {[
+                          { icon: 'person', label: 'dashboard.fullName', value: `${userData?.first_name} ${userData?.last_name}` },
+                          { icon: 'email', label: 'dashboard.email', value: userData?.email },
+                          { icon: 'phone', label: 'dashboard.phone', value: userData?.phone || '-' },
+                          { icon: 'circle', label: 'dashboard.status', value: userData?.status || 'ACTIF', isStatus: true },
+                          { icon: 'language', label: 'dashboard.language', value: userData?.language || 'FR' }
+                        ].map((item, index) => (
+                          <Grid item xs={12} md={6} key={index}>
+                            <Box className="info-box">
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 2
+                              }}>
+                                <Box className="info-box-icon">
+                                  <span className="material-icons">{item.icon}</span>
+                                </Box>
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography variant="body2" color="text.secondary" sx={{ 
+                                    mb: 0.5,
+                                    fontSize: '0.875rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px'
+                                  }}>
+                                    {t(item.label)}
+                                  </Typography>
+                                  {item.isStatus ? (
+                                    <Chip 
+                                      label={item.value}
+                                      className="status-chip"
+                                      size="small"
+                                    />
+                                  ) : (
+                                    <Typography variant="body1" sx={{ 
+                                      fontWeight: 500,
+                                      color: isDarkMode ? 'rgba(255, 255, 255, 0.9)' : '#1a1a1a'
+                                    }}>
+                                      {item.value}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        ))}
                       </Grid>
-                      
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          mb: 2,
-                          p: 2,
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                          }
-                        }}>
-                          <Box sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            borderRadius: '50%', 
-                            bgcolor: 'rgba(79, 70, 229, 0.1)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            mr: 2
-                          }}>
-                            <span className="material-icons" style={{ color: '#4f46e5', fontSize: '24px' }}>phone</span>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                              {t('dashboard.phone', 'Téléphone')}
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              {userData?.phone || '-'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          mb: 2,
-                          p: 2,
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                          }
-                        }}>
-                          <Box sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            borderRadius: '50%', 
-                            bgcolor: 'rgba(79, 70, 229, 0.1)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            mr: 2
-                          }}>
-                            <span className="material-icons" style={{ color: '#4f46e5', fontSize: '24px' }}>circle</span>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                              {t('dashboard.status', 'Statut')}
-                            </Typography>
-                            <Chip 
-                              label={userData?.status || 'ACTIF'} 
-                              color={userData?.status === 'ACTIF' ? 'success' : 'default'}
-                              size="small"
-                              sx={{ fontWeight: 500, mt: 0.5 }}
-                            />
-                          </Box>
-                        </Box>
-                      </Grid>
-                      
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          mb: 2,
-                          p: 2,
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(79, 70, 229, 0.04)',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                          }
-                        }}>
-                          <Box sx={{ 
-                            width: 50, 
-                            height: 50, 
-                            borderRadius: '50%', 
-                            bgcolor: 'rgba(79, 70, 229, 0.1)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            mr: 2
-                          }}>
-                            <span className="material-icons" style={{ color: '#4f46e5', fontSize: '24px' }}>language</span>
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                              {t('dashboard.language', 'Langue')}
-                            </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              {userData?.language || 'FR'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </CardContent>
-              </Card>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-          </Grid>
-        </Box>
-      )}
+          </Box>
+        )}
+      </Box>
+
+      <style jsx="true" global="true">{`
+        @keyframes float {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+          50% { transform: translate(-50%, -50%) translateY(-20px); }
+        }
+        @keyframes shine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </Box>
   );
 };

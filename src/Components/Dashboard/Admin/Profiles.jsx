@@ -1647,7 +1647,7 @@ const Profiles = () => {
     return (
         <Box className={`profiles-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : 'light-mode'} ${isMobile ? 'mobile-view' : ''} ${isTablet ? 'tablet-view' : ''}`}
             sx={{
-                padding: isMobile ? '1rem' : '2rem',
+                padding: isMobile ? '1rem' : '2rem 2rem 2rem 3.5rem',  /* Augmenté le padding gauche à 3.5rem */
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 marginLeft: isMobile ? '0' : (isMinimized ? '5rem' : '250px'),
                 width: isMobile ? '100%' : (isMinimized ? 'calc(100% - 5rem)' : 'calc(100% - 250px)'),
@@ -2204,24 +2204,14 @@ const Profiles = () => {
                     backgroundColor: 'white',
                     overflowX: isMobile ? 'auto' : 'hidden' 
                 }}>
-                    <table className="modern-table" style={{ 
+                    <table className="modern-table profiles-table" style={{ 
                         width: '100%', 
                         borderCollapse: 'collapse',
                         minWidth: isMobile ? '700px' : 'auto'
                     }}>
                         <thead>
                             <tr>
-                                <th style={{ 
-                                    padding: isMobile ? '12px 16px' : '16px 20px', 
-                                    textAlign: 'left', 
-                                    backgroundColor: '#f8fafc', 
-                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                                    fontWeight: 600,
-                                    color: '#1e293b',
-                                    fontSize: '0.875rem',
-                                    position: 'relative',
-                                    width: isMobile ? '40%' : 'auto'
-                                }}>
+                                <th className="table-header">
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Checkbox
                                             checked={filteredProfiles.length > 0 && selectedProfiles.length === filteredProfiles.length}
@@ -2242,46 +2232,11 @@ const Profiles = () => {
                                     </Box>
                                 </th>
                                 {!isMobile && (
-                                    <th style={{ 
-                                        padding: '16px 20px', 
-                                        textAlign: 'left', 
-                                        backgroundColor: '#f8fafc', 
-                                        borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                                        fontWeight: 600,
-                                        color: '#1e293b',
-                                        fontSize: '0.875rem'
-                                    }}>Description</th>
+                                    <th className="table-header">Description</th>
                                 )}
-                                <th style={{ 
-                                    padding: isMobile ? '12px 16px' : '16px 20px', 
-                                    textAlign: 'left', 
-                                    backgroundColor: '#f8fafc', 
-                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                                    fontWeight: 600,
-                                    color: '#1e293b',
-                                    fontSize: '0.875rem',
-                                    width: isMobile ? '30%' : 'auto'
-                                }}>Modules</th>
-                                <th style={{ 
-                                    padding: isMobile ? '12px 16px' : '16px 20px', 
-                                    textAlign: 'left', 
-                                    backgroundColor: '#f8fafc', 
-                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                                    fontWeight: 600,
-                                    color: '#1e293b',
-                                    fontSize: '0.875rem',
-                                    width: isMobile ? '15%' : 'auto'
-                                }}>Status</th>
-                                <th style={{ 
-                                    padding: isMobile ? '12px 16px' : '16px 20px', 
-                                    textAlign: 'center', 
-                                    backgroundColor: '#f8fafc', 
-                                    borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-                                    fontWeight: 600,
-                                    color: '#1e293b',
-                                    fontSize: '0.875rem',
-                                    width: isMobile ? '15%' : '140px'
-                                }}>Actions</th>
+                                <th className="table-header">Modules</th>
+                                <th className="table-header">Status</th>
+                                <th className="table-header" style={{ textAlign: 'center' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2322,17 +2277,17 @@ const Profiles = () => {
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
                                             />
-                                            <Avatar
-                                                sx={{
-                                                    width: isMobile ? 32 : 40,
-                                                    height: isMobile ? 32 : 40,
-                                                    bgcolor: getAvatarColor(profile.id),
-                                                    fontSize: isMobile ? '0.8rem' : '1rem',
-                                                    fontWeight: 'bold'
+                                            <div 
+                                                className="user-avatar"
+                                                style={{ 
+                                                    backgroundColor: getAvatarColor(profile.id),
+                                                    width: isMobile ? '32px' : '40px',
+                                                    height: isMobile ? '32px' : '40px',
+                                                    fontSize: isMobile ? '0.8rem' : '1rem'
                                                 }}
                                             >
                                                 {getInitials(profile.name)}
-                                            </Avatar>
+                                            </div>
                                             <Typography variant="body1" sx={{ 
                                                 fontWeight: 500, 
                                                 color: '#1e293b',

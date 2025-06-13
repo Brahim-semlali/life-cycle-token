@@ -54,7 +54,12 @@ import {
     PowerSettingsNew as DeactivateIcon,
     PlayArrow as ActivateIcon,
     Replay as ResumeIcon,
-    HourglassEmpty as WaitingIcon
+    HourglassEmpty as WaitingIcon,
+    Close as CloseIcon,
+    Info as InfoIcon,
+    Schedule as ScheduleIcon,
+    Event as EventIcon,
+    VerifiedUser as VerifiedUserIcon
 } from '@mui/icons-material';
 import TokenTable from './TokenTable';
 import './TokenList.css';
@@ -247,6 +252,23 @@ const TokenList = () => {
     const [lastRequest, setLastRequest] = useState(null);
     const searchTimer = React.useRef(null);
     const debounceTimer = React.useRef(null);
+
+    // Ajout de la fonction formatDate
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        } catch (error) {
+            return 'Invalid Date';
+        }
+    };
 
     // Fonction pour comparer deux objets de filtres
     const areFiltersEqual = (filters1, filters2) => {
@@ -1371,315 +1393,186 @@ const TokenList = () => {
                     )}
 
                     {/* Search Form */}
-                <Box
+                <Paper 
                     component="section"
-                        sx={{ 
+                    className="search-form-paper"
+                    elevation={0}
+                    sx={{ 
                         mb: 4,
-                        borderRadius: '12px',
-                        bgcolor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : '#fff',
                         p: 3,
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid',
-                        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)'
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}
-                    >
-                        <Typography variant="h6" sx={{ 
-                            mb: 3, 
-                            fontWeight: 600, 
-                            color: isDarkMode ? '#e2e8f0' : '#1e293b',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1
-                        }}>
+                >
+                    <Typography variant="h6" sx={{ 
+                        mb: 3, 
+                        fontWeight: 600, 
+                        color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                    }}>
                         <SearchIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
                         Search Tokens
-                        </Typography>
-                        
-                        <form onSubmit={handleSearch}>
-                            <Grid container spacing={2.5}>
-                                <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                        label="Token value"
-                                        name="token_value"
-                                        value={searchParams.token_value}
-                                        onChange={handleInputChange}
+                    </Typography>
+                    
+                    <form onSubmit={handleSearch}>
+                        <Grid container spacing={2.5}>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    placeholder="TOKEN VALUE"
+                                    value={searchParams.token_value}
+                                    onChange={handleInputChange}
+                                    name="token_value"
+                                    variant="outlined"
+                                    size="small"
+                                    InputProps={{
+                                        startAdornment: null
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    label="Token type"
+                                    name="token_type"
+                                    value={searchParams.token_type}
+                                    onChange={handleInputChange}
+                                    variant="outlined"
+                                    size="medium"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    label="Requestor ID"
+                                    name="token_requestor_id"
+                                    value={searchParams.token_requestor_id}
+                                    onChange={handleInputChange}
+                                    variant="outlined"
+                                    size="medium"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    fullWidth
+                                    label="Reference ID"
+                                    name="token_reference_id"
+                                    value={searchParams.token_reference_id}
+                                    onChange={handleInputChange}
+                                    variant="outlined"
+                                    size="medium"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <FormControl fullWidth size="small">
+                                    <Select
+                                        value={statusFilter}
+                                        onChange={handleStatusFilterChange}
+                                        displayEmpty
                                         variant="outlined"
-                                        size="small"
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <SearchIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
-                                                </InputAdornment>
-                                            )
-                                        }}
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                '&:hover': {
-                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                },
-                                                '&.Mui-focused': {
-                                                    borderColor: '#6366f1',
-                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                        label="Token type"
-                                        name="token_type"
-                                        value={searchParams.token_type}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                '&:hover': {
-                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                },
-                                                '&.Mui-focused': {
-                                                    borderColor: '#6366f1',
-                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                        label="Requestor ID"
-                                        name="token_requestor_id"
-                                        value={searchParams.token_requestor_id}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                '&:hover': {
-                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                },
-                                                '&.Mui-focused': {
-                                                    borderColor: '#6366f1',
-                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <TextField
-                                        fullWidth
-                                        label="Reference ID"
-                                        name="token_reference_id"
-                                        value={searchParams.token_reference_id}
-                                        onChange={handleInputChange}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                '&:hover': {
-                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                },
-                                                '&.Mui-focused': {
-                                                    borderColor: '#6366f1',
-                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <FormControl 
-                                        variant="outlined" 
-                                        size="small"
-                                        fullWidth
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                '&:hover': {
-                                                    borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                },
-                                                '&.Mui-focused': {
-                                                    borderColor: '#6366f1',
-                                                    boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                }
-                                            }
-                                        }}
+                                        placeholder="All Statuses"
                                     >
-                                    <InputLabel>Status Filter</InputLabel>
-                                        <Select
-                                            value={statusFilter}
-                                            onChange={handleStatusFilterChange}
-                                            label="Status Filter"
-                                            startAdornment={
-                                                <InputAdornment position="start">
-                                                    <FilterListIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
-                                                </InputAdornment>
-                                            }
-                                        >
                                         <MenuItem value="all">All Statuses</MenuItem>
                                         <MenuItem value="ACTIVE">Active</MenuItem>
                                         <MenuItem value="INACTIVE">Inactive</MenuItem>
                                         <MenuItem value="SUSPENDED">Suspended</MenuItem>
-                                        <MenuItem value="DEACTIVATED">Deactivated</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <DatePicker
-                                        label="Created from"
-                                        value={startDateObj}
-                                        onChange={setStartDateObj}
-                                        format="dd/MM/yyyy"
-                                        slotProps={{
-                                            textField: {
-                                                fullWidth: true,
-                                                size: "small",
-                                                InputProps: {
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <CalendarIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
-                                                        </InputAdornment>
-                                                    )
-                                                },
-                                                sx: {
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderRadius: '8px',
-                                                        border: '1px solid',
-                                                        borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                        '&:hover': {
-                                                            borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                        },
-                                                        '&.Mui-focused': {
-                                                            borderColor: '#6366f1',
-                                                            boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <DatePicker
-                                        label="Created to"
-                                        value={endDateObj}
-                                        onChange={setEndDateObj}
-                                        format="dd/MM/yyyy"
-                                        slotProps={{
-                                            textField: {
-                                                fullWidth: true,
-                                                size: "small",
-                                                InputProps: {
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <CalendarIcon fontSize="small" sx={{ color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8' }} />
-                                                        </InputAdornment>
-                                                    )
-                                                },
-                                                sx: {
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderRadius: '8px',
-                                                        border: '1px solid',
-                                                        borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                                                        '&:hover': {
-                                                            borderColor: theme => isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-                                                        },
-                                                        '&.Mui-focused': {
-                                                            borderColor: '#6366f1',
-                                                            boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.2)'
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={4}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                name="includeDeleted"
-                                                checked={searchParams.includeDeleted}
-                                                onChange={handleInputChange}
-                                                color="primary"
-                                                sx={{
-                                                    color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8',
-                                                    '&.Mui-checked': {
-                                                        color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : '#94a3b8'
-                                                    }
-                                                }}
-                                            />
-                                        }
-                                    label="Include deleted tokens"
-                                        sx={{
-                                            color: isDarkMode ? '#e2e8f0' : '#475569'
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
-                                        <Button 
-                                            variant="outlined" 
-                                            startIcon={<ClearIcon />}
-                                        onClick={handleClear}
-                                            sx={{
-                                                color: isDarkMode ? '#e2e8f0' : '#64748b',
-                                                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0',
-                                                borderRadius: '8px',
-                                                textTransform: 'none',
-                                                fontWeight: 500,
-                                                '&:hover': {
-                                                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#cbd5e1',
-                                                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(226, 232, 240, 0.2)'
-                                                }
-                                            }}
-                                        >
-                                        Clear
-                                        </Button>
-                                        <Button 
-                                            type="submit" 
-                                            variant="contained" 
-                                            startIcon={<SearchIcon />}
-                                            sx={{
-                                                bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#6366f1',
-                                                borderRadius: '8px',
-                                                textTransform: 'none',
-                                                fontWeight: 600,
-                                                fontSize: '0.95rem',
-                                                padding: '8px 24px',
-                                                boxShadow: '0 4px 6px rgba(99, 102, 241, 0.15)',
-                                                '&:hover': {
-                                                    bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#4f46e5',
-                                                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
-                                                }
-                                            }}
-                                        >
-                                        Rechercher
-                                        </Button>
-                                    </Box>
-                                </Grid>
+                                    </Select>
+                                </FormControl>
                             </Grid>
-                        </form>
-                </Box>
+                            <Grid item xs={12} md={3}>
+                                <DatePicker
+                                    label="Created from"
+                                    value={startDateObj}
+                                    onChange={(newValue) => {
+                                        setStartDateObj(newValue);
+                                        setSearchParams(prev => ({
+                                            ...prev,
+                                            startDate: newValue ? format(newValue, 'yyyy-MM-dd') : ''
+                                        }));
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField 
+                                            {...params} 
+                                            fullWidth
+                                            size="medium"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <CalendarIcon sx={{ color: 'action.active' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <DatePicker
+                                    label="Created to"
+                                    value={endDateObj}
+                                    onChange={(newValue) => {
+                                        setEndDateObj(newValue);
+                                        setSearchParams(prev => ({
+                                            ...prev,
+                                            endDate: newValue ? format(newValue, 'yyyy-MM-dd') : ''
+                                        }));
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField 
+                                            {...params} 
+                                            fullWidth
+                                            size="medium"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <CalendarIcon sx={{ color: 'action.active' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={searchParams.includeDeleted}
+                                            onChange={(e) => setSearchParams(prev => ({
+                                                ...prev,
+                                                includeDeleted: e.target.checked
+                                            }))}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Include deleted tokens"
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleClear}
+                                        startIcon={<ClearIcon />}
+                                    >
+                                        Clear
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        type="submit"
+                                        startIcon={<SearchIcon />}
+                                    >
+                                        Rechercher
+                                    </Button>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </form>
+                </Paper>
 
                     {/* Results Summary */}
                     <Box sx={{ 
@@ -1914,237 +1807,176 @@ const TokenList = () => {
                     fullWidth
                     PaperProps={{
                         sx: {
-                            borderRadius: '16px',
-                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-                            overflow: 'hidden',
-                            backgroundImage: theme => theme.palette.mode === 'dark' 
-                                ? 'linear-gradient(to bottom, rgba(79, 70, 229, 0.1) 0%, rgba(0, 0, 0, 0) 100%)'
-                                : 'linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
-                            '& .MuiDialogTitle-root': {
-                                p: 0
-                            }
+                            borderRadius: '24px',
+                            background: theme => theme.palette.mode === 'dark' 
+                                ? 'linear-gradient(145deg, rgba(66, 66, 255, 0.2), rgba(120, 86, 255, 0.2))'
+                                : 'linear-gradient(145deg, #c5cae9, #e8eaf6)',
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid',
+                            borderColor: theme => theme.palette.mode === 'dark' 
+                                ? 'rgba(255, 255, 255, 0.1)' 
+                                : 'rgba(255, 255, 255, 0.5)',
+                            padding: '24px',
+                            overflow: 'hidden'
                         }
                     }}
                 >
-                    <Box sx={{ 
-                        position: 'relative',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: '200px',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                            opacity: theme => theme.palette.mode === 'dark' ? 0.8 : 1
-                        }
-                    }}>
-                        <DialogTitle 
-                            component="div"
-                            sx={{ 
-                                position: 'relative',
-                                color: '#fff',
-                                p: 3,
-                                pb: 0
-                            }}
-                        >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                <Box sx={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                    backdropFilter: 'blur(8px)'
+                    {detailDialog.token && (
+                        <>
+                            {/* Header */}
+                            <Box sx={{ 
+                                mb: 4,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2
+                            }}>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'space-between'
                                 }}>
-                                    <TokenIcon sx={{ fontSize: 28 }} />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                        Token Details
-                                    </Typography>
-                                    {detailDialog.token && (
-                                        <Typography variant="subtitle1" sx={{ opacity: 0.9, fontWeight: 400, fontSize: '0.875rem' }}>
-                                            ID: {detailDialog.token.id} {detailDialog.token.token && `• ${detailDialog.token.token}`}
+                                    <Box>
+                                        <Typography variant="h5" sx={{ 
+                                            fontWeight: 700,
+                                            mb: 1,
+                                            background: theme => theme.palette.mode === 'dark'
+                                                ? 'linear-gradient(90deg, #93c5fd, #818cf8)'
+                                                : 'linear-gradient(90deg, #4f46e5, #7c3aed)',
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent'
+                                        }}>
+                                            Token Details
                                         </Typography>
-                                    )}
+                                        <Typography variant="subtitle1" sx={{ 
+                                            color: 'text.secondary',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            fontFamily: 'Roboto Mono, monospace'
+                                        }}>
+                                            ID: {detailDialog.token.id}
+                                        </Typography>
+                                    </Box>
+                                    <IconButton 
+                                        onClick={handleCloseDetailDialog}
+                                        sx={{ 
+                                            bgcolor: theme => theme.palette.mode === 'dark' 
+                                                ? 'rgba(255, 255, 255, 0.05)' 
+                                                : 'rgba(0, 0, 0, 0.05)',
+                                            '&:hover': {
+                                                bgcolor: theme => theme.palette.mode === 'dark' 
+                                                    ? 'rgba(255, 255, 255, 0.1)' 
+                                                    : 'rgba(0, 0, 0, 0.1)'
+                                            }
+                                        }}
+                                    >
+                                        <CloseIcon />
+                                    </IconButton>
                                 </Box>
-                            </Box>
 
-                            {detailDialog.token && detailDialog.token.tokenStatus && (
+                                {/* Status Bar */}
                                 <Box sx={{ 
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 3,
                                     p: 3,
-                                    mt: 2,
-                                    borderRadius: '12px',
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                    backdropFilter: 'blur(8px)'
+                                    borderRadius: '16px',
+                                    background: theme => theme.palette.mode === 'dark'
+                                        ? 'rgba(255, 255, 255, 0.05)'
+                                        : 'rgba(0, 0, 0, 0.02)',
+                                    border: '1px solid',
+                                    borderColor: theme => theme.palette.mode === 'dark'
+                                        ? 'rgba(255, 255, 255, 0.1)'
+                                        : 'rgba(0, 0, 0, 0.05)'
                                 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Chip 
-                                            label={detailDialog.token.tokenStatus} 
-                                            size="medium"
-                                            sx={{
-                                                fontSize: '0.875rem',
-                                                fontWeight: 600,
-                                                height: '32px',
-                                                borderRadius: '8px',
-                                                backgroundColor: theme => {
-                                                    const status = detailDialog.token.tokenStatus?.toLowerCase();
-                                                    if (status === 'active') return 'rgba(52, 211, 153, 0.2)';
-                                                    if (status === 'inactive') return 'rgba(239, 68, 68, 0.2)';
-                                                    if (status === 'suspended') return 'rgba(245, 158, 11, 0.2)';
-                                                    return 'rgba(107, 114, 128, 0.2)';
-                                                },
-                                                color: theme => {
-                                                    const status = detailDialog.token.tokenStatus?.toLowerCase();
-                                                    if (status === 'active') return '#10b981';
-                                                    if (status === 'inactive') return '#ef4444';
-                                                    if (status === 'suspended') return '#f59e0b';
-                                                    return '#6b7280';
-                                                },
-                                                '& .MuiChip-label': {
-                                                    px: 2
-                                                }
-                                            }}
+                                        <Chip
+                                            label={detailDialog.token.tokenStatus}
+                                            className={`status-${detailDialog.token.tokenStatus.toLowerCase()}`}
+                                            sx={{ height: '28px' }}
                                         />
-                                        <Typography variant="body1" sx={{ 
-                                            fontWeight: 500,
-                                            color: '#fff'
-                                        }}>
-                                            {detailDialog.token.tokenType} 
+                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                            {detailDialog.token.tokenType}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: 1,
-                                            color: 'rgba(255, 255, 255, 0.9)',
-                                            px: 2,
-                                            py: 1,
-                                            borderRadius: '8px',
-                                            bgcolor: 'rgba(255, 255, 255, 0.1)'
-                                        }}>
-                                            <SmartphoneIcon fontSize="small" />
-                                            <Typography variant="body2">
-                                                {getAssuranceMethodDescription(detailDialog.token.tokenAssuranceMethod)}
-                                            </Typography>
-                                        </Box>
-                                        {detailDialog.token.tokenExpirationDate && (
-                                            <Box sx={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: 1,
-                                                color: 'rgba(255, 255, 255, 0.9)',
-                                                px: 2,
-                                                py: 1,
-                                                borderRadius: '8px',
-                                                bgcolor: 'rgba(255, 255, 255, 0.1)'
-                                            }}>
-                                                <CalendarIcon fontSize="small" />
-                                                <Typography variant="body2">
-                                                    Expires: {new Date(detailDialog.token.tokenExpirationDate).toLocaleDateString()}
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </Box>
-                            )}
-                        </DialogTitle>
-                    </Box>
-
-                    <DialogContent 
-                        sx={{ 
-                            p: 0,
-                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : '#fff',
-                            mt: -3
-                        }}
-                    >
-                        {detailDialog.loading ? (
-                            <Box sx={{ 
-                                display: 'flex', 
-                                flexDirection: 'column',
-                                justifyContent: 'center', 
-                                alignItems: 'center', 
-                                minHeight: '300px',
-                                gap: 2
-                            }}>
-                                <CircularProgress size={40} />
-                                <Typography variant="body2" color="text.secondary">
-                                    Loading token details...
-                                </Typography>
-                            </Box>
-                        ) : detailDialog.token ? (
-                            <Box sx={{ p: 3 }}>
-                                {/* Actions Section */}
-                                <Box sx={{
-                                    mb: 4,
-                                    p: 3,
-                                    borderRadius: '12px',
-                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                                    border: '1px solid',
-                                    borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                }}>
                                     <Box sx={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 
                                         gap: 1,
-                                        mb: 2
+                                        color: 'text.secondary'
                                     }}>
-                                        <Box sx={{
-                                            width: 32,
-                                            height: 32,
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
-                                        }}>
-                                            <EditIcon sx={{ 
-                                                fontSize: 20,
-                                                color: '#6366f1'
-                                            }} />
-                                        </Box>
-                                        <Typography variant="h6" sx={{ 
-                                            fontSize: '1.1rem', 
-                                            fontWeight: 600,
-                                            color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                        }}>
-                                            Token Actions
+                                        <VerifiedUserIcon fontSize="small" />
+                                        <Typography variant="body2">
+                                            {getAssuranceMethodDescription(detailDialog.token.tokenAssuranceMethod)}
                                         </Typography>
                                     </Box>
-
                                     <Box sx={{ 
                                         display: 'flex', 
-                                        gap: 2, 
-                                        flexWrap: 'wrap',
-                                        alignItems: 'center'
+                                        alignItems: 'center', 
+                                        gap: 1,
+                                        color: 'text.secondary',
+                                        ml: 'auto'
                                     }}>
-                                        {/* Vérifier s'il y a une action en attente */}
+                                        <EventIcon fontSize="small" />
+                                        <Typography variant="body2">
+                                            Expires: {formatDate(detailDialog.token.tokenExpirationDate)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Box>
+
+                            {/* Content */}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {/* Actions Section */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ 
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        color: 'text.primary',
+                                        fontWeight: 600
+                                    }}>
+                                        <EditIcon fontSize="small" />
+                                        Token Actions
+                                    </Typography>
+                                    <Paper elevation={0} sx={{ 
+                                        p: 3,
+                                        borderRadius: '16px',
+                                        background: theme => theme.palette.mode === 'dark'
+                                            ? 'rgba(255, 255, 255, 0.03)'
+                                            : 'rgba(0, 0, 0, 0.02)',
+                                        border: '1px solid',
+                                        borderColor: theme => theme.palette.mode === 'dark'
+                                            ? 'rgba(255, 255, 255, 0.1)'
+                                            : 'rgba(0, 0, 0, 0.05)'
+                                    }}>
                                         {hasPendingStatusChange(detailDialog.token) ? (
                                             <Box sx={{ 
                                                 display: 'flex', 
                                                 alignItems: 'center', 
-                                                gap: 1,
-                                                bgcolor: 'rgba(99, 102, 241, 0.1)',
-                                                borderRadius: '8px',
-                                                py: 1.5,
-                                                px: 3,
-                                                width: '100%',
-                                                justifyContent: 'center'
+                                                gap: 2,
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(99, 102, 241, 0.1)'
+                                                    : 'rgba(99, 102, 241, 0.05)',
                                             }}>
-                                                <WaitingIcon fontSize="small" sx={{ color: '#6366f1' }} />
-                                                <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 500 }}>
+                                                <WaitingIcon sx={{ color: '#6366f1' }} />
+                                                <Typography sx={{ 
+                                                    color: '#6366f1',
+                                                    fontWeight: 500
+                                                }}>
                                                     Demande de {getPendingActionName(detailDialog.token)} en attente de confirmation
                                                 </Typography>
                                             </Box>
                                         ) : (
-                                            <>
+                                            <Box sx={{ 
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: 2
+                                            }}>
                                                 {getNormalizedStatus(detailDialog.token) === 'inactive' && (
                                                     <>
                                                         <Button 
@@ -2152,10 +1984,11 @@ const TokenList = () => {
                                                             startIcon={<ActivateIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'activate')}
                                                             sx={{
-                                                                bgcolor: '#10b981',
-                                                                '&:hover': { bgcolor: '#059669' },
-                                                                px: 3,
-                                                                py: 1
+                                                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                                                color: 'white',
+                                                                '&:hover': {
+                                                                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                                                                }
                                                             }}
                                                         >
                                                             Activate
@@ -2165,14 +1998,12 @@ const TokenList = () => {
                                                             startIcon={<DeactivateIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
                                                             sx={{
-                                                                color: '#6b7280',
                                                                 borderColor: '#6b7280',
-                                                                '&:hover': { 
-                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
-                                                                    borderColor: '#4b5563'
-                                                                },
-                                                                px: 3,
-                                                                py: 1
+                                                                color: '#6b7280',
+                                                                '&:hover': {
+                                                                    borderColor: '#4b5563',
+                                                                    background: 'rgba(107, 114, 128, 0.08)'
+                                                                }
                                                             }}
                                                         >
                                                             Deactivate
@@ -2187,10 +2018,11 @@ const TokenList = () => {
                                                             startIcon={<BlockIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'suspend')}
                                                             sx={{
-                                                                bgcolor: '#f59e0b',
-                                                                '&:hover': { bgcolor: '#d97706' },
-                                                                px: 3,
-                                                                py: 1
+                                                                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                                                color: 'white',
+                                                                '&:hover': {
+                                                                    background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
+                                                                }
                                                             }}
                                                         >
                                                             Suspend
@@ -2200,14 +2032,12 @@ const TokenList = () => {
                                                             startIcon={<DeactivateIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
                                                             sx={{
-                                                                color: '#6b7280',
                                                                 borderColor: '#6b7280',
-                                                                '&:hover': { 
-                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
-                                                                    borderColor: '#4b5563'
-                                                                },
-                                                                px: 3,
-                                                                py: 1
+                                                                color: '#6b7280',
+                                                                '&:hover': {
+                                                                    borderColor: '#4b5563',
+                                                                    background: 'rgba(107, 114, 128, 0.08)'
+                                                                }
                                                             }}
                                                         >
                                                             Deactivate
@@ -2222,10 +2052,11 @@ const TokenList = () => {
                                                             startIcon={<ResumeIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'resume')}
                                                             sx={{
-                                                                bgcolor: '#3b82f6',
-                                                                '&:hover': { bgcolor: '#2563eb' },
-                                                                px: 3,
-                                                                py: 1
+                                                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                                                color: 'white',
+                                                                '&:hover': {
+                                                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+                                                                }
                                                             }}
                                                         >
                                                             Resume
@@ -2235,290 +2066,340 @@ const TokenList = () => {
                                                             startIcon={<DeactivateIcon />}
                                                             onClick={() => handleUpdateStatus(detailDialog.token, 'deactivate')}
                                                             sx={{
-                                                                color: '#6b7280',
                                                                 borderColor: '#6b7280',
-                                                                '&:hover': { 
-                                                                    bgcolor: 'rgba(107, 114, 128, 0.1)',
-                                                                    borderColor: '#4b5563'
-                                                                },
-                                                                px: 3,
-                                                                py: 1
+                                                                color: '#6b7280',
+                                                                '&:hover': {
+                                                                    borderColor: '#4b5563',
+                                                                    background: 'rgba(107, 114, 128, 0.08)'
+                                                                }
                                                             }}
                                                         >
                                                             Deactivate
                                                         </Button>
                                                     </>
                                                 )}
-                                            </>
+                                            </Box>
                                         )}
-                                    </Box>
+                                    </Paper>
                                 </Box>
-                                
-                                <Grid container spacing={3}>
-                                    {/* Token Basic Info */}
-                                    <Grid item xs={12}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            mb: 2
-                                        }}>
-                                            <Box sx={{
-                                                width: 32,
-                                                height: 32,
-                                                borderRadius: '8px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
-                                            }}>
-                                                <TokenIcon sx={{ 
-                                                    fontSize: 20,
-                                                    color: '#6366f1'
-                                                }} />
-                                            </Box>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1.1rem', 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
-                                            }}>
-                                                Token Information
-                                            </Typography>
-                                        </Box>
-                                        <Grid container spacing={2}>
-                                            {[
-                                                { key: 'id', label: 'ID' },
-                                                { key: 'token', label: 'Token' },
-                                                { key: 'tokenReferenceID', label: 'Token Reference ID' },
-                                                { key: 'panReferenceID', label: 'PAN Reference ID' },
-                                                { key: 'tokenRequestorID', label: 'Token Requestor ID' },
-                                                { key: 'tokenType', label: 'Token Type' }
-                                            ].map(({ key, label }) => (
-                                                <Grid item xs={12} sm={6} md={4} key={key}>
-                                                    <Box sx={{
-                                                        p: 2,
-                                                        borderRadius: '12px',
-                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                                                        border: '1px solid',
-                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                        transition: 'all 0.2s ease-in-out',
-                                                        '&:hover': {
-                                                            transform: 'translateY(-2px)',
-                                                            boxShadow: theme => theme.palette.mode === 'dark' 
-                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
-                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                                        }
-                                                    }}>
-                                                        <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                                                            textTransform: 'uppercase',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 600,
-                                                            letterSpacing: 0.5,
-                                                            display: 'block',
-                                                            mb: 1
-                                                        }}>
-                                                            {label}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ 
-                                                            fontWeight: 500,
-                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                            wordBreak: 'break-all'
-                                                        }}>
-                                                            {detailDialog.token[key] !== null && detailDialog.token[key] !== undefined ? String(detailDialog.token[key]) : 'N/A'}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                    </Grid>
 
-                                    {/* Additional Token Info */}
-                                    <Grid item xs={12}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            mb: 2,
-                                            mt: 3
-                                        }}>
-                                            <Box sx={{
-                                                width: 32,
-                                                height: 32,
-                                                borderRadius: '8px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                                {/* Token Information */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ 
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        color: 'text.primary',
+                                        fontWeight: 600
+                                    }}>
+                                        <TokenIcon fontSize="small" />
+                                        Token Information
+                                    </Typography>
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                <AssessmentIcon sx={{ 
-                                                    fontSize: 20,
-                                                    color: '#6366f1'
-                                                }} />
-                                            </Box>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1.1rem', 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Token Reference ID
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ 
+                                                    fontWeight: 500,
+                                                    fontFamily: 'Roboto Mono, monospace'
+                                                }}>
+                                                    {detailDialog.token.tokenReferenceID}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                Additional Information
-                                            </Typography>
-                                        </Box>
-                                        <Grid container spacing={2}>
-                                            {[
-                                                { key: 'entityOfLastAction', label: 'Entity of Last Action' },
-                                                { key: 'walletAccountEmailAddressHash', label: 'Wallet Account Email Hash' },
-                                                { key: 'clientWalletAccountID', label: 'Client Wallet Account ID' },
-                                                { key: 'panSource', label: 'PAN Source' },
-                                                { key: 'autoFillIndicator', label: 'Auto Fill Indicator' }
-                                            ].filter(({ key }) => 
-                                                detailDialog.token[key] !== undefined && detailDialog.token[key] !== null && detailDialog.token[key] !== ''
-                                            ).map(({ key, label }) => (
-                                                <Grid item xs={12} sm={6} key={key}>
-                                                    <Box sx={{
-                                                        p: 2,
-                                                        borderRadius: '12px',
-                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                                                        border: '1px solid',
-                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                        transition: 'all 0.2s ease-in-out',
-                                                        '&:hover': {
-                                                            transform: 'translateY(-2px)',
-                                                            boxShadow: theme => theme.palette.mode === 'dark' 
-                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
-                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                                        }
-                                                    }}>
-                                                        <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                                                            textTransform: 'uppercase',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 600,
-                                                            letterSpacing: 0.5,
-                                                            display: 'block',
-                                                            mb: 1
-                                                        }}>
-                                                            {label}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ 
-                                                            fontWeight: 500,
-                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                            wordBreak: 'break-all'
-                                                        }}>
-                                                            {typeof detailDialog.token[key] === 'boolean' 
-                                                                ? detailDialog.token[key] ? 'Yes' : 'No'
-                                                                : String(detailDialog.token[key])}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    PAN Reference ID
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ 
+                                                    fontWeight: 500,
+                                                    fontFamily: 'Roboto Mono, monospace'
+                                                }}>
+                                                    {detailDialog.token.panReferenceID}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Token Requestor ID
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {detailDialog.token.tokenRequestorID}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    PAN Source
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {detailDialog.token.panSource}
+                                                </Typography>
+                                            </Paper>
                                         </Grid>
                                     </Grid>
+                                </Box>
 
-                                    {/* Timeline & Expiration */}
-                                    <Grid item xs={12}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1,
-                                            mb: 2,
-                                            mt: 3
-                                        }}>
-                                            <Box sx={{
-                                                width: 32,
-                                                height: 32,
-                                                borderRadius: '8px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                                {/* Additional Information */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ 
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        color: 'text.primary',
+                                        fontWeight: 600
+                                    }}>
+                                        <InfoIcon fontSize="small" />
+                                        Additional Information
+                                    </Typography>
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                <CalendarIcon sx={{ 
-                                                    fontSize: 20,
-                                                    color: '#6366f1'
-                                                }} />
-                                            </Box>
-                                            <Typography variant="h6" sx={{ 
-                                                fontSize: '1.1rem', 
-                                                fontWeight: 600,
-                                                color: theme => theme.palette.mode === 'dark' ? '#e2e8f0' : '#334155',
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Entity of Last Action
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {detailDialog.token.entityOfLastAction || 'N/A'}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                Timeline & Expiration
-                                            </Typography>
-                                        </Box>
-                                        <Grid container spacing={2}>
-                                            {['tokenActivationDate', 'tokenExpirationDate', 'lastTokenStatusUpdatedTime'].filter(key => 
-                                                detailDialog.token[key] !== undefined
-                                            ).map(key => (
-                                                <Grid item xs={12} sm={6} md={4} key={key}>
-                                                    <Box sx={{
-                                                        p: 2,
-                                                        borderRadius: '12px',
-                                                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)',
-                                                        border: '1px solid',
-                                                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                        transition: 'all 0.2s ease-in-out',
-                                                        '&:hover': {
-                                                            transform: 'translateY(-2px)',
-                                                            boxShadow: theme => theme.palette.mode === 'dark' 
-                                                                ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
-                                                                : '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                                        }
-                                                    }}>
-                                                        <Typography variant="caption" sx={{ 
-                                                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                                                            textTransform: 'uppercase',
-                                                            fontSize: '0.7rem',
-                                                            fontWeight: 600,
-                                                            letterSpacing: 0.5,
-                                                            display: 'block',
-                                                            mb: 1
-                                                        }}>
-                                                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ 
-                                                            fontWeight: 500,
-                                                            color: theme => theme.palette.mode === 'dark' ? '#f8fafc' : '#334155',
-                                                        }}>
-                                                            {detailDialog.token[key] !== null 
-                                                                ? new Date(detailDialog.token[key]).toLocaleString() 
-                                                                : 'N/A'}
-                                                        </Typography>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Wallet Account Email Hash
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ 
+                                                    fontWeight: 500,
+                                                    fontFamily: 'Roboto Mono, monospace'
+                                                }}>
+                                                    {detailDialog.token.walletAccountEmailAddressHash || 'N/A'}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Client Wallet Account ID
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {detailDialog.token.clientWalletAccountID || 'N/A'}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Auto Fill Indicator
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {detailDialog.token.autoFillIndicator ? 'Yes' : 'No'}
+                                                </Typography>
+                                            </Paper>
                                         </Grid>
                                     </Grid>
-                                </Grid>
+                                </Box>
+
+                                {/* Timeline & Expiration */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ 
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        color: 'text.primary',
+                                        fontWeight: 600
+                                    }}>
+                                        <ScheduleIcon fontSize="small" />
+                                        Timeline & Expiration
+                                    </Typography>
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12} sm={4}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Token Activation Date
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {formatDate(detailDialog.token.tokenActivationDate)}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={4}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Token Expiration Date
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {formatDate(detailDialog.token.tokenExpirationDate)}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                        <Grid item xs={12} sm={4}>
+                                            <Paper elevation={0} sx={{ 
+                                                p: 2,
+                                                borderRadius: '12px',
+                                                background: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.03)'
+                                                    : 'rgba(0, 0, 0, 0.02)',
+                                                border: '1px solid',
+                                                borderColor: theme => theme.palette.mode === 'dark'
+                                                    ? 'rgba(255, 255, 255, 0.1)'
+                                                    : 'rgba(0, 0, 0, 0.05)'
+                                            }}>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Last Status Update
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {formatDate(detailDialog.token.lastTokenStatusUpdatedTime)}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                    </Grid>
+                                </Box>
                             </Box>
-                        ) : (
-                            <Typography sx={{ p: 4, textAlign: 'center' }}>No token details available</Typography>
-                        )}
-                    </DialogContent>
 
-                    <DialogActions sx={{ 
-                        p: 3,
-                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : '#fff',
-                        borderTop: '1px solid',
-                        borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0'
-                    }}>
-                        <Button 
-                            onClick={handleCloseDetailDialog}
-                            variant="contained"
-                            sx={{
-                                borderRadius: '8px',
-                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#6366f1',
-                                color: '#fff',
-                                px: 4,
-                                py: 1,
-                                '&:hover': {
-                                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#4f46e5'
-                                }
-                            }}
-                        >
-                            Close
-                        </Button>
-                    </DialogActions>
+                            {/* Actions */}
+                            <Box sx={{ 
+                                mt: 4,
+                                pt: 3,
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: 2,
+                                borderTop: '1px solid',
+                                borderColor: theme => theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.1)'
+                                    : 'rgba(0, 0, 0, 0.1)'
+                            }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleCloseDetailDialog}
+                                    startIcon={<CloseIcon />}
+                                    sx={{
+                                        borderColor: theme => theme.palette.mode === 'dark' 
+                                            ? 'rgba(255, 255, 255, 0.2)' 
+                                            : 'rgba(0, 0, 0, 0.2)',
+                                        color: 'text.primary',
+                                        '&:hover': {
+                                            borderColor: theme => theme.palette.mode === 'dark'
+                                                ? 'rgba(255, 255, 255, 0.3)'
+                                                : 'rgba(0, 0, 0, 0.3)',
+                                            backgroundColor: theme => theme.palette.mode === 'dark'
+                                                ? 'rgba(255, 255, 255, 0.05)'
+                                                : 'rgba(0, 0, 0, 0.05)'
+                                        }
+                                    }}
+                                >
+                                    Close
+                                </Button>
+                            </Box>
+                        </>
+                    )}
                 </Dialog>
 
                 {/* Token Edit Dialog */}

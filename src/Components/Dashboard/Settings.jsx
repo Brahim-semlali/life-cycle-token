@@ -18,6 +18,7 @@ const Settings = () => {
   const { t, i18n } = useTranslation();
   const fileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
+  const [sidebarDesign, setSidebarDesign] = useState(localStorage.getItem('sidebarDesign') || 'default');
 
   // Language options
   const languages = [
@@ -205,6 +206,15 @@ const Settings = () => {
     }
   };
 
+  // Handle sidebar design change
+  const handleSidebarDesignChange = (e) => {
+    const newDesign = e.target.value;
+    setSidebarDesign(newDesign);
+    localStorage.setItem('sidebarDesign', newDesign);
+    // Dispatch un événement personnalisé pour notifier le changement
+    window.dispatchEvent(new CustomEvent('sidebarDesignChange', { detail: newDesign }));
+  };
+
   // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -231,6 +241,22 @@ const Settings = () => {
           >
             <option value="light">{t('settings.theme.light')}</option>
             <option value="dark">{t('settings.theme.dark')}</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Design de la Sidebar</h3>
+        <div className="setting-item">
+          <label htmlFor="sidebar-design-select">Choisir le design de la sidebar</label>
+          <select
+            id="sidebar-design-select"
+            value={sidebarDesign}
+            onChange={handleSidebarDesignChange}
+            className="theme-select"
+          >
+            <option value="default">Design par défaut</option>
+            <option value="horizontal">Design horizontal</option>
           </select>
         </div>
       </div>

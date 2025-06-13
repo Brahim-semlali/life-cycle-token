@@ -387,7 +387,9 @@ const SimulateurContent = () => {
                     ))}
                   </Select>
                 </FormControl>
+              </div>
 
+              <div className="form-row">
                 <FormControl className="simulateur-form-field">
                   <InputLabel id="pan-source-label">Source</InputLabel>
                   <Select
@@ -406,10 +408,7 @@ const SimulateurContent = () => {
                     ))}
                   </Select>
                 </FormControl>
-              </div>
 
-              <div className="card-details">
-                <div className="card-row">
                   <div className="pan-container">
                     <Typography className="input-label">Card Number (PAN)</Typography>
                     <TextField
@@ -436,8 +435,11 @@ const SimulateurContent = () => {
                       }}
                       placeholder="1234 5678 9012 3456"
                     />
+                </div>
                   </div>
 
+              <div className="card-details">
+                <div className="card-row">
                   <div className="cvv-container">
                     <Typography className="input-label">CVV2</Typography>
                     <TextField
@@ -465,7 +467,6 @@ const SimulateurContent = () => {
                       }}
                       placeholder="123"
                     />
-                  </div>
                 </div>
 
                 <div className="expiry-section">
@@ -510,6 +511,7 @@ const SimulateurContent = () => {
                         ))}
                       </Select>
                     </FormControl>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -586,7 +588,9 @@ const SimulateurContent = () => {
                     ))}
                   </Select>
                 </FormControl>
+              </div>
 
+              <div className="form-row">
                 <FormControl className="simulateur-form-field">
                   <InputLabel id="card-desc-pan-source-label">Source</InputLabel>
                   <Select
@@ -605,10 +609,7 @@ const SimulateurContent = () => {
                     ))}
                   </Select>
                 </FormControl>
-              </div>
 
-              <div className="card-details">
-                <div className="card-row">
                   <div className="pan-container">
                     <Typography className="input-label">Card Number (PAN)</Typography>
                     <TextField
@@ -635,8 +636,11 @@ const SimulateurContent = () => {
                       }}
                       placeholder="1234 5678 9012 3456"
                     />
+                </div>
                   </div>
 
+              <div className="card-details">
+                <div className="card-row">
                   <div className="cvv-container">
                     <Typography className="input-label">CVV2</Typography>
                     <TextField
@@ -664,7 +668,6 @@ const SimulateurContent = () => {
                       }}
                       placeholder="123"
                     />
-                  </div>
                 </div>
 
                 <div className="expiry-section">
@@ -709,6 +712,7 @@ const SimulateurContent = () => {
                         ))}
                       </Select>
                     </FormControl>
+                    </div>
                   </div>
                 </div>
               </div>

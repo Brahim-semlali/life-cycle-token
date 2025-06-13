@@ -793,10 +793,51 @@ const Users = () => {
             minWidth: 160,
             renderCell: (params) => {
                 if (!params?.row?.status) return null;
+                const status = params.row.status.toLowerCase();
+                const colors = {
+                    active: { bg: '#dcfce7', color: '#16a34a', dot: '#22c55e' },
+                    inactive: { bg: '#fee2e2', color: '#dc2626', dot: '#ef4444' },
+                    blocked: { bg: '#fef3c7', color: '#d97706', dot: '#f59e0b' },
+                    suspended: { bg: '#f3e8ff', color: '#9333ea', dot: '#a855f7' }
+                };
+                const statusColor = colors[status] || colors.inactive;
+                
                 return (
-                    <span className={`status-badge ${params.row.status || 'inactive'}`}>
-                        {t(`users.status${(params.row.status || 'inactive').charAt(0).toUpperCase() + (params.row.status || 'inactive').slice(1)}`)}
-                    </span>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        backgroundColor: statusColor.bg,
+                        borderRadius: '20px',
+                        padding: '8px 16px',
+                        border: `2px solid ${statusColor.color}`,
+                        boxShadow: `0 2px 4px rgba(0,0,0,0.05)`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 4px 8px rgba(0,0,0,0.1)`
+                        }
+                    }}>
+                        <Box component="span" sx={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: statusColor.dot,
+                            display: 'inline-block',
+                            marginRight: '8px',
+                            boxShadow: `0 0 0 2px ${statusColor.bg}`
+                        }}/>
+                        <Typography 
+                            variant="body2" 
+                            sx={{ 
+                                color: statusColor.color,
+                                fontWeight: 600,
+                                fontSize: '0.875rem',
+                                textTransform: 'capitalize'
+                            }}
+                        >
+                            {t(`users.status.${status}`)}
+                        </Typography>
+                    </Box>
                 );
             }
         },
@@ -1092,13 +1133,41 @@ const Users = () => {
                                 </td>
                             )}
                             <td>
-                                <div className={`status-badge ${user.status?.toLowerCase() || 'inactive'}`} style={{
-                                    padding: isMobile ? '4px 8px' : '8px 16px',
-                                    fontSize: isMobile ? '0.6rem' : '0.8rem'
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: user.status?.toLowerCase() === 'active' ? '#dcfce7' : user.status?.toLowerCase() === 'blocked' ? '#fef3c7' : user.status?.toLowerCase() === 'suspended' ? '#f3e8ff' : '#fee2e2',
+                                    color: user.status?.toLowerCase() === 'active' ? '#16a34a' : user.status?.toLowerCase() === 'blocked' ? '#d97706' : user.status?.toLowerCase() === 'suspended' ? '#9333ea' : '#dc2626',
+                                    borderRadius: '20px',
+                                    padding: isMobile ? '6px 12px' : '8px 16px',
+                                    border: `2px solid ${user.status?.toLowerCase() === 'active' ? '#22c55e' : user.status?.toLowerCase() === 'blocked' ? '#f59e0b' : user.status?.toLowerCase() === 'suspended' ? '#a855f7' : '#ef4444'}`,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                                    }
                                 }}>
-                                    <span className="status-dot"></span>
-                                    {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
-                                </div>
+                                    <Box component="span" sx={{
+                                        width: isMobile ? '8px' : '10px',
+                                        height: isMobile ? '8px' : '10px',
+                                        borderRadius: '50%',
+                                        backgroundColor: user.status?.toLowerCase() === 'active' ? '#22c55e' : user.status?.toLowerCase() === 'blocked' ? '#f59e0b' : user.status?.toLowerCase() === 'suspended' ? '#a855f7' : '#ef4444',
+                                        display: 'inline-block',
+                                        marginRight: '8px',
+                                        boxShadow: `0 0 0 2px ${user.status?.toLowerCase() === 'active' ? '#dcfce7' : user.status?.toLowerCase() === 'blocked' ? '#fef3c7' : user.status?.toLowerCase() === 'suspended' ? '#f3e8ff' : '#fee2e2'}`
+                                    }}/>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            fontWeight: 600,
+                                            fontSize: isMobile ? '0.75rem' : '0.875rem',
+                                            textTransform: 'capitalize'
+                                        }}
+                                    >
+                                        {user.status?.charAt(0).toUpperCase() + user.status?.slice(1) || 'Inactive'}
+                                    </Typography>
+                                </Box>
                             </td>
                             <td>
                                 <div className="action-buttons">
@@ -1286,11 +1355,10 @@ const Users = () => {
 
     // Modifier le rendu de la grille pour un design plus moderne
     const renderUserGrid = () => (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 2 : 3} className="user-grid">
             {filteredUsers.map((user, index) => (
-                <Grid item xs={12} sm={6} md={4} lg={4} key={user.id} style={{ animationDelay: `${index * 0.05}s` }}>
-                    <Card 
-                        className={selectedUsers.includes(user.id) ? 'selected' : ''}
+                <Grid item xs={12} sm={6} md={4} key={user.id} style={{ animationDelay: `${index * 0.05}s` }}>
+                    <div className={`user-card ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
                         onClick={() => {
                             setSelectedUsers(prev => 
                                 prev.includes(user.id)
@@ -1298,7 +1366,6 @@ const Users = () => {
                                     : [...prev, user.id]
                             );
                         }}
-                        sx={{ height: '100%' }}
                     >
                         <IconButton
                             size="small"
@@ -1313,142 +1380,73 @@ const Users = () => {
                             className={`selection-button ${selectedUsers.includes(user.id) ? 'selected' : ''}`}
                             sx={{
                                 position: 'absolute',
-                                top: 10,
-                                right: 10,
-                                zIndex: 10
+                                top: 16,
+                                right: 16,
+                                zIndex: 2,
+                                backgroundColor: selectedUsers.includes(user.id) ? '#4f46e5' : 'white',
+                                color: selectedUsers.includes(user.id) ? 'white' : '#64748b',
+                                '&:hover': {
+                                    backgroundColor: selectedUsers.includes(user.id) ? '#4338ca' : '#f8fafc'
+                                }
                             }}
                         >
                             {selectedUsers.includes(user.id) ? (
-                                <CheckIcon />
+                                <CheckIcon fontSize="small" />
                             ) : (
-                                <AddIcon />
+                                <AddIcon fontSize="small" />
                             )}
                         </IconButton>
                         
-                        <CardContent 
-                            sx={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center',
-                                p: isMobile ? 2 : 3,
-                                height: '100%'
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Avatar
-                                sx={{
-                                    width: isMobile ? 70 : 90,
-                                    height: isMobile ? 70 : 90,
-                                    mb: 2,
-                                    bgcolor: getAvatarColor(user.id),
-                                    fontSize: isMobile ? '1.4rem' : '1.8rem',
-                                    fontWeight: 'bold'
+                        <div className="user-avatar-large">
+                            {getInitials(user.firstName, user.lastName)}
+                        </div>
+                        
+                        <h3 className="user-card-name">
+                            {`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                        </h3>
+                        
+                        <div className="user-card-role">
+                            {user.profile ? user.profile.name : 'No Profile'}
+                        </div>
+                        
+                        <div className={`user-card-status ${user.status?.toLowerCase() || 'inactive'}`}>
+                            {user.status || 'Inactive'}
+                        </div>
+                        
+                        <div className="user-card-info">
+                            <div className="info-item">
+                                <EmailIcon />
+                                <span>{user.email}</span>
+                            </div>
+                            <div className="info-item">
+                                <PhoneIcon />
+                                <span>{user.phone || 'Not provided'}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="user-card-actions">
+                            <button 
+                                className="card-action-button edit"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(user.id);
                                 }}
-                                className="user-card-avatar"
                             >
-                                {getInitials(user.firstName, user.lastName)}
-                            </Avatar>
-                            <Typography 
-                                variant="h6" 
-                                className="card-user-name"
-                                sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }}
-                            >
-                                {user.fullName}
-                            </Typography>
-                            <Typography 
-                                variant="body2" 
-                                className="card-user-profile"
-                                sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}
-                            >
-                                {user.profile ? user.profile.name : 'No Profile'}
-                            </Typography>
-                            
-                            <Chip
-                                label={t(`users.status${(user.status || 'inactive').charAt(0).toUpperCase() + (user.status || 'inactive').slice(1)}`)}
-                                className={`status-badge ${user.status}`}
-                                sx={{ 
-                                    mb: 2, 
-                                    mt: 2,
-                                    height: isMobile ? '24px' : '32px',
-                                    fontSize: isMobile ? '0.65rem' : '0.8rem',
-                                    '& .MuiChip-label': {
-                                        px: isMobile ? 1 : 2
-                                    }
+                                <EditIcon fontSize="small" />
+                                Edit
+                            </button>
+                            <button 
+                                className="card-action-button delete"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(user.id);
                                 }}
-                            />
-                            
-                            <Box sx={{ 
-                                width: '100%', 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: 1, 
-                                mt: 1,
-                                flex: 1
-                            }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-email">
-                                    <EmailIcon sx={{ fontSize: isMobile ? 16 : 18, mr: 1 }} />
-                                    <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
-                                        {user.email}
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }} className="card-user-phone">
-                                    <PhoneIcon sx={{ fontSize: isMobile ? 16 : 18, mr: 1 }} />
-                                    <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
-                                        {user.phone || '(Not provided)'}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            
-                            <Box className="card-actions" sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'center', 
-                                gap: isMobile ? 1 : 2, 
-                                mt: 3, 
-                                width: '100%',
-                                position: 'relative',
-                                p: isMobile ? 1 : 2
-                            }}>
-                                <IconButton
-                                    onClick={() => handleEdit(user.id)}
-                                    className="action-button edit"
-                                    size={isMobile ? "small" : "medium"}
-                                >
-                                    <EditIcon fontSize={isMobile ? "small" : "medium"} />
-                                </IconButton>
-                                {user.status?.toLowerCase() === 'active' && (
-                                    <IconButton
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleUserStatus(user.id, user.status);
-                                        }}
-                                        className="action-button block"
-                                        size={isMobile ? "small" : "medium"}
-                                    >
-                                        <LockPersonIcon fontSize={isMobile ? "small" : "medium"} />
-                                    </IconButton>
-                                )}
-                                {user.status?.toLowerCase() === 'blocked' && (
-                                    <IconButton
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleUserStatus(user.id, user.status);
-                                        }}
-                                        className="action-button unblock"
-                                        size={isMobile ? "small" : "medium"}
-                                    >
-                                        <LockOpenIcon fontSize={isMobile ? "small" : "medium"} />
-                                    </IconButton>
-                                )}
-                                <IconButton
-                                    onClick={() => handleDelete(user.id)}
-                                    className="action-button delete"
-                                    size={isMobile ? "small" : "medium"}
-                                >
-                                    <DeleteIcon fontSize={isMobile ? "small" : "medium"} />
-                                </IconButton>
-                            </Box>
-                        </CardContent>
-                    </Card>
+                            >
+                                <DeleteIcon fontSize="small" />
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </Grid>
             ))}
         </Grid>

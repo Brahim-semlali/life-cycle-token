@@ -333,184 +333,100 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     
     // Function to render cell content based on column type
     const renderCellContent = (token, column) => {
-        // Check if the property exists in the token object
-        if (!(column.id in token)) {
-            // Essayer de faire correspondre les cas camelCase et snake_case
-            let value = null;
-            
-            // Correspondance des noms de champs entre backend et frontend
-            const fieldMappings = {
-                'panReferenceID': ['pan_reference_id', 'panReferencesID'],
-                'panSource': ['pan_source', 'tokenPanSource'],
-                'entityOfLastAction': ['entity_of_last_action', 'lastActionEntity'],
-                'clientWalletAccountID': ['client_wallet_account_id', 'walletAccountID'],
-                'walletAccountEmailAddressHash': ['wallet_account_email_address_hash', 'emailHash'],
-                'autoFillIndicator': ['auto_fill_indicator', 'autoFill'],
-                'tokenActivationDate': ['activation_date', 'tokenActivation'],
-                'tokenStatus': ['token_status'],
-                'token_status': ['tokenStatus']
-                // Ajoutez d'autres mappages au besoin
-            };
-            
-            // Vérifier les mappages possibles
-            if (fieldMappings[column.id]) {
-                for (const altName of fieldMappings[column.id]) {
-                    if (altName in token) {
-                        value = token[altName];
-                        break;
-                    }
-                }
-            }
-            
-            // Si on a trouvé une valeur via le mappage, on l'utilise
-            if (value !== null) {
-                // Utiliser une version récursive pour traiter la valeur trouvée
-                return renderCellContent({...token, [column.id]: value}, column);
-            }
-            
-            // For tokenStatus, try token_status as a fallback
-            if (column.id === 'tokenStatus' && 'token_status' in token) {
-                return renderCellContent({...token, tokenStatus: token.token_status}, column);
-            }
-            // For token_status, try tokenStatus as a fallback
-            if (column.id === 'token_status' && 'tokenStatus' in token) {
-                return renderCellContent({...token, token_status: token.tokenStatus}, column);
-            }
-            // For tokenReferenceId, try tokenReferenceID as a fallback
-            if (column.id === 'tokenReferenceId' && 'tokenReferenceID' in token) {
-                return renderCellContent({...token, tokenReferenceId: token.tokenReferenceID}, column);
-            }
-            // For tokenRequestorId, try tokenRequestorID as a fallback
-            if (column.id === 'tokenRequestorId' && 'tokenRequestorID' in token) {
-                return renderCellContent({...token, tokenRequestorId: token.tokenRequestorID}, column);
-            }
-            
-            // Log détaillé pour aider au débogage
-            console.log(`Champ manquant: ${column.id}, clés disponibles:`, Object.keys(token));
-            return 'N/A';
-        }
-        
         const value = token[column.id];
         
         // Handle null or undefined values
         if (value === null || value === undefined) {
-            return 'N/A';
+            return '-';
         }
         
-        // Format based on column type
+        // Handle dates
         if (column.isDate) {
-            return formatDate(value);
-        } else if (column.isBoolean) {
-            return value === true ? 'Yes' : 'No';
-        } else if (column.isStatus) {
             return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Chip 
-                    label={value || 'Unknown'} 
-                    size="small"
-                    sx={{
-                            ...getStatusStyle(value, token),
-                        fontSize: '0.75rem',
-                        height: '24px',
-                        borderRadius: '4px',
-                        textTransform: 'uppercase',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                />
-                    {hasPendingStatusChange(token) && (
-                        <Tooltip title={`Demande de ${getPendingActionName(token)} en attente de confirmation`}>
-                            <WaitingIcon 
-                                fontSize="small" 
-                                sx={{ 
-                                    color: '#6366f1',
-                                    animation: 'pulse 1.5s infinite ease-in-out',
-                                    '@keyframes pulse': {
-                                        '0%': { opacity: 0.6 },
-                                        '50%': { opacity: 1 },
-                                        '100%': { opacity: 0.6 }
-                                    }
-                                }} 
+                <Typography 
+                    variant="body2" 
+                    className="activation-date"
+                >
+                    {formatDate(value)}
+                </Typography>
+            );
+        }
+        
+        // Handle status
+        if (column.isStatus) {
+            const normalizedStatus = getNormalizedStatus(token);
+            const isPending = hasPendingStatusChange(token);
+            const pendingAction = getPendingActionName(token);
+            
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip
+                        label={normalizedStatus}
+                        size="small"
+                        className={`status-${normalizedStatus.toLowerCase()}`}
+                    />
+                    {isPending && (
+                        <Tooltip title={`Pending ${pendingAction}`}>
+                            <Chip
+                                icon={<PendingIcon fontSize="small" />}
+                                label={pendingAction}
+                                size="small"
+                                className="status-pending"
                             />
                         </Tooltip>
                     )}
                 </Box>
             );
-        } else if (column.isScore) {
-            return (
-                <Chip 
-                    label={value} 
-                    size="small"
-                    sx={{
-                        ...getScoreStyle(value),
-                        fontSize: '0.75rem',
-                        height: '24px',
-                        borderRadius: '4px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                />
-            );
-        } else if (column.id === 'token' || column.id === 'id') {
-            return (
-                <Typography 
-                    variant="body2" 
-                    sx={{ 
-                        fontWeight: 600,
-                        color: theme.palette.primary.main
-                    }}
-                >
-                    {value}
-                </Typography>
-            );
-        } else if (column.id === 'tokenReferenceId' || column.id === 'tokenRequestorId' || 
-                  column.id === 'tokenReferenceID' || column.id === 'tokenRequestorID') {
-            return (
-                <Typography 
-                    variant="body2" 
-                    sx={{ 
-                        fontWeight: 500,
-                        color: theme.palette.info.main,
-                        fontSize: '0.875rem'
-                    }}
-                >
-                    {value}
-                </Typography>
-            );
-        } else if (column.id === 'tokenAssuranceMethod') {
-            // Special handling for assurance method to display only the description
-            return (
-                <Tooltip title={`Code: ${value}`}>
-                    <Typography 
-                        variant="body2"
-                        sx={{
-                            color: theme.palette.text.primary,
-                            fontWeight: 500,
-                            cursor: 'help'
-                        }}
-                    >
-                        {value ? getAssuranceMethodDescription(value) : 'N/A'}
-                    </Typography>
-                </Tooltip>
-            );
-        } else if (column.id === 'device_name' || column.id === 'device_id' || column.id === 'device_type') {
-            // Special handling for device fields to ensure they display correctly
-            return (
-                <Typography 
-                    variant="body2"
-                    sx={{
-                        color: value ? theme.palette.text.primary : theme.palette.text.secondary,
-                        fontWeight: value ? 500 : 400
-                    }}
-                >
-                    {value || 'N/A'}
-                </Typography>
-            );
-        } else {
-            // For string values, handle empty strings
-            if (typeof value === 'string' && value.trim() === '') {
-                return 'N/A';
-            }
-            return String(value);
         }
+        
+        // Handle PAN source
+        if (column.id === 'panSource') {
+            return (
+                <Typography 
+                    variant="body2" 
+                    className="pan-source"
+                >
+                    {value}
+                </Typography>
+            );
+        }
+        
+        // Handle Reference ID
+        if (column.id === 'tokenReferenceID') {
+            return (
+                <Typography 
+                    variant="body2" 
+                    className="reference-id"
+                    sx={{ 
+                        fontFamily: 'Roboto Mono, monospace',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        color: '#4f46e5'
+                    }}
+                >
+                    {value}
+                </Typography>
+            );
+        }
+        
+        // Handle Requestor ID
+        if (column.id === 'tokenRequestorID') {
+            return (
+                <Typography 
+                    variant="body2" 
+                    className="requestor-id"
+                >
+                    {value}
+                </Typography>
+            );
+        }
+        
+        // Default rendering
+        return (
+            <Typography variant="body2">
+                {String(value)}
+            </Typography>
+        );
     };
 
     // Check if we have any data to display
@@ -523,163 +439,110 @@ const TokenTable = ({ tokens, loading, page, rowsPerPage, onPageChange, onRowsPe
     };
 
     return (
-        <Fade in={!loading} timeout={300}>
-            <Box sx={{ mt: 2, overflowX: 'auto' }}>
-                {loading && (
-                    <Box 
-                        sx={{ 
-                            position: 'absolute', 
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            zIndex: 10
-                        }}
-                    >
-                        <CircularProgress sx={{ color: theme.palette.primary.main }} />
-                    </Box>
-                )}
-                
-                <Paper 
-                    elevation={0}
-                    sx={{
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        border: '1px solid',
-                        borderColor: theme.palette.mode === 'dark' 
-                            ? 'rgba(255, 255, 255, 0.12)' 
-                            : 'rgba(0, 0, 0, 0.08)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
-                    }}
-                >
-                    <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-                    <Table stickyHeader aria-label="tokens table">
-                        <TableHead>
+        <Paper 
+            className="token-table-paper"
+            elevation={0}
+            sx={{ 
+                position: 'relative',
+                overflow: 'hidden'
+            }}
+        >
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            {columns.map((column) => (
+                                <TableCell
+                                    key={column.id}
+                                    align={column.isDate ? 'center' : 'left'}
+                                >
+                                    {column.label}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? (
                             <TableRow>
+                                <TableCell 
+                                    colSpan={columns.length} 
+                                    align="center"
+                                    sx={{ py: 6 }}
+                                >
+                                    <CircularProgress size={40} />
+                                </TableCell>
+                            </TableRow>
+                        ) : error ? (
+                            <TableRow>
+                                <TableCell 
+                                    colSpan={columns.length} 
+                                    align="center"
+                                    sx={{ py: 6 }}
+                                >
+                                    <Typography color="error">
+                                        {error}
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ) : displayedTokens.length === 0 ? (
+                            <TableRow>
+                                <TableCell 
+                                    colSpan={columns.length} 
+                                    align="center"
+                                    sx={{ py: 6 }}
+                                >
+                                    <Typography color="textSecondary">
+                                        No tokens found
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            displayedTokens.map((token, index) => (
+                                <TableRow 
+                                    key={token.id || index}
+                                    className="token-table-row"
+                                    onClick={() => onViewDetails(token)}
+                                    sx={{
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                            backgroundColor: theme => theme.palette.mode === 'dark' 
+                                                ? 'rgba(255, 255, 255, 0.05)' 
+                                                : 'rgba(99, 102, 241, 0.04)',
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
+                                        },
+                                        '&:active': {
+                                            transform: 'translateY(0)'
+                                        }
+                                    }}
+                                >
                                     {columns.map((column) => (
                                         <TableCell 
                                             key={column.id}
-                                            sx={{ 
-                                                fontWeight: 600, 
-                                                color: theme.palette.primary.main, 
-                                                borderBottom: '2px solid',
-                                                borderBottomColor: theme.palette.primary.light,
-                                                backgroundColor: theme.palette.mode === 'dark' 
-                                                    ? 'rgba(0, 0, 0, 0.2)' 
-                                                    : 'rgba(249, 250, 252, 0.9)',
-                                                whiteSpace: 'nowrap',
-                                                padding: '16px'
-                                            }}
+                                            align={column.isDate ? 'center' : 'left'}
+                                            className={column.id === 'tokenReferenceID' ? 'reference-id' : ''}
                                         >
-                                            {column.label}
+                                            {renderCellContent(token, column)}
                                         </TableCell>
                                     ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {displayedTokens.length > 0 ? (
-                                displayedTokens.map((token) => (
-                                    <TableRow
-                                        key={token.tokenReferenceID || token.id || `token-${Math.random()}`}
-                                        hover
-                                        onClick={() => handleViewDetails(token)}
-                                        sx={{
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease',
-                                            position: 'relative',
-                                            '&:hover': {
-                                                bgcolor: theme => theme.palette.mode === 'dark' 
-                                                    ? 'rgba(255, 255, 255, 0.05)' 
-                                                    : 'rgba(99, 102, 241, 0.04)',
-                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                                            },
-                                            '&:active': {
-                                                transform: 'translateY(0)',
-                                            },
-                                        }}
-                                    >
-                                        {columns.map((column) => (
-                                            <TableCell 
-                                                key={`${token.tokenReferenceID || token.id || Math.random()}-${column.id}`}
-                                                sx={{ 
-                                                    padding: '12px 16px',
-                                                    fontSize: '0.875rem'
-                                                }}
-                                            >
-                                                {renderCellContent(token, column)}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length} align="center">
-                                        <Box sx={{ py: 5 }}>
-                                            <Typography 
-                                                variant="body1" 
-                                                sx={{ color: theme.palette.text.secondary, mb: 1 }}
-                                            >
-                                                {loading ? 'Loading tokens...' : 
-                                                 error && error.includes('Access Denied') ? error :
-                                                 'No tokens found in database'}
-                                            </Typography>
-                                            {!loading && !error && (
-                                                <Typography variant="body2" sx={{ color: theme.palette.text.disabled }}>
-                                                    Please check database connection or try adjusting your search criteria
-                                                </Typography>
-                                            )}
-                                            {error && !error.includes('Access Denied') && (
-                                                <Typography variant="body2" sx={{ color: theme.palette.error.main }}>
-                                                    {error}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </TableCell>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                
-                    <Box 
-                        sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'flex-end', 
-                            alignItems: 'center',
-                            backgroundColor: theme.palette.mode === 'dark' 
-                                ? 'rgba(0, 0, 0, 0.2)' 
-                                : 'rgba(249, 250, 252, 0.9)',
-                            borderTop: '1px solid',
-                            borderTopColor: theme.palette.mode === 'dark' 
-                                ? 'rgba(255, 255, 255, 0.08)' 
-                                : 'rgba(0, 0, 0, 0.06)',
-                            padding: '8px 16px'
-                        }}
-                    >
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    component="div"
-                    count={tokens.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={onPageChange}
-                    onRowsPerPageChange={onRowsPerPageChange}
-                    sx={{
-                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                            fontSize: '0.875rem',
-                                    color: theme.palette.text.secondary
-                        },
-                        '.MuiTablePagination-select': {
-                            fontSize: '0.875rem'
-                        }
-                    }}
-                />
-                    </Box>
-                </Paper>
-            </Box>
-        </Fade>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={tokens.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={onPageChange}
+                onRowsPerPageChange={onRowsPerPageChange}
+            />
+        </Paper>
     );
 };
 
