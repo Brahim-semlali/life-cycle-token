@@ -1306,54 +1306,31 @@ const TokenList = () => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'flex-start',
-                                gap: 1,
                                 padding: '16px',
                                 borderRadius: '12px',
                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                             }}
                             icon={tspNotification.type === 'success' ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
                         >
-                            <Box sx={{ 
-                                display: 'flex', 
-                                flexDirection: 'column',
-                                width: '100%'
+                            <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center'
                             }}>
-                                <Typography variant="subtitle1" sx={{ 
-                                    fontWeight: 600,
-                                    mb: 1,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1
+                                {tspNotification.message}
+                            </Typography>
+                            
+                            {tspNotification.type === 'error' && tspNotification.externalMessage && (
+                                <Typography variant="body2" sx={{ 
+                                    mt: 1,
+                                    color: '#991b1b',
+                                    fontFamily: 'monospace',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word'
                                 }}>
-                                    {tspNotification.message}
+                                    {parseExternalMessage(tspNotification.externalMessage).text}
                                 </Typography>
-                                
-                                {tspNotification.externalMessage && (
-                                    <Box sx={{
-                                        mt: 1,
-                                        p: 2,
-                                        borderRadius: '8px',
-                                        backgroundColor: tspNotification.type === 'success' ? 'rgba(6, 95, 70, 0.1)' : 'rgba(153, 27, 27, 0.1)',
-                                        border: '1px solid',
-                                        borderColor: tspNotification.type === 'success' ? 'rgba(6, 95, 70, 0.2)' : 'rgba(153, 27, 27, 0.2)',
-                                        width: '100%'
-                                    }}>
-                                        {(() => {
-                                            const parsedMessage = parseExternalMessage(tspNotification.externalMessage);
-                                            return (
-                                                <Typography variant="body2" sx={{ 
-                                                    color: tspNotification.type === 'success' ? '#065f46' : '#991b1b',
-                                                    fontFamily: 'monospace',
-                                                    whiteSpace: 'pre-wrap',
-                                                    wordBreak: 'break-word'
-                                                }}>
-                                                    {parsedMessage.text}
-                                                </Typography>
-                                            );
-                                        })()}
-                                    </Box>
-                                )}
-                            </Box>
+                            )}
                         </Alert>
                     </Snackbar>
 

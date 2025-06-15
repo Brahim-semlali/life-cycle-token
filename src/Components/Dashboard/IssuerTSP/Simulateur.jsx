@@ -61,6 +61,7 @@ const SimulateurContent = () => {
   });
   
   const [responseData, setResponseData] = useState(null);
+  const [cardDescriptionResponseData, setCardDescriptionResponseData] = useState(null);
   
   // État pour gérer les notifications
   const [notification, setNotification] = useState({
@@ -225,7 +226,7 @@ const SimulateurContent = () => {
         cardDescription: response.data
       };
       
-      setResponseData(formattedResponse);
+      setCardDescriptionResponseData(formattedResponse);
       setNotification({
         open: true,
         message: formattedResponse.message,
@@ -241,7 +242,7 @@ const SimulateurContent = () => {
         statusCode: error.response?.status || 500
       };
       
-      setResponseData(errorResponse);
+      setCardDescriptionResponseData(errorResponse);
       setNotification({
         open: true,
         message: errorResponse.message,
@@ -271,6 +272,28 @@ const SimulateurContent = () => {
       return messageExterne;
     } catch (e) {
       return messageExterne;
+    }
+  };
+
+  const formatJsonString = (jsonString) => {
+    try {
+      if (typeof jsonString === 'string') {
+        const obj = JSON.parse(jsonString);
+        return Object.entries(obj).map(([key, value]) => (
+          `<span class="json-key">${key}</span>: ${
+            typeof value === 'string' 
+              ? `<span class="json-string">${value}</span>`
+              : typeof value === 'number'
+              ? `<span class="json-number">${value}</span>`
+              : typeof value === 'boolean'
+              ? `<span class="json-boolean">${value}</span>`
+              : `<span class="json-string">${JSON.stringify(value).replace(/"/g, '')}</span>`
+          }`
+        )).join(',\n');
+      }
+      return jsonString;
+    } catch (e) {
+      return jsonString;
     }
   };
 
@@ -304,8 +327,12 @@ const SimulateurContent = () => {
         {responseData.messageExterne && (
           <>
             <div className="response-label">MESSAGE EXTERNE</div>
-            <div className={externalClassName}>
-              {parseMessageExterne(responseData.messageExterne)}
+            <div 
+              className={externalClassName}
+            >
+              <pre dangerouslySetInnerHTML={{
+                __html: formatJsonString(responseData.messageExterne)
+              }} />
             </div>
           </>
         )}
@@ -322,418 +349,476 @@ const SimulateurContent = () => {
     );
   };
 
+  const CardDescriptionResponseContent = () => {
+    if (!cardDescriptionResponseData) {
+      return (
+        <div className="response-content">
+          <div className="response-message">
+            Waiting for card description request...
+          </div>
+        </div>
+      );
+    }
+
+    const isError = cardDescriptionResponseData.statusCode >= 400 || cardDescriptionResponseData.message?.includes('refus');
+    const messageClassName = `response-message ${isError ? 'error' : ''}`;
+    const externalClassName = `response-external ${isError ? 'error' : ''}`;
+    const codeClassName = `response-code ${isError ? 'error' : ''}`;
+
+    return (
+      <div className="response-content">
+        {cardDescriptionResponseData.message && (
+          <>
+            <div className="response-label">MESSAGE</div>
+            <div className={messageClassName}>
+              {cardDescriptionResponseData.message}
+            </div>
+          </>
+        )}
+
+        {cardDescriptionResponseData.messageExterne && (
+          <>
+            <div className="response-label">MESSAGE EXTERNE</div>
+            <div 
+              className={externalClassName}
+            >
+              <pre dangerouslySetInnerHTML={{
+                __html: formatJsonString(cardDescriptionResponseData.messageExterne)
+              }} />
+            </div>
+          </>
+        )}
+
+        {cardDescriptionResponseData.statusCode && (
+          <>
+            <div className="response-label">CODE STATUS</div>
+            <div className={codeClassName}>
+              {cardDescriptionResponseData.statusCode}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={`simulateur-container ${isMinimized ? 'minimized' : ''} ${isDarkMode ? 'dark-mode' : ''}`}>
       <div className="form-container">
-        <Paper className="simulateur-form-paper" elevation={0}>
-          <div className="form-header">
-            <div className="header-title">
-              <SecurityIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
-              <Typography variant="h6">APPROVE TOKENIZATION</Typography>
-            </div>
-            <Chip 
-              label="SECURE TOKENIZATION" 
-              className="secure-badge"
-            />
-          </div>
-          
-          <form onSubmit={handleSubmit}>
-            <div className="form-content">
-              <div className="form-row">
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="tsp-label">TSP</InputLabel>
-                  <Select
-                    labelId="tsp-label"
-                    id="tsp"
-                    name="tsp"
-                    value={formData.tsp}
-                    label="TSP"
-                    onChange={handleChange}
-                    required
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <ShieldIcon className="input-icon" />
-                      </InputAdornment>
-                    }
-                  >
-                    {tspOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="token-requestor-label">Token Requestor</InputLabel>
-                  <Select
-                    labelId="token-requestor-label"
-                    id="tokenRequestor"
-                    name="tokenRequestor"
-                    value={formData.tokenRequestor}
-                    label="Token Requestor"
-                    onChange={handleChange}
-                    required
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <CreditCardIcon className="input-icon" />
-                      </InputAdornment>
-                    }
-                  >
-                    {tokenRequestorOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+        <div className="form-response-group">
+          <Paper className="simulateur-form-paper" elevation={0}>
+            <div className="form-header">
+              <div className="header-title">
+                <SecurityIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+                <Typography variant="h6">APPROVE TOKENIZATION</Typography>
               </div>
-
-              <div className="form-row">
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="pan-source-label">Source</InputLabel>
-                  <Select
-                    labelId="pan-source-label"
-                    id="panSource"
-                    name="panSource"
-                    value={formData.panSource}
-                    label="Source"
-                    onChange={handleChange}
-                    required
-                  >
-                    {panSourceOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                  <div className="pan-container">
-                    <Typography className="input-label">Card Number (PAN)</Typography>
-                    <TextField
-                      className={`simulateur-form-field pan-input ${focusedInput === 'pan' ? 'focused' : ''}`}
-                      name="pan"
-                      value={formData.pan}
+              <Chip 
+                label="SECURE TOKENIZATION" 
+                className="secure-badge"
+              />
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-content">
+                <div className="form-row">
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="tsp-label">TSP</InputLabel>
+                    <Select
+                      labelId="tsp-label"
+                      id="tsp"
+                      name="tsp"
+                      value={formData.tsp}
+                      label="TSP"
                       onChange={handleChange}
-                      variant="outlined"
                       required
-                      inputProps={{
-                        maxLength: 16,
-                        pattern: '[0-9]{16}',
-                        className: 'pan-input'
-                      }}
-                      onFocus={() => handleFocus('pan')}
-                      onBlur={handleBlur}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CreditCardIcon className="input-icon" />
-                          </InputAdornment>
-                        ),
-                        className: 'card-input'
-                      }}
-                      placeholder="1234 5678 9012 3456"
-                    />
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ShieldIcon className="input-icon" />
+                        </InputAdornment>
+                      }
+                    >
+                      {tspOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="token-requestor-label">Token Requestor</InputLabel>
+                    <Select
+                      labelId="token-requestor-label"
+                      id="tokenRequestor"
+                      name="tokenRequestor"
+                      value={formData.tokenRequestor}
+                      label="Token Requestor"
+                      onChange={handleChange}
+                      required
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <CreditCardIcon className="input-icon" />
+                        </InputAdornment>
+                      }
+                    >
+                      {tokenRequestorOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </div>
+
+                <div className="form-row">
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="pan-source-label">Source</InputLabel>
+                    <Select
+                      labelId="pan-source-label"
+                      id="panSource"
+                      name="panSource"
+                      value={formData.panSource}
+                      label="Source"
+                      onChange={handleChange}
+                      required
+                    >
+                      {panSourceOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                    <div className="pan-container">
+                      <Typography className="input-label">Card Number (PAN)</Typography>
+                      <TextField
+                        className={`simulateur-form-field pan-input ${focusedInput === 'pan' ? 'focused' : ''}`}
+                        name="pan"
+                        value={formData.pan}
+                        onChange={handleChange}
+                        variant="outlined"
+                        required
+                        inputProps={{
+                          maxLength: 16,
+                          pattern: '[0-9]{16}',
+                          className: 'pan-input'
+                        }}
+                        onFocus={() => handleFocus('pan')}
+                        onBlur={handleBlur}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <CreditCardIcon className="input-icon" />
+                            </InputAdornment>
+                          ),
+                          className: 'card-input'
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                      />
+                  </div>
+                    </div>
+
+                <div className="card-details">
+                  <div className="card-row">
+                    <div className="cvv-container">
+                      <Typography className="input-label">CVV2</Typography>
+                      <TextField
+                        className={`simulateur-form-field cvv-input ${focusedInput === 'cvv2' ? 'focused' : ''}`}
+                        name="cvv2"
+                        value={formData.cvv2}
+                        onChange={handleChange}
+                        variant="outlined"
+                        type="password"
+                        required
+                        inputProps={{
+                          maxLength: 3,
+                          pattern: '[0-9]{3}',
+                          className: 'cvv-input'
+                        }}
+                        onFocus={() => handleFocus('cvv2')}
+                        onBlur={handleBlur}
+                        InputProps={{
+                          className: 'card-input',
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SecurityIcon className="input-icon" />
+                            </InputAdornment>
+                          )
+                        }}
+                        placeholder="123"
+                      />
                   </div>
 
-              <div className="card-details">
-                <div className="card-row">
-                  <div className="cvv-container">
-                    <Typography className="input-label">CVV2</Typography>
-                    <TextField
-                      className={`simulateur-form-field cvv-input ${focusedInput === 'cvv2' ? 'focused' : ''}`}
-                      name="cvv2"
-                      value={formData.cvv2}
-                      onChange={handleChange}
-                      variant="outlined"
-                      type="password"
-                      required
-                      inputProps={{
-                        maxLength: 3,
-                        pattern: '[0-9]{3}',
-                        className: 'cvv-input'
-                      }}
-                      onFocus={() => handleFocus('cvv2')}
-                      onBlur={handleBlur}
-                      InputProps={{
-                        className: 'card-input',
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SecurityIcon className="input-icon" />
-                          </InputAdornment>
-                        )
-                      }}
-                      placeholder="123"
-                    />
-                </div>
+                  <div className="expiry-section">
+                    <Typography className="expiry-title">Expiration Date</Typography>
+                    <div className="expiry-group">
+                      <FormControl className="simulateur-form-field">
+                        <InputLabel id="month-label">Month</InputLabel>
+                        <Select
+                          labelId="month-label"
+                          id="month"
+                          name="expiryDate.month"
+                          value={formData.expiryDate.month}
+                          label="Month"
+                          onChange={handleChange}
+                          required
+                          className="card-input"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <MenuItem key={month} value={month.toString().padStart(2, '0')}>
+                              {month.toString().padStart(2, '0')}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
 
-                <div className="expiry-section">
-                  <Typography className="expiry-title">Expiration Date</Typography>
-                  <div className="expiry-group">
-                    <FormControl className="simulateur-form-field">
-                      <InputLabel id="month-label">Month</InputLabel>
-                      <Select
-                        labelId="month-label"
-                        id="month"
-                        name="expiryDate.month"
-                        value={formData.expiryDate.month}
-                        label="Month"
-                        onChange={handleChange}
-                        required
-                        className="card-input"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <MenuItem key={month} value={month.toString().padStart(2, '0')}>
-                            {month.toString().padStart(2, '0')}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl className="simulateur-form-field">
-                      <InputLabel id="year-label">Year</InputLabel>
-                      <Select
-                        labelId="year-label"
-                        id="year"
-                        name="expiryDate.year"
-                        value={formData.expiryDate.year}
-                        label="Year"
-                        onChange={handleChange}
-                        required
-                        className="card-input"
-                      >
-                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                          <MenuItem key={year} value={year.toString().slice(-2)}>
-                            {year.toString().slice(-2)}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                      <FormControl className="simulateur-form-field">
+                        <InputLabel id="year-label">Year</InputLabel>
+                        <Select
+                          labelId="year-label"
+                          id="year"
+                          name="expiryDate.year"
+                          value={formData.expiryDate.year}
+                          label="Year"
+                          onChange={handleChange}
+                          required
+                          className="card-input"
+                        >
+                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                            <MenuItem key={year} value={year.toString().slice(-2)}>
+                              {year.toString().slice(-2)}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  type="submit"
+                  className="simulateur-submit-button"
+                  disabled={loading}
+                  startIcon={loading ? null : <VerifiedIcon />}
+                >
+                  {loading ? 'PROCESSING...' : 'APPROVE'}
+                </Button>
               </div>
-
-              <Button 
-                variant="contained" 
-                color="primary" 
-                type="submit"
-                className="simulateur-submit-button"
-                disabled={loading}
-                startIcon={loading ? null : <VerifiedIcon />}
-              >
-                {loading ? 'PROCESSING...' : 'APPROVE'}
-              </Button>
-            </div>
-          </form>
-        </Paper>
-
-        <Paper className="simulateur-form-paper" elevation={0}>
-          <div className="form-header">
-            <div className="header-title">
-              <CreditCardIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
-              <Typography variant="h6">GET CARD DESCRIPTION</Typography>
-            </div>
+            </form>
+          </Paper>
+          <div className="response-container">
+            {ResponseContent()}
           </div>
-          
-          <form onSubmit={handleCardDescriptionSubmit}>
-            <div className="form-content">
-              <div className="form-row">
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="card-desc-tsp-label">TSP</InputLabel>
-                  <Select
-                    labelId="card-desc-tsp-label"
-                    id="card-desc-tsp"
-                    name="tsp"
-                    value={cardDescriptionData.tsp}
-                    label="TSP"
-                    onChange={handleCardDescriptionChange}
-                    required
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <ShieldIcon className="input-icon" />
-                      </InputAdornment>
-                    }
-                  >
-                    {tspOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+        </div>
 
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="card-desc-token-requestor-label">Token Requestor</InputLabel>
-                  <Select
-                    labelId="card-desc-token-requestor-label"
-                    id="card-desc-tokenRequestor"
-                    name="tokenRequestor"
-                    value={cardDescriptionData.tokenRequestor}
-                    label="Token Requestor"
-                    onChange={handleCardDescriptionChange}
-                    required
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <CreditCardIcon className="input-icon" />
-                      </InputAdornment>
-                    }
-                  >
-                    {tokenRequestorOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+        <div className="form-response-group">
+          <Paper className="simulateur-form-paper" elevation={0}>
+            <div className="form-header">
+              <div className="header-title">
+                <CreditCardIcon sx={{ fontSize: '1.2rem', color: '#6366f1' }} />
+                <Typography variant="h6">GET CARD DESCRIPTION</Typography>
               </div>
-
-              <div className="form-row">
-                <FormControl className="simulateur-form-field">
-                  <InputLabel id="card-desc-pan-source-label">Source</InputLabel>
-                  <Select
-                    labelId="card-desc-pan-source-label"
-                    id="card-desc-panSource"
-                    name="panSource"
-                    value={cardDescriptionData.panSource}
-                    label="Source"
-                    onChange={handleCardDescriptionChange}
-                    required
-                  >
-                    {panSourceOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                  <div className="pan-container">
-                    <Typography className="input-label">Card Number (PAN)</Typography>
-                    <TextField
-                      className={`simulateur-form-field pan-input ${focusedInput === 'card-desc-pan' ? 'focused' : ''}`}
-                      name="pan"
-                      value={cardDescriptionData.pan}
+            </div>
+            
+            <form onSubmit={handleCardDescriptionSubmit}>
+              <div className="form-content">
+                <div className="form-row">
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="card-desc-tsp-label">TSP</InputLabel>
+                    <Select
+                      labelId="card-desc-tsp-label"
+                      id="card-desc-tsp"
+                      name="tsp"
+                      value={cardDescriptionData.tsp}
+                      label="TSP"
                       onChange={handleCardDescriptionChange}
-                      variant="outlined"
                       required
-                      inputProps={{
-                        maxLength: 16,
-                        pattern: '[0-9]{16}',
-                        className: 'pan-input'
-                      }}
-                      onFocus={() => handleFocus('card-desc-pan')}
-                      onBlur={handleBlur}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CreditCardIcon className="input-icon" />
-                          </InputAdornment>
-                        ),
-                        className: 'card-input'
-                      }}
-                      placeholder="1234 5678 9012 3456"
-                    />
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ShieldIcon className="input-icon" />
+                        </InputAdornment>
+                      }
+                    >
+                      {tspOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="card-desc-token-requestor-label">Token Requestor</InputLabel>
+                    <Select
+                      labelId="card-desc-token-requestor-label"
+                      id="card-desc-tokenRequestor"
+                      name="tokenRequestor"
+                      value={cardDescriptionData.tokenRequestor}
+                      label="Token Requestor"
+                      onChange={handleCardDescriptionChange}
+                      required
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <CreditCardIcon className="input-icon" />
+                        </InputAdornment>
+                      }
+                    >
+                      {tokenRequestorOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </div>
+
+                <div className="form-row">
+                  <FormControl className="simulateur-form-field">
+                    <InputLabel id="card-desc-pan-source-label">Source</InputLabel>
+                    <Select
+                      labelId="card-desc-pan-source-label"
+                      id="card-desc-panSource"
+                      name="panSource"
+                      value={cardDescriptionData.panSource}
+                      label="Source"
+                      onChange={handleCardDescriptionChange}
+                      required
+                    >
+                      {panSourceOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                    <div className="pan-container">
+                      <Typography className="input-label">Card Number (PAN)</Typography>
+                      <TextField
+                        className={`simulateur-form-field pan-input ${focusedInput === 'card-desc-pan' ? 'focused' : ''}`}
+                        name="pan"
+                        value={cardDescriptionData.pan}
+                        onChange={handleCardDescriptionChange}
+                        variant="outlined"
+                        required
+                        inputProps={{
+                          maxLength: 16,
+                          pattern: '[0-9]{16}',
+                          className: 'pan-input'
+                        }}
+                        onFocus={() => handleFocus('card-desc-pan')}
+                        onBlur={handleBlur}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <CreditCardIcon className="input-icon" />
+                            </InputAdornment>
+                          ),
+                          className: 'card-input'
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                      />
+                  </div>
+                    </div>
+
+                <div className="card-details">
+                  <div className="card-row">
+                    <div className="cvv-container">
+                      <Typography className="input-label">CVV2</Typography>
+                      <TextField
+                        className={`simulateur-form-field cvv-input ${focusedInput === 'card-desc-cvv2' ? 'focused' : ''}`}
+                        name="cvv2"
+                        value={cardDescriptionData.cvv2}
+                        onChange={handleCardDescriptionChange}
+                        variant="outlined"
+                        type="password"
+                        required
+                        inputProps={{
+                          maxLength: 3,
+                          pattern: '[0-9]{3}',
+                          className: 'cvv-input'
+                        }}
+                        onFocus={() => handleFocus('card-desc-cvv2')}
+                        onBlur={handleBlur}
+                        InputProps={{
+                          className: 'card-input',
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SecurityIcon className="input-icon" />
+                            </InputAdornment>
+                          )
+                        }}
+                        placeholder="123"
+                      />
                   </div>
 
-              <div className="card-details">
-                <div className="card-row">
-                  <div className="cvv-container">
-                    <Typography className="input-label">CVV2</Typography>
-                    <TextField
-                      className={`simulateur-form-field cvv-input ${focusedInput === 'card-desc-cvv2' ? 'focused' : ''}`}
-                      name="cvv2"
-                      value={cardDescriptionData.cvv2}
-                      onChange={handleCardDescriptionChange}
-                      variant="outlined"
-                      type="password"
-                      required
-                      inputProps={{
-                        maxLength: 3,
-                        pattern: '[0-9]{3}',
-                        className: 'cvv-input'
-                      }}
-                      onFocus={() => handleFocus('card-desc-cvv2')}
-                      onBlur={handleBlur}
-                      InputProps={{
-                        className: 'card-input',
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SecurityIcon className="input-icon" />
-                          </InputAdornment>
-                        )
-                      }}
-                      placeholder="123"
-                    />
-                </div>
+                  <div className="expiry-section">
+                    <Typography className="expiry-title">Expiration Date</Typography>
+                    <div className="expiry-group">
+                      <FormControl className="simulateur-form-field">
+                        <InputLabel id="card-desc-month-label">Month</InputLabel>
+                        <Select
+                          labelId="card-desc-month-label"
+                          id="card-desc-month"
+                          name="expiryDate.month"
+                          value={cardDescriptionData.expiryDate.month}
+                          label="Month"
+                          onChange={handleCardDescriptionChange}
+                          required
+                          className="card-input"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <MenuItem key={month} value={month.toString().padStart(2, '0')}>
+                              {month.toString().padStart(2, '0')}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
 
-                <div className="expiry-section">
-                  <Typography className="expiry-title">Expiration Date</Typography>
-                  <div className="expiry-group">
-                    <FormControl className="simulateur-form-field">
-                      <InputLabel id="card-desc-month-label">Month</InputLabel>
-                      <Select
-                        labelId="card-desc-month-label"
-                        id="card-desc-month"
-                        name="expiryDate.month"
-                        value={cardDescriptionData.expiryDate.month}
-                        label="Month"
-                        onChange={handleCardDescriptionChange}
-                        required
-                        className="card-input"
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <MenuItem key={month} value={month.toString().padStart(2, '0')}>
-                            {month.toString().padStart(2, '0')}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl className="simulateur-form-field">
-                      <InputLabel id="card-desc-year-label">Year</InputLabel>
-                      <Select
-                        labelId="card-desc-year-label"
-                        id="card-desc-year"
-                        name="expiryDate.year"
-                        value={cardDescriptionData.expiryDate.year}
-                        label="Year"
-                        onChange={handleCardDescriptionChange}
-                        required
-                        className="card-input"
-                      >
-                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                          <MenuItem key={year} value={year.toString().slice(-2)}>
-                            {year.toString().slice(-2)}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                      <FormControl className="simulateur-form-field">
+                        <InputLabel id="card-desc-year-label">Year</InputLabel>
+                        <Select
+                          labelId="card-desc-year-label"
+                          id="card-desc-year"
+                          name="expiryDate.year"
+                          value={cardDescriptionData.expiryDate.year}
+                          label="Year"
+                          onChange={handleCardDescriptionChange}
+                          required
+                          className="card-input"
+                        >
+                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                            <MenuItem key={year} value={year.toString().slice(-2)}>
+                              {year.toString().slice(-2)}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  type="submit"
+                  className="simulateur-submit-button"
+                  disabled={loading}
+                  startIcon={loading ? null : <VerifiedIcon />}
+                >
+                  {loading ? 'PROCESSING...' : 'GET DESCRIPTION'}
+                </Button>
               </div>
-
-              <Button 
-                variant="contained" 
-                color="primary" 
-                type="submit"
-                className="simulateur-submit-button"
-                disabled={loading}
-                startIcon={loading ? null : <VerifiedIcon />}
-              >
-                {loading ? 'PROCESSING...' : 'GET DESCRIPTION'}
-              </Button>
-            </div>
-          </form>
-        </Paper>
-      </div>
-
-      <div className="response-container">
-        {ResponseContent()}
+            </form>
+          </Paper>
+          <div className="response-container">
+            {CardDescriptionResponseContent()}
+          </div>
+        </div>
       </div>
     </div>
   );
