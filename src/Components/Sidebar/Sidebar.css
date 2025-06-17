@@ -2,7 +2,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    height: 133.33vh; /* Compensate for 75% zoom */
+    height: 100vh;
     width: 280px;
     background: linear-gradient(145deg, rgba(252, 252, 255, 0.85) 0%, rgba(247, 249, 255, 0.95) 100%);
     color: #4a5568;
@@ -22,7 +22,6 @@
     font-weight: 400;
     backdrop-filter: blur(20px);
     border-right: 1px solid rgba(229, 231, 235, 0.2);
-    transform-origin: top left;
 }
 
 /* Dark mode styles for sidebar */
