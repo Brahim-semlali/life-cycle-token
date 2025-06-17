@@ -16,6 +16,10 @@
   --accent-color: #4a7ab0;
   --sidebar-bg: #4a7ab0;
   --sidebar-text: #ffffff;
+  /* Add zoom control */
+  zoom: 75%;
+  -moz-transform: scale(0.75);
+  -moz-transform-origin: 0 0;
 }
 
 /* Dark theme */
